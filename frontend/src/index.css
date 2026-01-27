@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset propre */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #root { height: 100%; }
+
+/* Le "style BrainUP" (ombres + douceur) */
+:root{
+  --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --soft-shadow: 0 8px 24px rgba(15, 23, 42, 0.10);
+}
+
+/* Utilitaires custom */
+.brain-card{
+  box-shadow: var(--card-shadow);
+}
+
+.brain-soft{
+  box-shadow: var(--soft-shadow);
+}
