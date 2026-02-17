@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>BrainUP - Quiz</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+
+<body>
+  <div class="bg">
+    <div class="shell">
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand__logo">🧠</div>
+          <div class="brand__name">Brain<span>UP</span></div>
+        </div>
+
+        <nav class="nav">
+          <a class="nav__item" href="./accueil.html"><span class="nav__icon">🏠</span> Accueil</a>
+          <a class="nav__item" href="./cours.html"><span class="nav__icon">📘</span> Cours</a>
+          <a class="nav__item" href="./tableau_de_bord.html"><span class="nav__icon">📊</span> Tableau de Bord</a>
+          <a class="nav__item" href="./recommandations.html"><span class="nav__icon">⭐</span> Recommandations</a>
+          <a class="nav__item is-active" href="./quiz.html"><span class="nav__icon">✅</span> Quiz</a>
+          <a class="nav__item" href="./chatbot.html"><span class="nav__icon">💬</span> Chatbot</a>
+          <a class="nav__item" href="./profil.html"><span class="nav__icon">👤</span> Profil</a>
+
+          <div class="nav__sep"></div>
+
+          <a class="nav__item" href="./deconnexion.html"><span class="nav__icon">🚪</span> Déconnexion</a>
+        </nav>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="main">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+          <div class="search">
+            <span class="search__icon">🔎</span>
+            <input class="search__input" placeholder="Rechercher un message" />
+          </div>
+
+          <div class="topbar__actions">
+            <button class="iconbtn" title="Notifications">🔔</button>
+            <button class="iconbtn" title="Profil">👤</button>
+            <button class="iconbtn" title="Alertes">🔔</button>
+            <button class="iconbtn" title="Favoris">🔖</button>
+          </div>
+        </header>
+
+        <!-- CONTENT -->
+        <section class="page">
+
+          <!-- breadcrumb -->
+          <div class="crumbs">
+            <a href="./quiz.html">Quiz</a>
+            <span class="sep">›</span>
+            <a href="./cours.html">Ressource</a>
+            <span class="sep">›</span>
+            <span class="here">1 Farms</span>
+          </div>
+
+          <h1 class="quizTitle">Quiz: <span>Introduction à Python</span></h1>
+
+          <div class="quizGrid">
+            <!-- QUIZ CARD -->
+            <section class="card card--pad quizCard">
+
+              <!-- header banner -->
+              <div class="qBanner">
+                <div class="qBanner__text">
+                  <div class="qBanner__q">Comment déclencher un arrêt en Python ?</div>
+                  <div class="qBanner__sub">QCM • 1 bonne réponse</div>
+                </div>
+                <div class="qBanner__bot">🤖+</div>
+              </div>
+
+              <!-- answer list -->
+              <div class="qList" id="qList">
+                <button class="qOpt" data-correct="false">
+                  <span class="qNum">1.</span>
+                  <span class="qTxt">stop()</span>
+                  <span class="qState"></span>
+                </button>
+
+                <button class="qOpt" data-correct="true">
+                  <span class="qNum">2.</span>
+                  <span class="qTxt">exit()</span>
+                  <span class="qState"></span>
+                </button>
+
+                <button class="qOpt" data-correct="false">
+                  <span class="qNum">3.</span>
+                  <span class="qTxt">break</span>
+                  <span class="qState"></span>
+                </button>
+
+                <button class="qOpt" data-correct="false">
+                  <span class="qNum">4.</span>
+                  <span class="qTxt">stop_execution()</span>
+                  <span class="qState"></span>
+                </button>
+              </div>
+
+              <!-- validate -->
+              <button class="qValidate" id="qValidate" disabled>Valider la Reponse</button>
+
+            </section>
+
+            <!-- CHAT BOX LIKE THE DESIGN -->
+            <section class="card card--pad quizChat">
+              <div class="quizChat__row">
+                <div class="quizChat__avatar">👩</div>
+                <div class="quizChat__bubble"> Besoin d’aide pour ce quiz ?</div>
+              </div>
+
+              <div class="quizChat__inputRow">
+                <input class="quizChat__input" placeholder="Écrire un message..." />
+                <button class="quizChat__send">➤</button>
+              </div>
+            </section>
+          </div>
+
+        </section>
+      </main>
+
+    </div>
+  </div>
+
+  <script src="../assets/js/app.js"></script>
+  <script>
+    // mini logique quiz (selection + validation)
+    const opts = Array.from(document.querySelectorAll(".qOpt"));
+    const btn = document.getElementById("qValidate");
+    let picked = null;
+
+    opts.forEach(o => {
+      o.addEventListener("click", () => {
+        opts.forEach(x => x.classList.remove("is-picked"));
+        o.classList.add("is-picked");
+        picked = o;
+        btn.disabled = false;
+      });
+    });
+
+    btn.addEventListener("click", () => {
+      if (!picked) return;
+
+      // lock
+      opts.forEach(x => x.disabled = true);
+      btn.disabled = true;
+
+      const isCorrect = picked.dataset.correct === "true";
+      picked.classList.add(isCorrect ? "is-correct" : "is-wrong");
+      picked.querySelector(".qState").textContent = isCorrect ? "✓ Correct" : "✕ Faux";
+
+      // show correct if wrong
+      if (!isCorrect) {
+        const correct = opts.find(x => x.dataset.correct === "true");
+        if (correct) {
+          correct.classList.add("is-correct");
+          correct.querySelector(".qState").textContent = "✓ Correct";
+        }
+      }
+    });
+  </script>
+</body>
+</html>

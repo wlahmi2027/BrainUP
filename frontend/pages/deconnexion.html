@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrainUP - Déconnexion</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+
+<body>
+  <div class="appBg">
+    <div class="shell">
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand__logo">🧠</div>
+          <div class="brand__name">Brain<span>UP</span></div>
+        </div>
+
+        <nav class="nav">
+          <a class="nav__item" href="./accueil.html">🏠 <span>Accueil</span></a>
+          <a class="nav__item" href="./cours.html">📚 <span>Cours</span></a>
+          <a class="nav__item" href="./tableau_de_bord.html">📊 <span>Tableau de Bord</span></a>
+          <a class="nav__item" href="./recommandations.html">⭐ <span>Recommandations</span></a>
+          <a class="nav__item" href="./quiz.html">✅ <span>Quiz</span></a>
+          <a class="nav__item" href="./chatbot.html">💬 <span>Chatbot</span></a>
+          <a class="nav__item" href="./profil.html">👤 <span>Profil</span></a>
+
+          <div class="nav__divider"></div>
+
+          <a class="nav__item is-active" href="./deconnexion.html">⏻ <span>Déconnexion</span></a>
+        </nav>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="main">
+        <!-- TOPBAR -->
+        <header class="topbar">
+          <div class="search">
+            <span class="search__icon">🔎</span>
+            <input class="search__input" placeholder="Rechercher un message" />
+          </div>
+
+          <div class="topbar__right">
+            <button class="iconBtn" title="Notifications">🔔</button>
+            <button class="iconBtn" title="Messages">💬</button>
+            <button class="iconBtn" title="Favoris">🔖</button>
+          </div>
+        </header>
+
+        <!-- CONTENT -->
+        <section class="content">
+          <div class="logoutWrap">
+
+            <div class="logoutCard">
+              <h1 class="logoutTitle">Se déconnecter ?</h1>
+              <p class="logoutSub">Voulez-vous vraiment vous déconnecter ?</p>
+
+              <div class="logoutIllustration">
+                <!-- (on garde simple avec un emoji / placeholder)
+                     si tu as une image, remplace par <img src="../assets/img/xxx.png"> -->
+                <div class="logoutGuy">🧑‍💻</div>
+                <div class="logoutPower">⏻</div>
+              </div>
+
+              <div class="logoutBtns">
+                <a class="btnGhost" href="./accueil.html">Annuler</a>
+                <a class="btnDanger" href="./accueil.html">Déconnexion</a>
+              </div>
+
+              <div class="logoutChat">
+                <div class="logoutChat__avatar"></div>
+                <div class="logoutChat__bubble">
+                  Bonjour ! Comment puis-je vous aider ?
+                </div>
+                <button class="logoutChat__send" title="Ouvrir Chat">💬</button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+      </main>
+
+    </div>
+  </div>
+</body>
+</html>

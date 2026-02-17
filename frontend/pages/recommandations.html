@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>BrainUP - Recommandations</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+
+<body>
+  <div class="bg">
+    <div class="shell">
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand__logo">🧠</div>
+          <div class="brand__name">Brain<span>UP</span></div>
+        </div>
+
+        <nav class="nav">
+          <a class="nav__item" href="./accueil.html"><span class="nav__icon">🏠</span> Accueil</a>
+          <a class="nav__item" href="./cours.html"><span class="nav__icon">📘</span> Cours</a>
+          <a class="nav__item" href="./tableau_de_bord.html"><span class="nav__icon">📊</span> Tableau de Bord</a>
+          <a class="nav__item is-active" href="./recommandations.html"><span class="nav__icon">⭐</span> Recommandations</a>
+          <a class="nav__item" href="./quiz.html"><span class="nav__icon">✅</span> Quiz</a>
+          <a class="nav__item" href="./chatbot.html"><span class="nav__icon">💬</span> Chatbot</a>
+          <a class="nav__item" href="./profil.html"><span class="nav__icon">👤</span> Profil</a>
+
+          <div class="nav__sep"></div>
+
+          <a class="nav__item" href="./deconnexion.html"><span class="nav__icon">🚪</span> Déconnexion</a>
+        </nav>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="main">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+          <div class="search">
+            <span class="search__icon">🔎</span>
+            <input class="search__input" placeholder="Rechercher un message" />
+          </div>
+
+          <div class="topbar__actions">
+            <button class="iconbtn" title="Notifications">🔔</button>
+
+            <div class="userpill">
+              <div class="userpill__avatar">H</div>
+              <div class="userpill__text">Hi, Frant</div>
+              <div class="userpill__chev">▾</div>
+            </div>
+
+            <button class="iconbtn" title="Alertes">🔔</button>
+            <button class="iconbtn" title="Favoris">🔖</button>
+          </div>
+        </header>
+
+        <!-- CONTENT -->
+        <section class="page">
+          <div class="recHeader">
+            <h1 class="recHeader__title">
+              Recommandations <span class="recHeader__pill">👁</span>
+            </h1>
+            <p class="recHeader__sub">
+              Découvrez des cours suggérés selon vos intérêts.
+            </p>
+          </div>
+
+          <!-- Bloc recommandation -->
+          <section class="card card--pad recBlock">
+            <div class="card__head">
+              <div class="recBlock__title">Recommandations & habitudes</div>
+              <span class="dots">•••</span>
+            </div>
+
+            <div class="recCards">
+              <!-- Card 1 -->
+              <article class="recCard recCard--green">
+                <div class="recCard__left">
+                  <div class="recCard__icon">◯</div>
+                  <div>
+                    <div class="recCard__name">Analyse de Données</div>
+                    <div class="recCard__desc">Basé sur vos centres d’intérêt</div>
+                  </div>
+                </div>
+                <div class="recCard__right">
+                  <span class="chip">Voir</span>
+                </div>
+              </article>
+
+              <!-- Card 2 -->
+              <article class="recCard recCard--blue">
+                <div class="recCard__left">
+                  <div class="recCard__icon">🤖</div>
+                  <div>
+                    <div class="recCard__name">IA et Chatbots</div>
+                    <div class="recCard__desc">De nouvelles leçons adaptées</div>
+                  </div>
+                </div>
+                <div class="recCard__right">
+                  <span class="chip">Voir</span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <!-- Historique -->
+          <section class="card card--pad recHistory">
+            <div class="card__head">
+              <h2 class="card__title">Historique & Suggestions</h2>
+              <span class="dots">•••</span>
+            </div>
+
+            <ul class="historyList">
+              <li class="historyItem">
+                <div class="historyItem__left">
+                  <span class="hico">✓</span>
+                  <div>
+                    <div class="htitle">Complétion de section “Variables”</div>
+                    <div class="hsub">Quiz JavaScript • amélioration</div>
+                  </div>
+                </div>
+                <div class="hdate">1 sept. 11:16</div>
+              </li>
+
+              <li class="historyItem">
+                <div class="historyItem__left">
+                  <span class="hico">📍</span>
+                  <div>
+                    <div class="htitle">Recommandation : “Bases de Données”</div>
+                    <div class="hsub">Cours suggéré • niveau débutant</div>
+                  </div>
+                </div>
+                <div class="hdate">dim. 17:26</div>
+              </li>
+
+              <li class="historyItem">
+                <div class="historyItem__left">
+                  <span class="hico">⏱</span>
+                  <div>
+                    <div class="htitle">Temps d’étude augmenté</div>
+                    <div class="hsub">+30 min • bonne régularité</div>
+                  </div>
+                </div>
+                <div class="hdate">sam. 15:30</div>
+              </li>
+            </ul>
+          </section>
+
+          <!-- assistant -->
+          <div class="assistFloat">
+            <div class="assistFloat__avatar">👩</div>
+            <div class="assistFloat__bubble">Bonjour! Comment puis-je vous aider?</div>
+          </div>
+        </section>
+      </main>
+
+    </div>
+  </div>
+</body>
+</html>
