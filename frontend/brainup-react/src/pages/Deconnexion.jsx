@@ -1,0 +1,38 @@
+import { Link } from "react-router-dom";
+
+export default function Deconnexion() {
+  return (
+    <section className="content">
+      <div className="logoutWrap">
+        <div className="logoutCard">
+          <h1 className="logoutTitle">Se déconnecter ?</h1>
+          <p className="logoutSub">Voulez-vous vraiment vous déconnecter ?</p>
+
+          <div className="logoutIllustration">
+            <div className="logoutGuy">🧑‍💻</div>
+            <div className="logoutPower">⏻</div>
+          </div>
+
+          <div className="logoutBtns">
+            <Link className="btnGhost" to="/">
+              Annuler
+            </Link>
+            <Link className="btnDanger" to="/">
+              Déconnexion
+            </Link>
+          </div>
+
+          <div className="logoutChat">
+            <div className="logoutChat__avatar"></div>
+            <div className="logoutChat__bubble">
+              Bonjour ! Comment puis-je vous aider ?
+            </div>
+            <button className="logoutChat__send" type="button" title="Ouvrir Chat">
+              💬
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
