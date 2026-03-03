@@ -5,6 +5,7 @@ import reco1Img from "../assets/img/reco1.png";
 import reco2Img from "../assets/img/reco2.png";
 
 export default function Cours() {
+
   return (
     <section className="page">
       <div className="page__header">
