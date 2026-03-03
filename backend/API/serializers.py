@@ -1,7 +1,7 @@
 from rest_framework import serializers
-from .models import Item
+from API.models import Etudiant
 
-class ItemSerializer(serializers.ModelSerializer):
+class EtudiantSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Item
-        fields = '__all__'
+        model = Etudiant
+        fields = 'score_moyen'
