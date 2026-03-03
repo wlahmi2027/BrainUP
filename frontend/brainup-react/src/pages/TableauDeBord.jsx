@@ -1,7 +1,29 @@
+import { useEffect, useState } from "react";
 import { dashboardData } from "../mock/dashboardData";
+import { api } from "../api/client";
 
 export default function TableauDeBord() {
-  const { user, progress, statsCards, suggestions, topQuiz } = dashboardData;
+  // start with mock progress
+  const [progress, setProgress] = useState(dashboardData.progress);
+
+  useEffect(() => {
+    const fetchProgressPercent = async () => {
+      try {
+        const res = await api.get("/etudiants/999/progression/"); // backend fetch
+        console.log("Backend response:", res.data);
+        setProgress((prev) => ({
+          ...prev,
+          percent: res.data.progression, // map backend field to percent
+        }));
+      } catch (error) {
+        console.error("Error fetching progress percent:", error);
+      }
+    };
+
+    fetchProgressPercent();
+  }, []);
+
+  const { user, statsCards, suggestions, topQuiz } = dashboardData;
 
   return (
     <section className="page">

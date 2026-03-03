@@ -4,4 +4,5 @@ from API.models import Etudiant
 class EtudiantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Etudiant
-        fields = 'score_moyen'
+        fields = ['progression']
+
