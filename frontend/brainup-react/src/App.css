@@ -1829,3 +1829,241 @@ a { color: inherit; text-decoration: none; }
   background: rgba(255,255,255,.92);
   cursor:pointer;
 }
+/* =========================
+   PROFIL - BUTTON INTERACTIONS
+   ========================= */
+
+/* Base buttons */
+.btn {
+  transition: transform .12s ease, box-shadow .18s ease, opacity .18s ease, filter .18s ease;
+  will-change: transform;
+}
+
+/* Hover */
+.btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+/* Active (click press) */
+.btn:active {
+  transform: translateY(0px) scale(0.98);
+  opacity: .95;
+}
+
+/* Focus (keyboard accessibility) */
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(11, 58, 122, .18);
+}
+
+/* Primary button stronger effect */
+.btn--primary:hover {
+  box-shadow: 0 12px 26px rgba(11, 58, 122, .22);
+}
+
+.btn--primary:active {
+  box-shadow: 0 6px 14px rgba(11, 58, 122, .18);
+}
+
+/* Disabled save button style */
+.btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  filter: none;
+}
+
+/* =========================
+   PROFIL - INPUT INTERACTIONS
+   ========================= */
+
+.input {
+  transition: border-color .15s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.input:hover {
+  border-color: rgba(59,130,246,.35);
+}
+
+.input:focus {
+  border-color: rgba(59,130,246,.55);
+  box-shadow: 0 0 0 4px rgba(59,130,246,.15);
+}
+
+/* Optional: disabled inputs look */
+.input:disabled {
+  opacity: .85;
+  background: rgba(241,245,249,.75);
+  cursor: not-allowed;
+}
+
+
+/* ===== TOPBAR IMPROVEMENTS ===== */
+.topbar{
+  background: #f7faff;
+  padding: 16px 18px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(15,23,42,0.06);
+}
+
+.search{
+  background: #ffffff;
+  border: 1px solid #d9e7ff;
+  border-radius: 999px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 520px;
+  max-width: 100%;
+}
+
+.search__input{
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 14px;
+  background: transparent;
+}
+
+.search:focus-within{
+  border-color: rgba(59,130,246,.55);
+  box-shadow: 0 0 0 4px rgba(59,130,246,.12);
+}
+
+.topbar__actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.iconbtn{
+  width:42px;
+  height:42px;
+  border-radius:999px;
+  border:1px solid #d9e7ff;
+  background:#fff;
+  cursor:pointer;
+  position:relative;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+
+.iconbtn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(18,40,76,.10);
+  background:#f3f7ff;
+}
+
+.iconbtn:active{
+  transform: translateY(0px) scale(.98);
+}
+
+.notif-badge{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  min-width:18px;
+  height:18px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#ef4444;
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+  display:grid;
+  place-items:center;
+  border:2px solid #fff;
+}
+
+/* user pill dropdown */
+.userpill{
+  position:relative;
+}
+
+.userpill__btn{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border-radius:999px;
+  padding: 6px 10px;
+  background:#fff;
+  border:1px solid #d9e7ff;
+  cursor:pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+
+.userpill__btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(18,40,76,.10);
+  background:#f7faff;
+}
+
+.userpill__btn:active{
+  transform: translateY(0px) scale(.99);
+}
+
+.userpill__avatar{
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #e6f0ff;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: #0b3a7a;
+}
+
+.userpill__text{
+  font-size: 14px;
+  color: #1f2937;
+  white-space:nowrap;
+}
+
+.userpill__chev{
+  color:#9ca3af;
+}
+
+.userpill__menu{
+  position:absolute;
+  right:0;
+  top: calc(100% + 10px);
+  width: 220px;
+  background:#fff;
+  border:1px solid rgba(15,23,42,.10);
+  border-radius:16px;
+  box-shadow: 0 18px 50px rgba(15,23,42,.18);
+  overflow:hidden;
+  z-index:999;
+}
+
+.userpill__item{
+  width:100%;
+  text-align:left;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:12px 14px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  font-weight:900;
+  color:#0f172a;
+  text-decoration:none;
+}
+
+.userpill__item:hover{
+  background:#f3f7ff;
+}
+
+.userpill__item.danger{
+  color:#b91c1c;
+}
+
+.userpill__item.danger:hover{
+  background: rgba(239,68,68,.08);
+}
