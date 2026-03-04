@@ -16,8 +16,12 @@ Including another URLconf
 """
 from rest_framework import routers
 from API.views import EtudiantViewSet
-
+from django.urls import path, include
 router = routers.DefaultRouter()
 router.register(r'etudiants', EtudiantViewSet)
 
-urlpatterns = router.urls
+
+urlpatterns = [
+    path('', include(router.urls)),  # routes API existantes
+    path('api/', include('chatbot.urls')),  # route du chatbot
+]
