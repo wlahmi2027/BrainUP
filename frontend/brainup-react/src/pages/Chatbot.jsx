@@ -1,96 +1,39 @@
+import { useState } from "react";
+import { api } from "../api/client"; // adapte le chemin si besoin
+
 export default function Chatbot() {
+  const [message, setMessage] = useState("");
+  const [reply, setReply] = useState("");
+
+  const send = async () => {
+    try {
+      setReply("...");
+      const res = await api.post("/chat/", { message }); // <-- clé "message"
+      setReply(res.data?.reply ?? "Aucune réponse");
+    } catch (err) {
+      console.log("CHAT ERROR:", err);
+      console.log("DETAIL:", err?.response?.data);
+      setReply("Erreur de connexion au serveur");
+    }
+  };
+
   return (
-    <section className="content">
-      <div className="chatWrap">
-        <div className="chatCard">
-          <div className="chatTitle">
-            <div className="chatTitle__icon">🤖</div>
-            <div>
-              <div className="chatTitle__h1">Chatbot</div>
-              <div className="chatTitle__p">
-                Bienvenue ! Comment puis-je vous aider ?
-              </div>
-            </div>
-          </div>
+    <div style={{ padding: 24 }}>
+      <h1>BrainUP Assistant</h1>
 
-          {/* bubble */}
-          <div className="chatHello">
-            <div className="chatHello__avatar"></div>
-            <div className="chatHello__bubble">
-              Bonjour ! Comment puis-je vous aider ?
-            </div>
-          </div>
+      <input
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="Écris un message..."
+        style={{ width: 360, padding: 8 }}
+      />
 
-          {/* actions */}
-          <div className="chatActions">
-            <button className="chatAction" type="button">
-              <span className="chatAction__ico">📘</span>
-              <span>Reprendre mon dernier cours</span>
-              <span className="chatAction__chev">›</span>
-            </button>
+      <button onClick={send} style={{ marginLeft: 10, padding: "8px 14px" }}>
+        Envoyer
+      </button>
 
-            <button className="chatAction" type="button">
-              <span className="chatAction__ico">⭐</span>
-              <span>Mes recommandations de cours</span>
-              <span className="chatAction__chev">›</span>
-            </button>
-
-            <button className="chatAction" type="button">
-              <span className="chatAction__ico">✅</span>
-              <span>Parlez-moi des quiz disponibles</span>
-              <span className="chatAction__chev">›</span>
-            </button>
-          </div>
-
-          {/* quick questions */}
-          <div className="chatSection">
-            <div className="chatSection__title">
-              Comment puis-je vous aider ?
-            </div>
-
-            <div className="chatQuick">
-              <button className="chatQuick__item" type="button">
-                Se baser sur ton niveau et te proposer un plan ?
-                <span>›</span>
-              </button>
-
-              <button className="chatQuick__item" type="button">
-                Me faire un résumé du cours “Python” ?
-                <span>›</span>
-              </button>
-
-              <button className="chatQuick__item" type="button">
-                Me donner des exercices pour m’entraîner ?
-                <span>›</span>
-              </button>
-            </div>
-          </div>
-
-          {/* input bottom */}
-          <div className="chatComposer">
-            <button
-              className="chatComposer__attach"
-              type="button"
-              title="Joindre"
-            >
-              📎
-            </button>
-
-            <input
-              className="chatComposer__input"
-              placeholder="Écrire un message..."
-            />
-
-            <button
-              className="chatComposer__send"
-              type="button"
-              title="Envoyer"
-            >
-              ➤
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
+      <h3 style={{ marginTop: 20 }}>Réponse :</h3>
+      <div>{reply}</div>
+    </div>
   );
 }

@@ -2067,3 +2067,64 @@ a { color: inherit; text-decoration: none; }
 .userpill__item.danger:hover{
   background: rgba(239,68,68,.08);
 }
+
+/* --------- Cours (UI dynamique) --------- */
+.badgeOk, .badgeWarn{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 10px; border-radius:999px; font-weight:600; font-size:12px;
+  border:1px solid rgba(0,0,0,0.08);
+}
+.badgeOk{ background:#ecfff3; color:#166534; }
+.badgeWarn{ background:#fff7ed; color:#9a3412; }
+
+.selectRow{ display:flex; flex-direction:column; gap:10px; align-items:flex-end; }
+.seg{ display:inline-flex; background:#eef4ff; border-radius:999px; padding:4px; gap:4px; border:1px solid #dbe7ff; }
+.seg__btn{
+  border:0; background:transparent; padding:8px 12px; border-radius:999px;
+  cursor:pointer; font-weight:700; color:#1f3b6d;
+  transition: transform .08s ease, background .15s ease, box-shadow .15s ease;
+}
+.seg__btn:hover{ background:#ffffff; box-shadow:0 8px 18px rgba(16,24,40,.08); }
+.seg__btn:active{ transform: translateY(1px) scale(.98); }
+.seg__btn.is-active{ background:#0b2f66; color:white; }
+
+.searchInline input{
+  width: 320px; max-width: 100%;
+  padding:12px 14px; border-radius:999px;
+  border:1px solid #d6e3ff; outline:none;
+  background:#fff;
+}
+.searchInline input:focus{
+  box-shadow:0 0 0 4px rgba(59,130,246,.15);
+  border-color:#90b4ff;
+}
+
+.course__imgPlaceholder{
+  height: 140px;
+  background: linear-gradient(135deg, #e6f0ff, #f4f8ff);
+  border-radius: 14px;
+}
+
+.course__rating{ display:flex; align-items:center; gap:8px; }
+.stars{ display:inline-flex; gap:4px; }
+.star{
+  border:0; background:transparent; cursor:pointer;
+  font-size:16px; line-height:1;
+  color:#c8d4e6;
+  transition: transform .08s ease, color .15s ease;
+}
+.star:hover{ transform: translateY(-1px); }
+.star.is-on{ color:#f59e0b; }
+.votes{ color:#6b7280; font-weight:600; font-size:12px; }
+
+.btn--ghost.is-fav{
+  border-color:#f59e0b !important;
+  color:#b45309 !important;
+  background:#fff7ed !important;
+}
+
+.listWrap{ display:flex; flex-direction:column; gap:12px; }
+.listRow{ display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.listTitle{ font-weight:900; font-size:16px; }
+.listSub{ color:#6b7280; font-weight:600; margin-top:4px; }
+.listRight{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
