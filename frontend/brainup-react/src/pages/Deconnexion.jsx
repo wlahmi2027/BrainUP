@@ -1,6 +1,15 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function Deconnexion() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Remove login flag
+    localStorage.removeItem("isLoggedIn");
+    // Redirect to login page
+    navigate("/login");
+  };
+
   return (
     <section className="content">
       <div className="logoutWrap">
@@ -14,12 +23,12 @@ export default function Deconnexion() {
           </div>
 
           <div className="logoutBtns">
-            <Link className="btnGhost" to="/">
+            <button className="btnGhost" onClick={() => navigate("/")}>
               Annuler
-            </Link>
-            <Link className="btnDanger" to="/">
+            </button>
+            <button className="btnDanger" onClick={handleLogout}>
               Déconnexion
-            </Link>
+            </button>
           </div>
 
           <div className="logoutChat">

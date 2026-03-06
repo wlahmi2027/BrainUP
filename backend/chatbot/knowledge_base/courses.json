@@ -1,0 +1,52 @@
+[
+  {
+    "id": "course_python",
+    "title": "Introduction à Python",
+    "level": "Débutant",
+    "category": "Programmation",
+    "tags": ["python", "variables", "boucles", "fonctions", "bases"],
+    "description": "Découvrir les bases de Python : variables, conditions, boucles et fonctions.",
+    "route": "/cours",
+    "teacher": "Léa Théode"
+  },
+  {
+    "id": "course_ml",
+    "title": "Machine Learning Avancé",
+    "level": "Avancé",
+    "category": "IA",
+    "tags": ["machine learning", "classification", "régression", "scikit-learn", "modèles"],
+    "description": "Approfondir les techniques de ML : entraînement, évaluation, tuning et pipelines.",
+    "route": "/cours",
+    "teacher": "Léo Martin"
+  },
+  {
+    "id": "course_web_design",
+    "title": "Design Web Moderne",
+    "level": "Intermédiaire",
+    "category": "Web",
+    "tags": ["ui", "ux", "design", "responsive", "css"],
+    "description": "Construire des interfaces modernes, claires et responsives.",
+    "route": "/cours",
+    "teacher": "Inès M."
+  },
+  {
+    "id": "course_data",
+    "title": "Analyse de Données",
+    "level": "Intermédiaire",
+    "category": "Data",
+    "tags": ["data", "analyse", "pandas", "visualisation"],
+    "description": "Explorer et analyser des données pour en tirer des insights.",
+    "route": "/cours",
+    "teacher": "Adam K."
+  },
+  {
+    "id": "course_chatbots",
+    "title": "IA et Chatbots",
+    "level": "Intermédiaire",
+    "category": "IA",
+    "tags": ["chatbot", "nlp", "rag", "gpt"],
+    "description": "Comprendre les chatbots modernes et les bases du NLP.",
+    "route": "/cours",
+    "teacher": "Bot BrainUP"
+  }
+]

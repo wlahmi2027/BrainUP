@@ -1,0 +1,37 @@
+[
+  {
+    "id": "faq_001",
+    "type": "faq",
+    "title": "Voir les cours",
+    "text": "Pour consulter le catalogue des cours, clique sur le menu Cours dans la barre latérale.",
+    "route": "/cours"
+  },
+  {
+    "id": "faq_002",
+    "type": "faq",
+    "title": "Modifier profil",
+    "text": "Pour modifier ton profil, va dans la page Profil puis clique sur Modifier mon profil.",
+    "route": "/profil"
+  },
+  {
+    "id": "course_001",
+    "type": "course",
+    "title": "Introduction à Python",
+    "text": "Cours débutant pour apprendre les bases de Python : variables, conditions, boucles et fonctions.",
+    "route": "/cours"
+  },
+  {
+    "id": "course_002",
+    "type": "course",
+    "title": "Machine Learning Avancé",
+    "text": "Cours avancé sur les modèles de machine learning, l'entraînement, l'évaluation et les pipelines.",
+    "route": "/cours"
+  },
+  {
+    "id": "nav_001",
+    "type": "navigation",
+    "title": "Accéder aux quiz",
+    "text": "Les quiz sont accessibles depuis la page Quiz dans le menu latéral.",
+    "route": "/quiz"
+  }
+]
