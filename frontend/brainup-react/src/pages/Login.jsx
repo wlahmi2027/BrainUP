@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { api } from "../api/client"; // adjust path if needed
 
 export default function Login() {
@@ -13,16 +13,14 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // Call backend login endpoint
       const response = await api.post("login/", {
         email: email,
-        mot_de_passe: password, // matches your database field
+        mot_de_passe: password,
       });
 
       const data = response.data;
 
       if (data.success) {
-        // For now, just save a login flag
         localStorage.setItem("isLoggedIn", "true");
         navigate("/tableau-de-bord");
       } else {
@@ -53,6 +51,7 @@ export default function Login() {
             >
               Login
             </h2>
+
             <form onSubmit={handleLogin} className="formGrid">
               <div className="field">
                 <label className="label">Email</label>
@@ -85,6 +84,14 @@ export default function Login() {
                 {loading ? "Connexion..." : "Login"}
               </button>
             </form>
+
+            {/* Sign Up Section */}
+            <div style={{ marginTop: "20px", textAlign: "center" }}>
+              <span>Pas encore de compte ? </span>
+              <Link to="/inscription" className="btn btn--secondary">
+                S'inscrire
+              </Link>
+            </div>
           </div>
         </div>
       </div>

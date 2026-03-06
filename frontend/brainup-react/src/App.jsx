@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Layout from "./pages/Layout";
 import Login from "./pages/Login";
+import Inscription from "./pages/Inscription";
 import Accueil from "./pages/Accueil";
 import Cours from "./pages/Cours";
 import TableauDeBord from "./pages/TableauDeBord";
@@ -20,6 +21,7 @@ export default function App() {
   <Routes>
     {/* Public route */}
     <Route path="/login" element={<Login />} />
+    <Route path="/inscription" element={<Inscription />} />
 
     {/* All protected routes inside Layout */}
     <Route

@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from rest_framework import routers
-from API.views import EtudiantViewSet, login_view
+from API.views import EtudiantViewSet, login_view, register_view
 from django.urls import path, include
 
 router = routers.DefaultRouter()
@@ -28,6 +28,6 @@ urlpatterns = [
 
     # login endpoint
     path("api/login/", login_view, name="login"),
-
+    path('api/register/', register_view, name='register'),
     path('api/chatbot', include('chatbot.urls')),  # route du chatbot
 ]
