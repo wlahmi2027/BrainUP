@@ -140,6 +140,7 @@ vite.config.ts.timestamp-*
 
 # venv
 /venv/
+.venv
 
 # Django stuff
 *.sqlite3
