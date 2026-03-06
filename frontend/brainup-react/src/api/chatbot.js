@@ -6,6 +6,6 @@ import { api } from "./client";
  * Réponse attendue: { reply: "...", actions?: [...] }
  */
 export async function askBot(message) {
-  const { data } = await api.post("/chat/", { message });
+  const { data } = await api.post("/chatbot/chat/", { message });
   return data; // ex: { reply: "..." }
 }
