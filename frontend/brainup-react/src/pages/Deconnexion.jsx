@@ -1,12 +1,20 @@
 import { useNavigate } from "react-router-dom";
+import { api } from "../api/client";
+
+
 
 export default function Deconnexion() {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    // Remove login flag
-    localStorage.removeItem("isLoggedIn");
-    // Redirect to login page
+  const handleLogout = async () => {
+    try {
+      await api.post("logout/");
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+
+    localStorage.removeItem("token");
+
     navigate("/login");
   };
 

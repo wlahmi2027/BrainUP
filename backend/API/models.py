@@ -6,6 +6,8 @@ class Utilisateur(models.Model):
     email = models.EmailField(unique=True)
     mot_de_passe = models.CharField(max_length=255)
 
+    token = models.CharField(max_length=128, blank=True, null=True)
+
     def __str__(self):
         return self.nom
 

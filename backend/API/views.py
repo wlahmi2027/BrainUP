@@ -13,6 +13,48 @@ from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view, permission_classes
 
 from .models import Utilisateur, Etudiant, Enseignant
+import secrets
+
+@api_view(['GET'])
+def profil_view(request):
+
+    user = get_user_from_token(request)
+
+    if not user:
+        return Response({"error": "Unauthorized"}, status=401)
+
+    return Response({
+        "nom": user.nom,
+        "email": user.email
+    })
+
+def get_user_from_token(request):
+
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        return None
+
+    try:
+        token = auth_header.split(" ")[1]
+        user = Utilisateur.objects.get(token=token)
+        return user
+    except:
+        return None
+
+
+@api_view(['POST'])
+def logout_view(request):
+
+    user = get_user_from_token(request)
+
+    if not user:
+        return Response({"success": False}, status=401)
+
+    user.token = None
+    user.save()
+
+    return Response({"success": True})
 
 
 class EtudiantViewSet(viewsets.ModelViewSet):
@@ -34,14 +76,22 @@ def login_view(request):
 
     try:
         utilisateur = Utilisateur.objects.get(email=email)
+
         if utilisateur.mot_de_passe == mot_de_passe:
-            return Response({"success": True, "message": "Connexion réussie"})
-        else:
-            return Response({"success": False, "message": "Mot de passe incorrect"}, status=401)
+            token = secrets.token_hex(32)
+            utilisateur.token = token
+            utilisateur.save()
+
+            return Response({
+                "success": True,
+                "token": token,
+                "user": utilisateur.email
+            })
+
+        return Response({"success": False, "message": "Mot de passe incorrect"}, status=401)
 
     except Utilisateur.DoesNotExist:
         return Response({"success": False, "message": "Email invalide"}, status=401)
-
 
 # sign up post :
 @permission_classes([AllowAny])

@@ -21,10 +21,8 @@ export default function Login() {
       const data = response.data;
 
       if (data.success) {
-        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("token", data.token);
         navigate("/tableau-de-bord");
-      } else {
-        alert(data.message || "Email ou mot de passe invalide");
       }
     } catch (err) {
       console.error(err);
