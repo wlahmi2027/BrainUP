@@ -15,6 +15,9 @@ from rest_framework.decorators import api_view, permission_classes
 from .models import Utilisateur, Etudiant, Enseignant
 import secrets
 
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import check_password
+
 @api_view(['GET'])
 def profil_view(request):
 
@@ -77,7 +80,7 @@ def login_view(request):
     try:
         utilisateur = Utilisateur.objects.get(email=email)
 
-        if utilisateur.mot_de_passe == mot_de_passe:
+        if check_password(mot_de_passe, utilisateur.mot_de_passe):
             token = secrets.token_hex(32)
             utilisateur.token = token
             utilisateur.save()
@@ -102,6 +105,8 @@ def register_view(request):
     mot_de_passe = request.data.get('mot_de_passe')
     role = request.data.get('role', 'etudiant').lower()  # default to etudiant
 
+    mot_de_passe_hashe = make_password(mot_de_passe)
+
     if not all([nom, email, mot_de_passe, role]):
         return Response({"success": False, "message": "Tous les champs sont requis"}, status=400)
 
@@ -114,7 +119,7 @@ def register_view(request):
         Etudiant.objects.create(
             nom=nom,
             email=email,
-            mot_de_passe=mot_de_passe,
+            mot_de_passe=mot_de_passe_hashe,
             progression=0.0,
             score_moyen=0.0
         )
@@ -122,7 +127,7 @@ def register_view(request):
         Enseignant.objects.create(
             nom=nom,
             email=email,
-            mot_de_passe=mot_de_passe,
+            mot_de_passe=mot_de_passe_hashe,
             specialite=""
         )
     else:
