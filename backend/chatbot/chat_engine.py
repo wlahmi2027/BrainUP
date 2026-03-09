@@ -12,24 +12,47 @@ Tes missions :
 - orienter vers les bons cours,
 - répondre de façon claire, courte et utile.
 
-Règles :
+Règles importantes :
 - Réponds toujours en français.
-- Utilise uniquement le contexte fourni si possible.
+- Utilise d'abord le contexte BrainUP fourni.
+- N'invente jamais de pages, routes, emails, boutons ou fonctionnalités.
 - Si l'information n'est pas dans le contexte, dis-le honnêtement.
-- Si une route est présente, tu peux proposer à l'utilisateur d'y aller.
+- Si une route existe dans le contexte, cite-la clairement.
+- Sois concret, utile, et évite les réponses trop générales.
 """
 
-def ask_ollama(question, context=""):
+def _format_history(history):
+    if not history:
+        return "Aucun historique."
+
+    lines = []
+    for msg in history[-6:]:
+        role = msg.get("role", "user")
+        text = msg.get("text", "")
+        lines.append(f"{role.upper()} : {text}")
+    return "\n".join(lines)
+
+
+def ask_ollama(question, context="", history=None):
+    history_text = _format_history(history or [])
+
     prompt = f"""
 {SYSTEM_PROMPT}
 
-Contexte :
+Historique récent :
+{history_text}
+
+Contexte BrainUP :
 {context}
 
 Question utilisateur :
 {question}
 
-Réponse :
+Réponse attendue :
+- courte à moyenne
+- précise
+- utile
+- basée sur BrainUP si possible
 """
 
     response = requests.post(

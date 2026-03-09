@@ -1,31 +1,38 @@
 import { useEffect, useRef, useState } from "react";
-import { api } from "../api/client";
+import { useNavigate } from "react-router-dom";
+import { askBot } from "../api/chatbot";
 
 export default function Chatbot() {
+  const navigate = useNavigate();
+  const messagesEndRef = useRef(null);
+
   const [messages, setMessages] = useState([
     {
       id: 1,
       role: "assistant",
       text: "Bonjour 👋 Je suis Assistant BrainUP. Je peux t’aider à trouver un cours, t’orienter vers une page, ou répondre à des questions pédagogiques.",
       sources: [],
+      actions: [],
     },
   ]);
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const messagesEndRef = useRef(null);
-
-  const quickSuggestions = [
+  const [quickSuggestions, setQuickSuggestions] = useState([
     "Je veux apprendre Python",
     "Où trouver les cours ?",
     "Comment modifier mon profil ?",
     "Où sont les quiz ?",
-  ];
+  ]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+  const goToRoute = (route) => {
+    if (!route) return;
+    navigate(route);
+  };
 
   const sendMessage = async (customMessage = null) => {
     const finalMessage = (customMessage ?? message).trim();
@@ -36,23 +43,35 @@ export default function Chatbot() {
       role: "user",
       text: finalMessage,
       sources: [],
+      actions: [],
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
     setMessage("");
     setLoading(true);
 
     try {
-      const res = await api.post("/chat/", { message: finalMessage });
+      const history = nextMessages.map((msg) => ({
+        role: msg.role,
+        text: msg.text,
+      }));
+
+      const data = await askBot(finalMessage, history);
 
       const botMessage = {
         id: Date.now() + 1,
         role: "assistant",
-        text: res.data.reply || "Je n’ai pas trouvé de réponse.",
-        sources: res.data.sources || [],
+        text: data.reply || "Je n’ai pas trouvé de réponse.",
+        sources: data.sources || [],
+        actions: data.actions || [],
       };
 
       setMessages((prev) => [...prev, botMessage]);
+
+      if (Array.isArray(data.suggestions) && data.suggestions.length > 0) {
+        setQuickSuggestions(data.suggestions);
+      }
     } catch (error) {
       console.error(error);
 
@@ -61,6 +80,7 @@ export default function Chatbot() {
         role: "assistant",
         text: "Erreur de connexion au serveur.",
         sources: [],
+        actions: [],
       };
 
       setMessages((prev) => [...prev, errorMessage]);
@@ -78,7 +98,6 @@ export default function Chatbot() {
   return (
     <div className="chatbot-page">
       <div className="chatbot-card">
-        {/* Header */}
         <div className="chatbot-header">
           <div className="chatbot-header-left">
             <div className="chatbot-avatar">🧠</div>
@@ -94,7 +113,6 @@ export default function Chatbot() {
           </div>
         </div>
 
-        {/* Suggestions */}
         <div className="chatbot-suggestions">
           {quickSuggestions.map((item, index) => (
             <button
@@ -107,7 +125,6 @@ export default function Chatbot() {
           ))}
         </div>
 
-        {/* Messages */}
         <div className="chatbot-messages">
           {messages.map((msg) => (
             <div
@@ -129,12 +146,39 @@ export default function Chatbot() {
 
                 {msg.sources && msg.sources.length > 0 && (
                   <div className="chat-sources">
-                    <div className="chat-sources-title">Sources :</div>
+                    <div className="chat-sources-title">Liens utiles :</div>
                     {msg.sources.map((src, index) => (
                       <div key={index} className="chat-source-item">
                         <strong>{src.title}</strong>
-                        {src.route && <span> → {src.route}</span>}
+                        {src.route && (
+                          <>
+                            {" "}
+                            →{" "}
+                            <button
+                              type="button"
+                              className="chat-link-btn"
+                              onClick={() => goToRoute(src.route)}
+                            >
+                              {src.route}
+                            </button>
+                          </>
+                        )}
                       </div>
+                    ))}
+                  </div>
+                )}
+
+                {msg.actions && msg.actions.length > 0 && (
+                  <div className="chat-actions">
+                    {msg.actions.map((action, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        className="chat-action-btn"
+                        onClick={() => goToRoute(action.route)}
+                      >
+                        {action.label}
+                      </button>
                     ))}
                   </div>
                 )}
@@ -161,7 +205,6 @@ export default function Chatbot() {
           <div ref={messagesEndRef}></div>
         </div>
 
-        {/* Input */}
         <div className="chatbot-input-area">
           <input
             type="text"

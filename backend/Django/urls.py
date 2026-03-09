@@ -29,5 +29,5 @@ urlpatterns = [
     # login endpoint
     path("api/login/", login_view, name="login"),
     path('api/register/', register_view, name='register'),
-    path('api/chatbot', include('chatbot.urls')),  # route du chatbot
+    path('api/chatbot/', include('chatbot.urls')),  # route du chatbot
 ]
