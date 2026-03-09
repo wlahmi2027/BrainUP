@@ -18,6 +18,9 @@ import secrets
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
 
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+
 @api_view(['GET'])
 def profil_view(request):
 
@@ -105,7 +108,10 @@ def register_view(request):
     mot_de_passe = request.data.get('mot_de_passe')
     role = request.data.get('role', 'etudiant').lower()  # default to etudiant
 
-    mot_de_passe_hashe = make_password(mot_de_passe)
+    try:
+        validate_password(mot_de_passe)  # raises ValidationError if invalid
+    except ValidationError as e:
+        return Response({"success": False, "message": e.messages}, status=400)
 
     if not all([nom, email, mot_de_passe, role]):
         return Response({"success": False, "message": "Tous les champs sont requis"}, status=400)
@@ -114,12 +120,15 @@ def register_view(request):
     if Utilisateur.objects.filter(email=email).exists():
         return Response({"success": False, "message": "Cet email est déjà utilisé"}, status=400)
 
+    
+    mot_de_passe_hash = make_password(mot_de_passe)
+
     # Create child instance directly
     if role == "etudiant":
         Etudiant.objects.create(
             nom=nom,
             email=email,
-            mot_de_passe=mot_de_passe_hashe,
+            mot_de_passe=mot_de_passe_hash,
             progression=0.0,
             score_moyen=0.0
         )
@@ -127,7 +136,7 @@ def register_view(request):
         Enseignant.objects.create(
             nom=nom,
             email=email,
-            mot_de_passe=mot_de_passe_hashe,
+            mot_de_passe=mot_de_passe_hash,
             specialite=""
         )
     else:
