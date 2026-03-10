@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchCourses } from "../api/courses";
+import { fetchCourses } from "../../api/courses";
 
-// Fallback local si backend down
-const MOCK = [
+const FALLBACK_COURSES = [
   {
     id: 1,
     title: "Introduction à Python",
@@ -41,19 +40,19 @@ const MOCK = [
 
 function Stars({ value = 0, onRate }) {
   const [hover, setHover] = useState(null);
-  const shown = hover ?? value;
+  const displayedValue = hover ?? value;
 
   return (
     <div className="stars" aria-label="Note du cours">
-      {[1, 2, 3, 4, 5].map((n) => (
+      {[1, 2, 3, 4, 5].map((star) => (
         <button
-          key={n}
+          key={star}
           type="button"
-          className={`star ${shown >= n ? "is-on" : ""}`}
-          onMouseEnter={() => setHover(n)}
+          className={`star ${displayedValue >= star ? "is-on" : ""}`}
+          onMouseEnter={() => setHover(star)}
           onMouseLeave={() => setHover(null)}
-          onClick={() => onRate?.(n)}
-          title={`${n} étoile${n > 1 ? "s" : ""}`}
+          onClick={() => onRate?.(star)}
+          title={`${star} étoile${star > 1 ? "s" : ""}`}
         >
           ★
         </button>
@@ -63,37 +62,35 @@ function Stars({ value = 0, onRate }) {
 }
 
 function normalizeCourses(data) {
-  const raw = Array.isArray(data) ? data : data?.results || [];
+  const rawCourses = Array.isArray(data) ? data : data?.results || [];
 
-  return raw.map((c, idx) => ({
-    id: c.id ?? idx + 1,
-    title: c.title ?? c.name ?? "Sans titre",
-    author: c.author ?? c.teacher ?? "Inconnu",
-    subtitle: c.subtitle ?? "Cours & exercices",
-    rating: Number(c.rating ?? 0),
-    votes: Number(c.votes ?? 0),
-    isFavorite: Boolean(c.isFavorite ?? c.is_favorite ?? false),
-    level: c.level ?? "—",
-    description: c.description ?? "",
+  return rawCourses.map((course, index) => ({
+    id: course.id ?? index + 1,
+    title: course.title ?? course.name ?? "Sans titre",
+    author: course.author ?? course.teacher ?? "Inconnu",
+    subtitle: course.subtitle ?? "Cours & exercices",
+    rating: Number(course.rating ?? 0),
+    votes: Number(course.votes ?? 0),
+    isFavorite: Boolean(course.isFavorite ?? course.is_favorite ?? false),
+    level: course.level ?? "—",
+    description: course.description ?? "",
   }));
 }
 
-export default function Cours() {
+export default function Courses() {
   const navigate = useNavigate();
 
-  // UI state
-  const [tab, setTab] = useState("contenu"); // contenu | filter | progress | liked
-  const [sortBy, setSortBy] = useState("choix"); // choix | rating | title
-  const [viewMode, setViewMode] = useState("grid"); // grid | list
+  const [tab, setTab] = useState("content");
+  const [sortBy, setSortBy] = useState("default");
+  const [viewMode, setViewMode] = useState("grid");
   const [query, setQuery] = useState("");
 
-  // Data state
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [apiDown, setApiDown] = useState(false);
 
   useEffect(() => {
-    let alive = true;
+    let isMounted = true;
 
     async function loadCourses() {
       try {
@@ -101,122 +98,123 @@ export default function Cours() {
         setApiDown(false);
 
         const data = await fetchCourses();
-        if (!alive) return;
+        if (!isMounted) return;
 
-        const normalized = normalizeCourses(data);
-        setCourses(normalized.length ? normalized : MOCK);
+        const normalizedCourses = normalizeCourses(data);
+        setCourses(
+          normalizedCourses.length ? normalizedCourses : FALLBACK_COURSES
+        );
       } catch (error) {
-        if (!alive) return;
-        console.error("Erreur chargement cours:", error);
+        if (!isMounted) return;
+        console.error("Erreur lors du chargement des cours :", error);
         setApiDown(true);
-        setCourses(MOCK);
+        setCourses(FALLBACK_COURSES);
       } finally {
-        if (alive) setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
 
     loadCourses();
 
     return () => {
-      alive = false;
+      isMounted = false;
     };
   }, []);
 
-  const filtered = useMemo(() => {
-    let arr = [...courses];
+  const filteredCourses = useMemo(() => {
+    let result = [...courses];
 
     if (query.trim()) {
-      const q = query.toLowerCase();
-      arr = arr.filter(
-        (c) =>
-          c.title.toLowerCase().includes(q) ||
-          c.author.toLowerCase().includes(q) ||
-          c.description.toLowerCase().includes(q)
+      const normalizedQuery = query.toLowerCase();
+      result = result.filter(
+        (course) =>
+          course.title.toLowerCase().includes(normalizedQuery) ||
+          course.author.toLowerCase().includes(normalizedQuery) ||
+          course.description.toLowerCase().includes(normalizedQuery)
       );
     }
 
-    if (tab === "liked") {
-      arr = arr.filter((c) => c.isFavorite);
+    if (tab === "favorites") {
+      result = result.filter((course) => course.isFavorite);
     }
 
-    if (tab === "progress") {
-      // Tant qu'on n'a pas de vraie progression par cours, on garde tout
-      arr = [...arr];
-    }
-
-    if (tab === "filter") {
-      // Placeholder pour futur vrai filtrage
-      arr = [...arr];
-    }
-
-    return arr;
+    return result;
   }, [courses, query, tab]);
 
-  const sorted = useMemo(() => {
-    const arr = [...filtered];
+  const sortedCourses = useMemo(() => {
+    const result = [...filteredCourses];
 
     if (sortBy === "rating") {
-      arr.sort((a, b) => b.rating - a.rating || b.votes - a.votes);
+      result.sort(
+        (a, b) => b.rating - a.rating || b.votes - a.votes
+      );
     } else if (sortBy === "title") {
-      arr.sort((a, b) => a.title.localeCompare(b.title));
+      result.sort((a, b) => a.title.localeCompare(b.title));
     } else {
-      // "choix" = tri simple par titre + votes si présents
-      arr.sort((a, b) => (b.votes + b.rating * 10) - (a.votes + a.rating * 10));
+      result.sort(
+        (a, b) => b.votes + b.rating * 10 - (a.votes + a.rating * 10)
+      );
     }
 
-    return arr;
-  }, [filtered, sortBy]);
+    return result;
+  }, [filteredCourses, sortBy]);
 
-  const handleRate = (courseId, rating) => {
-    console.warn("Notation non encore connectée au backend", { courseId, rating });
-  };
+  function handleRate(courseId, rating) {
+    console.warn("Notation non encore connectée au backend", {
+      courseId,
+      rating,
+    });
+  }
 
-  const handleFavorite = (courseId) => {
-    setCourses((prev) =>
-      prev.map((c) =>
-        c.id === courseId ? { ...c, isFavorite: !c.isFavorite } : c
+  function handleFavorite(courseId) {
+    setCourses((previousCourses) =>
+      previousCourses.map((course) =>
+        course.id === courseId
+          ? { ...course, isFavorite: !course.isFavorite }
+          : course
       )
     );
-    console.warn("Favoris non encore connectés au backend", { courseId });
-  };
 
-  const active = (k) => (tab === k ? "is-active" : "");
-  const activeSort = (k) => (sortBy === k ? "is-active" : "");
-  const activeView = (k) => (viewMode === k ? "is-active" : "");
+    console.warn("Favoris non encore connectés au backend", { courseId });
+  }
+
+  const isActiveTab = (key) => (tab === key ? "is-active" : "");
+  const isActiveSort = (key) => (sortBy === key ? "is-active" : "");
+  const isActiveView = (key) => (viewMode === key ? "is-active" : "");
 
   return (
     <section className="page">
       <div className="page__header">
         <div>
-          <h1 className="page__title">Catalogue des Cours</h1>
+          <h1 className="page__title">Catalogue des cours</h1>
 
           <div className="filters">
             <button
-              className={`chip ${active("contenu")}`}
-              onClick={() => setTab("contenu")}
+              className={`chip ${isActiveTab("content")}`}
+              onClick={() => setTab("content")}
             >
-              🎯 Contenu
+              🎯 Tous les cours
             </button>
 
             <button
-              className={`chip ${active("filter")}`}
-              onClick={() => setTab("filter")}
+              className={`chip ${isActiveTab("filters")}`}
+              onClick={() => setTab("filters")}
             >
               📚 Filtrer
             </button>
 
             <button
-              className={`chip ${active("progress")}`}
+              className={`chip ${isActiveTab("progress")}`}
               onClick={() => setTab("progress")}
             >
-              📈 Mes Progressions
+              📈 Mes progressions
             </button>
 
             <button
-              className={`chip ${active("liked")}`}
-              onClick={() => setTab("liked")}
+              className={`chip ${isActiveTab("favorites")}`}
+              onClick={() => setTab("favorites")}
             >
-              ⭐ Mes plus aimés
+              ⭐ Mes favoris
             </button>
           </div>
         </div>
@@ -225,21 +223,21 @@ export default function Cours() {
           <div className="selectRow">
             <div className="seg">
               <button
-                className={`seg__btn ${activeSort("choix")}`}
-                onClick={() => setSortBy("choix")}
+                className={`seg__btn ${isActiveSort("default")}`}
+                onClick={() => setSortBy("default")}
               >
-                choix volonté →
+                Recommandés
               </button>
 
               <button
-                className={`seg__btn ${activeSort("rating")}`}
+                className={`seg__btn ${isActiveSort("rating")}`}
                 onClick={() => setSortBy("rating")}
               >
                 Top notes
               </button>
 
               <button
-                className={`seg__btn ${activeSort("title")}`}
+                className={`seg__btn ${isActiveSort("title")}`}
                 onClick={() => setSortBy("title")}
               >
                 A-Z
@@ -248,14 +246,14 @@ export default function Cours() {
 
             <div className="seg">
               <button
-                className={`seg__btn ${activeView("grid")}`}
+                className={`seg__btn ${isActiveView("grid")}`}
                 onClick={() => setViewMode("grid")}
               >
-                Ress lister
+                Grille
               </button>
 
               <button
-                className={`seg__btn ${activeView("list")}`}
+                className={`seg__btn ${isActiveView("list")}`}
                 onClick={() => setViewMode("list")}
               >
                 Liste
@@ -267,71 +265,76 @@ export default function Cours() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Rechercher un cours / prof..."
+              placeholder="Rechercher un cours ou un enseignant..."
             />
           </div>
         </div>
       </div>
 
       <div className="sectionhead">
-        <div className="sectionhead__title">Nos Cours</div>
+        <div className="sectionhead__title">Nos cours</div>
 
         <div className="sectionhead__meta">
           {apiDown ? (
-            <span className="badgeWarn">Backend off → mode local</span>
+            <span className="badgeWarn">Backend indisponible · mode local</span>
           ) : (
-            <span className="badgeOk">API OK</span>
+            <span className="badgeOk">API disponible</span>
           )}
-          <span className="muted">{sorted.length} résultat(s)</span>
+          <span className="muted">{sortedCourses.length} résultat(s)</span>
         </div>
       </div>
 
       {loading ? (
-        <div className="card card--pad">Chargement…</div>
-      ) : sorted.length === 0 ? (
+        <div className="card card--pad">Chargement des cours...</div>
+      ) : sortedCourses.length === 0 ? (
         <div className="card card--pad">Aucun cours trouvé.</div>
       ) : viewMode === "grid" ? (
         <div className="coursesgrid">
-          {sorted.map((c) => (
-            <article key={c.id} className="course">
+          {sortedCourses.map((course) => (
+            <article key={course.id} className="course">
               <div className="course__img">
                 <div className="course__imgPlaceholder" />
               </div>
 
               <div className="course__body">
-                <h3 className="course__title">{c.title}</h3>
+                <h3 className="course__title">{course.title}</h3>
 
                 <div className="course__meta">
                   <div className="avatarmini">👤</div>
 
                   <div className="course__author">
-                    <div className="course__name">{c.author}</div>
+                    <div className="course__name">{course.author}</div>
                     <div className="course__sub">
-                      {c.subtitle} • {c.level}
+                      {course.subtitle} • {course.level}
                     </div>
                   </div>
 
                   <div className="course__rating">
-                    <Stars value={c.rating} onRate={(r) => handleRate(c.id, r)} />
-                    <span className="votes">({c.votes})</span>
+                    <Stars
+                      value={course.rating}
+                      onRate={(rating) => handleRate(course.id, rating)}
+                    />
+                    <span className="votes">({course.votes})</span>
                   </div>
                 </div>
 
-                <p className="course__desc">{c.description}</p>
+                <p className="course__desc">{course.description}</p>
 
                 <div className="course__actions">
                   <button
                     className="btn btn--primary"
-                    onClick={() => navigate(`/cours/${c.id}`)}
+                    onClick={() => navigate(`/student/courses/${course.id}`)}
                   >
-                    Voir Cours
+                    Voir le cours
                   </button>
 
                   <button
-                    className={`btn btn--ghost ${c.isFavorite ? "is-fav" : ""}`}
-                    onClick={() => handleFavorite(c.id)}
+                    className={`btn btn--ghost ${
+                      course.isFavorite ? "is-fav" : ""
+                    }`}
+                    onClick={() => handleFavorite(course.id)}
                   >
-                    {c.isFavorite ? "★ Aimé" : "☆ Mes notes"}
+                    {course.isFavorite ? "★ Favori" : "☆ Ajouter"}
                   </button>
                 </div>
               </div>
@@ -340,32 +343,37 @@ export default function Cours() {
         </div>
       ) : (
         <div className="listWrap">
-          {sorted.map((c) => (
-            <div key={c.id} className="listRow card card--pad">
+          {sortedCourses.map((course) => (
+            <div key={course.id} className="listRow card card--pad">
               <div className="listMain">
-                <div className="listTitle">{c.title}</div>
+                <div className="listTitle">{course.title}</div>
                 <div className="listSub">
-                  {c.author} • {c.level}
+                  {course.author} • {course.level}
                 </div>
-                <div className="listDesc">{c.description}</div>
+                <div className="listDesc">{course.description}</div>
               </div>
 
               <div className="listRight">
-                <Stars value={c.rating} onRate={(r) => handleRate(c.id, r)} />
-                <span className="votes">({c.votes})</span>
+                <Stars
+                  value={course.rating}
+                  onRate={(rating) => handleRate(course.id, rating)}
+                />
+                <span className="votes">({course.votes})</span>
 
                 <button
                   className="btn btn--primary"
-                  onClick={() => navigate(`/cours/${c.id}`)}
+                  onClick={() => navigate(`/student/courses/${course.id}`)}
                 >
                   Ouvrir
                 </button>
 
                 <button
-                  className={`btn btn--ghost ${c.isFavorite ? "is-fav" : ""}`}
-                  onClick={() => handleFavorite(c.id)}
+                  className={`btn btn--ghost ${
+                    course.isFavorite ? "is-fav" : ""
+                  }`}
+                  onClick={() => handleFavorite(course.id)}
                 >
-                  {c.isFavorite ? "★" : "☆"}
+                  {course.isFavorite ? "★" : "☆"}
                 </button>
               </div>
             </div>

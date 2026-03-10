@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Quiz() {
-  // Options du quiz (on reprend ton HTML)
   const options = useMemo(
     () => [
       { id: 1, text: "stop()", correct: false },
@@ -15,7 +15,8 @@ export default function Quiz() {
   const [pickedId, setPickedId] = useState(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const picked = options.find((o) => o.id === pickedId) || null;
+  const picked = options.find((option) => option.id === pickedId) || null;
+  const isCorrect = submitted && picked ? picked.correct : false;
 
   function onPick(id) {
     if (submitted) return;
@@ -27,97 +28,126 @@ export default function Quiz() {
     setSubmitted(true);
   }
 
-  // Helpers pour classes / états
-  function getOptClass(opt) {
-    let cls = "qOpt";
-    if (pickedId === opt.id) cls += " is-picked";
-
-    if (submitted) {
-      // après validation : marquer la réponse choisie
-      if (pickedId === opt.id) cls += opt.correct ? " is-correct" : " is-wrong";
-
-      // si choix faux : montrer aussi la bonne réponse
-      if (pickedId !== opt.id && picked && !picked.correct && opt.correct) {
-        cls += " is-correct";
-      }
-    }
-    return cls;
+  function onReset() {
+    setPickedId(null);
+    setSubmitted(false);
   }
 
-  function getOptStateText(opt) {
-    if (!submitted) return "";
-    if (pickedId === opt.id) return opt.correct ? "✓ Correct" : "✕ Faux";
+  function getOptClass(option) {
+    let className = "qOpt";
 
-    if (picked && !picked.correct && opt.correct) return "✓ Correct";
+    if (pickedId === option.id) {
+      className += " is-picked";
+    }
+
+    if (submitted) {
+      if (pickedId === option.id) {
+        className += option.correct ? " is-correct" : " is-wrong";
+      }
+
+      if (pickedId !== option.id && picked && !picked.correct && option.correct) {
+        className += " is-correct";
+      }
+    }
+
+    return className;
+  }
+
+  function getOptStateText(option) {
+    if (!submitted) return "";
+
+    if (pickedId === option.id) {
+      return option.correct ? "✓ Correct" : "✕ Faux";
+    }
+
+    if (picked && !picked.correct && option.correct) {
+      return "✓ Bonne réponse";
+    }
+
     return "";
   }
 
   return (
     <section className="page">
-      {/* breadcrumb */}
       <div className="crumbs">
-        <a href="#">Quiz</a>
+        <Link to="/student/dashboard">Dashboard</Link>
         <span className="sep">›</span>
-        <a href="#">Ressource</a>
+        <Link to="/student/courses">Cours</Link>
         <span className="sep">›</span>
-        <span className="here">1 Farms</span>
+        <span className="here">Quiz Python</span>
       </div>
 
       <h1 className="quizTitle">
-        Quiz: <span>Introduction à Python</span>
+        Quiz : <span>Introduction à Python</span>
       </h1>
 
       <div className="quizGrid">
-        {/* QUIZ CARD */}
         <section className="card card--pad quizCard">
-          {/* header banner */}
           <div className="qBanner">
             <div className="qBanner__text">
               <div className="qBanner__q">
-                Comment déclencher un arrêt en Python ?
+                Quelle instruction permet d’interrompre un programme en Python ?
               </div>
-              <div className="qBanner__sub">QCM • 1 bonne réponse</div>
+              <div className="qBanner__sub">QCM • 1 seule bonne réponse</div>
             </div>
             <div className="qBanner__bot">🤖+</div>
           </div>
 
-          {/* answer list */}
-          <div className="qList" id="qList">
-            {options.map((opt) => (
+          <div className="qList">
+            {options.map((option) => (
               <button
-                key={opt.id}
-                className={getOptClass(opt)}
+                key={option.id}
+                className={getOptClass(option)}
                 type="button"
                 disabled={submitted}
-                onClick={() => onPick(opt.id)}
+                onClick={() => onPick(option.id)}
               >
-                <span className="qNum">{opt.id}.</span>
-                <span className="qTxt">{opt.text}</span>
-                <span className="qState">{getOptStateText(opt)}</span>
+                <span className="qNum">{option.id}.</span>
+                <span className="qTxt">{option.text}</span>
+                <span className="qState">{getOptStateText(option)}</span>
               </button>
             ))}
           </div>
 
-          {/* validate */}
           <button
             className="qValidate"
             type="button"
             disabled={!picked || submitted}
             onClick={onValidate}
           >
-            Valider la Reponse
+            Valider la réponse
           </button>
+
+          {submitted && (
+            <div style={{ marginTop: "12px" }}>
+              <div className="assistant__bubble">
+                {isCorrect
+                  ? "Bravo ! Votre réponse est correcte."
+                  : "Réponse incorrecte. La bonne réponse est : exit()."}
+              </div>
+
+              <div style={{ marginTop: "10px" }}>
+                <button className="btn btn--soft" type="button" onClick={onReset}>
+                  Recommencer
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
-        {/* CHAT BOX LIKE THE DESIGN */}
         <section className="card card--pad quizChat">
           <div className="quizChat__row">
             <div className="quizChat__avatar">👩</div>
-            <div className="quizChat__bubble">Besoin d’aide pour ce quiz ?</div>
+            <div className="quizChat__bubble">
+              Besoin d’aide pour ce quiz ? Posez votre question à l’assistant.
+            </div>
           </div>
 
           <div className="quizChat__inputRow">
-            <input className="quizChat__input" placeholder="Écrire un message..." />
+            <input
+              className="quizChat__input"
+              placeholder="Écrire un message..."
+            />
             <button className="quizChat__send" type="button">
               ➤
             </button>

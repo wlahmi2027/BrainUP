@@ -1,44 +1,89 @@
-import { useEffect, useState } from "react";
-import { dashboardData } from "../mock/dashboardData";
-import { api } from "../api/client";
+import { useMemo, useState } from "react";
 
-export default function TableauDeBord() {
-  // start with mock progress
-  const [progress, setProgress] = useState(dashboardData.progress);
+export default function Dashboard() {
+  const [progress] = useState({
+    percent: 72,
+    objectifsLabel: "Objectifs atteints",
+    checklist: [
+      { text: "Cours terminés", value: "8 / 12" },
+      { text: "Quiz réussis", value: "14 / 18" },
+      { text: "Temps d'apprentissage", value: "26h" },
+    ],
+  });
 
-  useEffect(() => {
-    const fetchProgressPercent = async () => {
-      try {
-        const res = await api.get("/etudiants/999/progression/"); // backend fetch
-        console.log("Backend response:", res.data);
-        setProgress((prev) => ({
-          ...prev,
-          percent: res.data.progression, // map backend field to percent
-        }));
-      } catch (error) {
-        console.error("Error fetching progress percent:", error);
-      }
-    };
+  const statsCards = useMemo(
+    () => [
+      {
+        kpi: "12 cours",
+        name: "Cours suivis",
+        ctaLeft: "Voir",
+        ctaRight: "Continuer",
+      },
+      {
+        kpi: "87%",
+        name: "Taux de réussite",
+        ctaLeft: "Détails",
+        ctaRight: "Améliorer",
+      },
+    ],
+    []
+  );
 
-    fetchProgressPercent();
-  }, []);
+  const suggestions = useMemo(
+    () => [
+      { icon: "🧠", title: "Quiz JavaScript avancé" },
+      { icon: "⚛️", title: "Quiz React Hooks" },
+      { icon: "🗄️", title: "Quiz Bases de données" },
+    ],
+    []
+  );
 
-  const { user, statsCards, suggestions, topQuiz } = dashboardData;
+  const topQuiz = useMemo(
+    () => [
+      {
+        icon: "🥇",
+        name: "React Fundamentals",
+        period: "Cette semaine",
+        score: "18/20",
+        label: "Meilleur score",
+      },
+      {
+        icon: "🚀",
+        name: "API REST",
+        period: "Dernier passage",
+        score: "16/20",
+        label: "Très bon résultat",
+      },
+      {
+        icon: "💡",
+        name: "Algorithmes",
+        period: "Ce mois-ci",
+        score: "15/20",
+        label: "À retravailler",
+      },
+    ],
+    []
+  );
+
+  const user = useMemo(
+    () => ({
+      initial: "B",
+    }),
+    []
+  );
 
   return (
     <section className="page">
       <div className="dashhead">
-        <h1 className="dashhead__title">Tableau de Bord</h1>
-        <button className="btn btn--soft">Mes dernières ▾</button>
+        <h1 className="dashhead__title">Tableau de bord étudiant</h1>
+        <button className="btn btn--soft">Mes dernières activités ▾</button>
       </div>
 
       <div className="dashgrid">
-        {/* LEFT COL */}
         <div className="dashleft">
-          {/* Progress */}
           <section className="card card--pad">
             <div className="card__head">
-              <h2 className="card__title">Ma Progression</h2>
+              <h2 className="card__title">Ma progression</h2>
               <span className="dots">•••</span>
             </div>
 
@@ -60,10 +105,10 @@ export default function TableauDeBord() {
                 </div>
 
                 <ul className="checklist">
-                  {progress.checklist.map((item, idx) => (
-                    <li key={idx}>
-                      <span className="check">✓</span> {item.text}{" "}
-                      <span className="muted">— {item.value}</span>
+                  {progress.checklist.map((item, index) => (
+                    <li key={index}>
+                      <span className="check">✓</span>
+                      {item.text} <span className="muted">— {item.value}</span>
                     </li>
                   ))}
                 </ul>
@@ -71,26 +116,31 @@ export default function TableauDeBord() {
             </div>
           </section>
 
-          {/* Course stats */}
           <section className="card card--pad">
             <div className="card__head">
-              <h2 className="card__title">Statistiques de Cours</h2>
-              <a className="tinyLink" href="#">Voir plus</a>
+              <h2 className="card__title">Statistiques de cours</h2>
+              <button className="btn btn--ghost">Voir plus</button>
             </div>
 
             <div className="statcards">
-              {statsCards.map((c, idx) => (
-                <article className="statmedia" key={idx}>
-                  <div className={`statmedia__thumb ${idx === 0 ? "statmedia__thumb--blue" : "statmedia__thumb--navy"}`}>
+              {statsCards.map((card, index) => (
+                <article className="statmedia" key={index}>
+                  <div
+                    className={`statmedia__thumb ${
+                      index === 0
+                        ? "statmedia__thumb--blue"
+                        : "statmedia__thumb--navy"
+                    }`}
+                  >
                     <div className="statmedia__kpi">
-                      <div className="kpi__top">{c.kpi}</div>
-                      <div className="kpi__name">{c.name}</div>
+                      <div className="kpi__top">{card.kpi}</div>
+                      <div className="kpi__name">{card.name}</div>
                     </div>
                   </div>
 
                   <div className="statmedia__actions">
-                    <button className="btn btn--ghost">{c.ctaLeft}</button>
-                    <button className="btn btn--primary">{c.ctaRight}</button>
+                    <button className="btn btn--ghost">{card.ctaLeft}</button>
+                    <button className="btn btn--primary">{card.ctaRight}</button>
                   </div>
                 </article>
               ))}
@@ -98,51 +148,52 @@ export default function TableauDeBord() {
           </section>
         </div>
 
-        {/* RIGHT COL */}
         <aside className="dashright">
-          {/* Quiz suggestions */}
           <section className="card card--pad">
             <div className="card__head">
-              <h2 className="card__title">Suggestions de Quiz</h2>
+              <h2 className="card__title">Suggestions de quiz</h2>
               <span className="dots">•••</span>
             </div>
 
             <div className="suglist">
-              {suggestions.map((s, idx) => (
-                <div className="sugitem" key={idx}>
-                  <div className="sugicon">{s.icon}</div>
+              {suggestions.map((item, index) => (
+                <div className="sugitem" key={index}>
+                  <div className="sugicon">{item.icon}</div>
                   <div className="sugtext">
-                    <div className="sugtitle">{s.title}</div>
+                    <div className="sugtitle">{item.title}</div>
                   </div>
                 </div>
               ))}
 
-              <button className="btn btn--soft" style={{ width: "100%", marginTop: 10 }}>
-                Your Picks ▾
+              <button
+                className="btn btn--soft"
+                style={{ width: "100%", marginTop: 10 }}
+              >
+                Voir plus ▾
               </button>
             </div>
           </section>
 
-          {/* Top quiz */}
           <section className="card card--pad">
             <div className="card__head">
-              <h2 className="card__title">Top Quiz</h2>
+              <h2 className="card__title">Top quiz</h2>
               <span className="dots">•••</span>
             </div>
 
             <div className="toplist">
-              {topQuiz.map((t, idx) => (
-                <div className="toprow" key={idx}>
+              {topQuiz.map((item, index) => (
+                <div className="toprow" key={index}>
                   <div className="topleft">
-                    <div className="topicon">{t.icon}</div>
+                    <div className="topicon">{item.icon}</div>
                     <div>
-                      <div className="topname">{t.name}</div>
-                      <div className="topsub">{t.period}</div>
+                      <div className="topname">{item.name}</div>
+                      <div className="topsub">{item.period}</div>
                     </div>
                   </div>
+
                   <div className="topscore">
-                    <div className="topbig">{t.score}</div>
-                    <div className="topsub">{t.label}</div>
+                    <div className="topbig">{item.score}</div>
+                    <div className="topsub">{item.label}</div>
                   </div>
                 </div>
               ))}
@@ -151,10 +202,11 @@ export default function TableauDeBord() {
         </aside>
       </div>
 
-      {/* Floating assistant */}
       <div className="assistFloat">
         <div className="assistFloat__avatar">{user.initial}</div>
-        <div className="assistFloat__bubble">Bonjour! Comment puis-je vous aider?</div>
+        <div className="assistFloat__bubble">
+          Bonjour, comment puis-je vous aider ?
+        </div>
       </div>
     </section>
   );

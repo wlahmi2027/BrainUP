@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../api/client"; // adjust path if needed
+import { api } from "../../api/client"; // adjust path if needed
 
 export default function Inscription() {
   const [nom, setNom] = useState("");

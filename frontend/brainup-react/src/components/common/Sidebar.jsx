@@ -14,14 +14,37 @@ export default function Sidebar() {
       </div>
 
       <nav className="nav">
-        <NavLink className={linkClass} to="/">🏠 Accueil</NavLink>
-        <NavLink className={linkClass} to="/cours">📘 Cours</NavLink>
-        <NavLink className={linkClass} to="/tableau-de-bord">📊 Tableau de bord</NavLink>
-        <NavLink className={linkClass} to="/recommandations">⭐ Recommandations</NavLink>
-        <NavLink className={linkClass} to="/quiz">✅ Quiz</NavLink>
-        <NavLink className={linkClass} to="/chatbot">💬 Chatbot</NavLink>
-        <NavLink className={linkClass} to="/profil">👤 Profil</NavLink>
-        <NavLink className={linkClass} to="/deconnexion">🚪 Déconnexion</NavLink>
+        <NavLink className={linkClass} to="/">
+          🏠 Accueil
+        </NavLink>
+
+        <NavLink className={linkClass} to="/student/courses">
+          📘 Cours
+        </NavLink>
+
+        <NavLink className={linkClass} to="/student/dashboard">
+          📊 Tableau de bord
+        </NavLink>
+
+        <NavLink className={linkClass} to="/student/recommendations">
+          ⭐ Recommandations
+        </NavLink>
+
+        <NavLink className={linkClass} to="/student/quiz">
+          ✅ Quiz
+        </NavLink>
+
+        <NavLink className={linkClass} to="/chatbot">
+          💬 Chatbot
+        </NavLink>
+
+        <NavLink className={linkClass} to="/student/profile">
+          👤 Profil
+        </NavLink>
+
+        <NavLink className={linkClass} to="/deconnexion">
+          🚪 Déconnexion
+        </NavLink>
       </nav>
     </aside>
   );

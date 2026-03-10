@@ -8,39 +8,41 @@ export default function Topbar() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
 
-  // user fallback (plus tard tu mettras le vrai user depuis backend)
   const user = useMemo(() => {
     try {
       const raw = localStorage.getItem("user");
-      if (!raw) return { name: "Frant" };
+      if (!raw) return { name: "Frant", role: "student" };
       const parsed = JSON.parse(raw);
-      return { name: parsed?.name || "Frant" };
+      return {
+        name: parsed?.name || "Frant",
+        role: parsed?.role || "student",
+      };
     } catch {
-      return { name: "Frant" };
+      return { name: "Frant", role: "student" };
     }
   }, []);
 
-  // fermer dropdown quand on clique dehors
   useEffect(() => {
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setOpen(false);
       }
     }
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   function handleSearchKeyDown(e) {
     if (e.key === "Enter") {
-      // pour l’instant on fait juste une navigation vers /cours (ou tu peux faire /search)
-      navigate("/cours");
+      navigate("/student/courses");
     }
   }
 
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("isLoggedIn");
     navigate("/deconnexion");
   }
 
@@ -50,7 +52,7 @@ export default function Topbar() {
         <span className="search__icon">🔎</span>
         <input
           className="search__input"
-          placeholder="Rechercher un message"
+          placeholder="Rechercher un cours, quiz ou contenu"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleSearchKeyDown}
@@ -70,7 +72,9 @@ export default function Topbar() {
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
           >
-            <div className="userpill__avatar">H</div>
+            <div className="userpill__avatar">
+              {user.name?.charAt(0)?.toUpperCase() || "U"}
+            </div>
             <div className="userpill__text">
               Hi, <b>{user.name}</b>
             </div>
@@ -79,9 +83,14 @@ export default function Topbar() {
 
           {open && (
             <div className="userpill__menu">
-              <Link className="userpill__item" to="/profil" onClick={() => setOpen(false)}>
+              <Link
+                className="userpill__item"
+                to="/student/profile"
+                onClick={() => setOpen(false)}
+              >
                 👤 Profil
               </Link>
+
               <button className="userpill__item danger" onClick={logout}>
                 🚪 Déconnexion
               </button>

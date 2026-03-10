@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../api/client";
+import { api } from "../../api/client";
 
-export default function Profil() {
+const FALLBACK_PROFILE = {
+  name: "Fran Dupont",
+  email: "fran.dupont@email.com",
+  role: "Étudiant",
+  signupDate: "07/04/2024",
+};
+
+export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -9,29 +16,26 @@ export default function Profil() {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [apiDown, setApiDown] = useState(false);
 
-  // données venant du backend
   const [profile, setProfile] = useState(null);
 
-  // formulaire (modifiable)
   const [form, setForm] = useState({
     name: "",
     email: "",
-    password: "", // souvent on ne renvoie pas le mdp, mais on le garde si tu veux
+    password: "",
     role: "Étudiant",
-    signupDate: "07/04/2024",
+    signupDate: "",
   });
 
-  // ⚠️ endpoints (change-les selon ton backend)
   const endpoints = useMemo(
     () => ({
-      get: "/user/profile/",  // exemple: /api/user/profile/
-      put: "/user/profile/",  // exemple: /api/user/profile/
+      get: "/user/profile/",
+      put: "/user/profile/",
     }),
     []
   );
 
-  // GET profile au chargement
   useEffect(() => {
     let cancelled = false;
 
@@ -40,60 +44,79 @@ export default function Profil() {
         setLoading(true);
         setError("");
         setSuccess("");
+        setApiDown(false);
 
-        const res = await api.get(endpoints.get);
-
+        const response = await api.get(endpoints.get);
         if (cancelled) return;
 
-        // adapte mapping selon ton backend
-        const data = res.data;
+        const data = response.data || {};
 
-        setProfile(data);
+        const normalizedProfile = {
+          name: data?.name ?? data?.full_name ?? FALLBACK_PROFILE.name,
+          email: data?.email ?? FALLBACK_PROFILE.email,
+          role: data?.role ?? FALLBACK_PROFILE.role,
+          signupDate:
+            data?.signupDate ?? data?.created_at ?? FALLBACK_PROFILE.signupDate,
+        };
 
+        setProfile(normalizedProfile);
         setForm({
-          name: data?.name ?? data?.full_name ?? "Fran Dupont",
-          email: data?.email ?? "fran.dupont@email.com",
+          ...normalizedProfile,
           password: "",
-          role: data?.role ?? "Étudiant",
-          signupDate: data?.signupDate ?? data?.created_at ?? "07/04/2024",
         });
       } catch (e) {
         if (cancelled) return;
-        setError(
-          "Impossible de charger le profil. Vérifie que le backend est lancé et que l’URL est correcte."
-        );
+
+        console.error("Erreur chargement profil :", e);
+        setApiDown(true);
+        setError("Backend profil indisponible. Affichage des données locales.");
+
+        setProfile(FALLBACK_PROFILE);
+        setForm({
+          ...FALLBACK_PROFILE,
+          password: "",
+        });
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
 
     fetchProfile();
+
     return () => {
       cancelled = true;
     };
-  }, [endpoints.get]);
+  }, [endpoints]);
 
-  function onToggleEdit() {
-    setSuccess("");
-    setError("");
+  function resetFormFromProfile(currentProfile) {
+    if (!currentProfile) return;
 
-    // si on annule, on remet les valeurs initiales
-    if (isEditing && profile) {
-      setForm({
-        name: profile?.name ?? profile?.full_name ?? "Fran Dupont",
-        email: profile?.email ?? "fran.dupont@email.com",
-        password: "",
-        role: profile?.role ?? "Étudiant",
-        signupDate: profile?.signupDate ?? profile?.created_at ?? "07/04/2024",
-      });
-    }
-
-    setIsEditing((v) => !v);
+    setForm({
+      name: currentProfile.name,
+      email: currentProfile.email,
+      password: "",
+      role: currentProfile.role,
+      signupDate: currentProfile.signupDate,
+    });
   }
 
-  function onChange(e) {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
+  function onToggleEdit() {
+    setError("");
+    setSuccess("");
+
+    if (isEditing) {
+      resetFormFromProfile(profile);
+    }
+
+    setIsEditing((value) => !value);
+  }
+
+  function onChange(event) {
+    const { name, value } = event.target;
+    setForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   }
 
   async function onSave() {
@@ -102,27 +125,51 @@ export default function Profil() {
       setError("");
       setSuccess("");
 
-      // payload envoyé au backend (adapte les clés si besoin)
       const payload = {
         name: form.name,
         email: form.email,
-        role: form.role,
       };
 
-      // on envoie le password seulement si rempli
-      if (form.password?.trim()) payload.password = form.password.trim();
+      if (form.password.trim()) {
+        payload.password = form.password.trim();
+      }
 
-      const res = await api.put(endpoints.put, payload);
+      if (apiDown) {
+        const updatedProfile = {
+          name: form.name,
+          email: form.email,
+          role: form.role,
+          signupDate: form.signupDate,
+        };
 
-      // on considère que le backend renvoie le profil mis à jour
-      const updated = res.data;
+        setProfile(updatedProfile);
+        setForm((previous) => ({ ...previous, password: "" }));
+        setIsEditing(false);
+        setSuccess("✅ Profil mis à jour localement.");
+        return;
+      }
 
-      setProfile(updated);
+      const response = await api.put(endpoints.put, payload);
+      const data = response.data || {};
+
+      const updatedProfile = {
+        name: data?.name ?? data?.full_name ?? form.name,
+        email: data?.email ?? form.email,
+        role: data?.role ?? form.role,
+        signupDate:
+          data?.signupDate ?? data?.created_at ?? form.signupDate,
+      };
+
+      setProfile(updatedProfile);
+      setForm({
+        ...updatedProfile,
+        password: "",
+      });
       setIsEditing(false);
-      setForm((f) => ({ ...f, password: "" }));
-      setSuccess("✅ Profil mis à jour avec succès !");
+      setSuccess("✅ Profil mis à jour avec succès.");
     } catch (e) {
-      setError("❌ Erreur lors de l’enregistrement. Vérifie le backend et les champs.");
+      console.error("Erreur sauvegarde profil :", e);
+      setError("❌ Erreur lors de l’enregistrement du profil.");
     } finally {
       setSaving(false);
     }
@@ -130,11 +177,11 @@ export default function Profil() {
 
   if (loading) {
     return (
-      <section className="content">
-        <div className="card card--profile" style={{ padding: 18 }}>
+      <section className="page">
+        <div className="card card--profile">
           <h2>Chargement du profil…</h2>
-          <p style={{ marginTop: 8, color: "#64748b", fontWeight: 700 }}>
-            Attends une seconde.
+          <p style={{ marginTop: "8px", color: "#64748b", fontWeight: 700 }}>
+            Veuillez patienter un instant.
           </p>
         </div>
       </section>
@@ -142,9 +189,8 @@ export default function Profil() {
   }
 
   return (
-    <section className="content">
+    <section className="page">
       <div className="card card--profile">
-        {/* Header profil */}
         <div className="profileHeader">
           <div className="profileHeader__left">
             <div className="avatar" />
@@ -152,19 +198,22 @@ export default function Profil() {
             <div className="profileHeader__meta">
               <div className="profileHeader__name">{form.name || "—"}</div>
               <div className="profileHeader__sub">
-                <span className="badgeLine">👥 &nbsp;Élève / Vie scolaire</span>
+                <span className="badgeLine">👨‍🎓 {form.role}</span>
               </div>
             </div>
           </div>
 
           <div className="profileHeader__right">
-            <button className="btn btn--primary" onClick={onToggleEdit} disabled={saving}>
+            <button
+              className="btn btn--primary"
+              onClick={onToggleEdit}
+              disabled={saving}
+            >
               {isEditing ? "Annuler" : "Modifier mon profil"}
             </button>
           </div>
         </div>
 
-        {/* messages */}
         <div style={{ padding: "12px 8px 0" }}>
           {error && (
             <div
@@ -199,10 +248,9 @@ export default function Profil() {
           )}
         </div>
 
-        {/* Form */}
         <div className="formGrid">
           <div className="field">
-            <label className="label">Nom</label>
+            <label className="label">Nom complet</label>
             <div className="control">
               <input
                 className="input"
@@ -240,7 +288,11 @@ export default function Profil() {
                 name="password"
                 value={form.password}
                 onChange={onChange}
-                placeholder={isEditing ? "Nouveau mot de passe (optionnel)" : "••••••••"}
+                placeholder={
+                  isEditing
+                    ? "Nouveau mot de passe (optionnel)"
+                    : "••••••••"
+                }
                 disabled={!isEditing || saving}
               />
               <span className="fieldIcon">🔒</span>
@@ -250,18 +302,14 @@ export default function Profil() {
           <div className="field">
             <label className="label">Rôle</label>
             <div className="control">
-              <select
+              <input
                 className="input"
+                type="text"
                 name="role"
                 value={form.role}
-                onChange={onChange}
-                disabled={!isEditing || saving}
-              >
-                <option>Étudiant</option>
-                <option>Enseignant</option>
-                <option>Admin</option>
-              </select>
-              <span className="fieldIcon">▾</span>
+                disabled
+              />
+              <span className="fieldIcon">👤</span>
             </div>
           </div>
 
@@ -276,9 +324,9 @@ export default function Profil() {
               className="btn btn--primary btn--wide"
               onClick={onSave}
               disabled={!isEditing || saving}
-              title={!isEditing ? "Clique sur Modifier mon profil d’abord" : ""}
+              title={!isEditing ? "Activez le mode édition d’abord" : ""}
             >
-              {saving ? "Enregistrement…" : "Enregistrer les modifications"}
+              {saving ? "Enregistrement..." : "Enregistrer les modifications"}
             </button>
           </div>
         </div>
