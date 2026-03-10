@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { api } from "../../api/client"; // adjust path if needed
+import { api } from "../../api/client";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -21,18 +22,45 @@ export default function Login() {
       const data = response.data;
 
       if (data.success) {
+        /* stockage login */
         localStorage.setItem("isLoggedIn", "true");
-        navigate("/tableau-de-bord");
+
+        /* stocker l'utilisateur */
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        /* récupérer rôle */
+        const role = data.user?.role;
+
+        /* redirection selon rôle */
+        if (role === "student") {
+          navigate("/student/dashboard");
+        }
+
+        else if (role === "teacher") {
+          navigate("/teacher/dashboard");
+        }
+
+        else if (role === "admin") {
+          navigate("/admin/dashboard");
+        }
+
+        else {
+          navigate("/");
+        }
+
       } else {
         alert(data.message || "Email ou mot de passe invalide");
       }
+
     } catch (err) {
       console.error(err);
+
       if (err.response && err.response.status === 401) {
         alert("Email ou mot de passe invalide");
       } else {
         alert("Erreur serveur, veuillez réessayer");
       }
+
     } finally {
       setLoading(false);
     }
@@ -46,13 +74,13 @@ export default function Login() {
       >
         <div className="main" style={{ padding: "40px 24px" }}>
           <div className="card card--pad login-card">
-            <h2
-              style={{ marginBottom: "20px", fontWeight: 900, fontSize: "24px" }}
-            >
+
+            <h2 style={{ marginBottom: "20px", fontWeight: 900, fontSize: "24px" }}>
               Login
             </h2>
 
             <form onSubmit={handleLogin} className="formGrid">
+
               <div className="field">
                 <label className="label">Email</label>
                 <input
@@ -83,15 +111,17 @@ export default function Login() {
               >
                 {loading ? "Connexion..." : "Login"}
               </button>
+
             </form>
 
-            {/* Sign Up Section */}
+            {/* Sign Up */}
             <div style={{ marginTop: "20px", textAlign: "center" }}>
               <span>Pas encore de compte ? </span>
               <Link to="/inscription" className="btn btn--secondary">
                 S'inscrire
               </Link>
             </div>
+
           </div>
         </div>
       </div>
