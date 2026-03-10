@@ -147,3 +147,5 @@ vite.config.ts.timestamp-*
 *.log
 media/
 .env
+
+__pycache__/
