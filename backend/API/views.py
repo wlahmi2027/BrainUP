@@ -1,15 +1,10 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
-
-from API.serializers import EtudiantSerializer
-from rest_framework.decorators import action
-
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny
+from rest_framework import status
 
+<<<<<<< HEAD
 from rest_framework.decorators import api_view, permission_classes
 
 from .models import Utilisateur, Etudiant, Enseignant
@@ -62,6 +57,11 @@ def logout_view(request):
 
     return Response({"success": True})
 
+=======
+from API.serializers import EtudiantSerializer, CoursSerializer, QuizSerializer
+from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz
+from .recommendation_service import build_recommendations_payload
+>>>>>>> refactor/structure-roles
 
 class EtudiantViewSet(viewsets.ModelViewSet):
     queryset = Etudiant.objects.all()
@@ -73,6 +73,17 @@ class EtudiantViewSet(viewsets.ModelViewSet):
         serializer = EtudiantSerializer(etudiant)
         return Response(serializer.data)
 
+
+class CoursViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Cours.objects.select_related("enseignant").all()
+    serializer_class = CoursSerializer
+
+    @action(detail=True, methods=["get"])
+    def quizzes(self, request, pk=None):
+        cours = self.get_object()
+        quizzes = Quiz.objects.filter(cours=cours)
+        serializer = QuizSerializer(quizzes, many=True)
+        return Response(serializer.data)
 
 # login check :
 @api_view(['POST'])
@@ -143,3 +154,18 @@ def register_view(request):
         return Response({"success": False, "message": "Rôle invalide"}, status=400)
 
     return Response({"success": True, "message": "Inscription réussie"})
+
+
+#Recommendations 
+@api_view(['GET'])
+def recommendations_view(request, user_id):
+    try:
+        etudiant = Etudiant.objects.get(id=user_id)
+        payload = build_recommendations_payload(etudiant)
+        return Response(payload)
+
+    except Etudiant.DoesNotExist:
+        return Response({"error": "Étudiant introuvable"}, status=404)
+
+    except Exception as e:
+        return Response({"error": f"Erreur serveur : {str(e)}"}, status=500)
