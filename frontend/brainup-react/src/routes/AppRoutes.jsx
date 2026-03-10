@@ -35,6 +35,10 @@ import EditCourse from "../pages/teacher/EditCourse";
 import CreateQuiz from "../pages/teacher/CreateQuiz";
 import EditQuiz from "../pages/teacher/EditQuiz";
 
+import Results from "../pages/teacher/Results";
+import Students from "../pages/teacher/Students";
+import StudentsResults from "../pages/teacher/StudentsResults";
+
 /* ADMIN (optionnel plus tard)
 import AdminDashboard from "../pages/admin/Dashboard";
 import AdminUsers from "../pages/admin/Users";
@@ -109,6 +113,10 @@ export default function AppRoutes() {
         <Route path="profile" element={<TeacherProfile />} />
 
         <Route path="chatbot" element={<Chatbot />} />
+        <Route path="results" element={<Results />} />
+
+        <Route path="students" element={<Students />} />
+        <Route path="students-results" element={<StudentsResults />} />
       </Route>
 
       {/* ========================= */}
