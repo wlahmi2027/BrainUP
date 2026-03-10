@@ -1,0 +1,27 @@
+[
+  {
+    "id": "faq_001",
+    "question": "Comment s'inscrire sur BrainUP ?",
+    "answer": "Va sur la page Inscription, remplis le formulaire, puis valide. Ensuite connecte-toi avec ton email et mot de passe."
+  },
+  {
+    "id": "faq_002",
+    "question": "J'ai oublié mon mot de passe, que faire ?",
+    "answer": "Clique sur 'Mot de passe oublié' sur la page Connexion. Tu recevras un email pour réinitialiser ton mot de passe."
+  },
+  {
+    "id": "faq_003",
+    "question": "Comment m'inscrire à un cours ?",
+    "answer": "Va sur la page Cours, choisis un cours, puis clique sur 'Voir Cours' ou 'S’inscrire' selon l’interface."
+  },
+  {
+    "id": "faq_004",
+    "question": "Comment accéder aux recommandations ?",
+    "answer": "Va sur la page Recommandations. BrainUP te suggère des cours selon ton profil et tes performances."
+  },
+  {
+    "id": "faq_005",
+    "question": "Comment passer un quiz ?",
+    "answer": "Ouvre la page Quiz, sélectionne le quiz voulu, choisis une réponse puis clique sur 'Valider'."
+  }
+]
