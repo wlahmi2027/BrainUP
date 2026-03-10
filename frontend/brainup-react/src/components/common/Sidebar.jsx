@@ -16,6 +16,10 @@ export default function Sidebar({ role = "student" }) {
       <nav className="nav">
         {role === "student" && (
           <>
+            <NavLink className={linkClass} to="/student/accueil">
+              🏠 Accueil
+            </NavLink>
+
             <NavLink className={linkClass} to="/student/dashboard">
               📊 Tableau de bord
             </NavLink>
@@ -34,6 +38,10 @@ export default function Sidebar({ role = "student" }) {
 
             <NavLink className={linkClass} to="/student/profile">
               👤 Profil
+            </NavLink>
+
+            <NavLink className={linkClass} to="/student/chatbot">
+              💬 Chatbot
             </NavLink>
           </>
         )}
@@ -60,15 +68,27 @@ export default function Sidebar({ role = "student" }) {
               ➕ Créer quiz
             </NavLink>
 
+            <NavLink className={linkClass} to="/teacher/results">
+              📈 Résultats
+            </NavLink>
+
+            <NavLink className={linkClass} to="/teacher/students">
+              👨‍🎓 Étudiants
+            </NavLink>
+
+            <NavLink className={linkClass} to="/teacher/students-results">
+              📋 Suivi étudiants
+            </NavLink>
+
             <NavLink className={linkClass} to="/teacher/profile">
               👨‍🏫 Profil
             </NavLink>
+
+            <NavLink className={linkClass} to="/teacher/chatbot">
+              💬 Chatbot
+            </NavLink>
           </>
         )}
-
-        <NavLink className={linkClass} to="/chatbot">
-          💬 Chatbot
-        </NavLink>
 
         <NavLink className={linkClass} to="/deconnexion">
           🚪 Déconnexion

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { api } from "../../api/client";
+import { loginUser } from "../../api/auth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -14,44 +14,26 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await api.post("login/", {
-        email: email,
-        mot_de_passe: password,
-      });
-
-      const data = response.data;
+      const data = await loginUser(email, password);
 
       if (data.success) {
-        /* stockage login */
         localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("user", JSON.stringify(data.user || {}));
 
-        /* stocker l'utilisateur */
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        /* récupérer rôle */
         const role = data.user?.role;
 
-        /* redirection selon rôle */
         if (role === "student") {
           navigate("/student/dashboard");
-        }
-
-        else if (role === "teacher") {
+        } else if (role === "teacher") {
           navigate("/teacher/dashboard");
-        }
-
-        else if (role === "admin") {
+        } else if (role === "admin") {
           navigate("/admin/dashboard");
-        }
-
-        else {
+        } else {
           navigate("/");
         }
-
       } else {
         alert(data.message || "Email ou mot de passe invalide");
       }
-
     } catch (err) {
       console.error(err);
 
@@ -60,7 +42,6 @@ export default function Login() {
       } else {
         alert("Erreur serveur, veuillez réessayer");
       }
-
     } finally {
       setLoading(false);
     }
@@ -74,13 +55,13 @@ export default function Login() {
       >
         <div className="main" style={{ padding: "40px 24px" }}>
           <div className="card card--pad login-card">
-
-            <h2 style={{ marginBottom: "20px", fontWeight: 900, fontSize: "24px" }}>
+            <h2
+              style={{ marginBottom: "20px", fontWeight: 900, fontSize: "24px" }}
+            >
               Login
             </h2>
 
             <form onSubmit={handleLogin} className="formGrid">
-
               <div className="field">
                 <label className="label">Email</label>
                 <input
@@ -111,17 +92,14 @@ export default function Login() {
               >
                 {loading ? "Connexion..." : "Login"}
               </button>
-
             </form>
 
-            {/* Sign Up */}
             <div style={{ marginTop: "20px", textAlign: "center" }}>
               <span>Pas encore de compte ? </span>
               <Link to="/inscription" className="btn btn--secondary">
                 S'inscrire
               </Link>
             </div>
-
           </div>
         </div>
       </div>

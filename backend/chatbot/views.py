@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .chat_engine import ask_ollama
-from .knowledge_loader import search_knowledge
+from .services.chat_engine import ask_ollama
+from .loaders.knowledge_loader import search_knowledge
 
 
 @api_view(["POST"])

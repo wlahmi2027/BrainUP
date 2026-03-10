@@ -1,24 +1,35 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny
-from rest_framework import status
 
-<<<<<<< HEAD
-from rest_framework.decorators import api_view, permission_classes
+from API.serializers import EtudiantSerializer, CoursSerializer, QuizSerializer
+from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz
+from .recommendation_service import build_recommendations_payload
 
-from .models import Utilisateur, Etudiant, Enseignant
 import secrets
 
-from django.contrib.auth.hashers import make_password
-from django.contrib.auth.hashers import check_password
-
+from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
+
+def get_user_from_token(request):
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        return None
+
+    try:
+        token = auth_header.split(" ")[1]
+        user = Utilisateur.objects.get(token=token)
+        return user
+    except Exception:
+        return None
+
+
 @api_view(['GET'])
 def profil_view(request):
-
     user = get_user_from_token(request)
 
     if not user:
@@ -29,24 +40,9 @@ def profil_view(request):
         "email": user.email
     })
 
-def get_user_from_token(request):
-
-    auth_header = request.headers.get("Authorization")
-
-    if not auth_header:
-        return None
-
-    try:
-        token = auth_header.split(" ")[1]
-        user = Utilisateur.objects.get(token=token)
-        return user
-    except:
-        return None
-
 
 @api_view(['POST'])
 def logout_view(request):
-
     user = get_user_from_token(request)
 
     if not user:
@@ -57,11 +53,6 @@ def logout_view(request):
 
     return Response({"success": True})
 
-=======
-from API.serializers import EtudiantSerializer, CoursSerializer, QuizSerializer
-from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz
-from .recommendation_service import build_recommendations_payload
->>>>>>> refactor/structure-roles
 
 class EtudiantViewSet(viewsets.ModelViewSet):
     queryset = Etudiant.objects.all()
@@ -69,7 +60,7 @@ class EtudiantViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def progression(self, request, pk=None):
-        etudiant = self.get_object()  # fetches student with this PK
+        etudiant = self.get_object()
         serializer = EtudiantSerializer(etudiant)
         return Response(serializer.data)
 
@@ -85,7 +76,7 @@ class CoursViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = QuizSerializer(quizzes, many=True)
         return Response(serializer.data)
 
-# login check :
+
 @api_view(['POST'])
 def login_view(request):
     email = request.data.get('email')
@@ -105,36 +96,45 @@ def login_view(request):
                 "user": utilisateur.email
             })
 
-        return Response({"success": False, "message": "Mot de passe incorrect"}, status=401)
+        return Response(
+            {"success": False, "message": "Mot de passe incorrect"},
+            status=401
+        )
 
     except Utilisateur.DoesNotExist:
-        return Response({"success": False, "message": "Email invalide"}, status=401)
+        return Response(
+            {"success": False, "message": "Email invalide"},
+            status=401
+        )
 
-# sign up post :
+
 @permission_classes([AllowAny])
 @api_view(['POST'])
 def register_view(request):
     nom = request.data.get('nom')
     email = request.data.get('email')
     mot_de_passe = request.data.get('mot_de_passe')
-    role = request.data.get('role', 'etudiant').lower()  # default to etudiant
+    role = request.data.get('role', 'etudiant').lower()
 
     try:
-        validate_password(mot_de_passe)  # raises ValidationError if invalid
+        validate_password(mot_de_passe)
     except ValidationError as e:
         return Response({"success": False, "message": e.messages}, status=400)
 
     if not all([nom, email, mot_de_passe, role]):
-        return Response({"success": False, "message": "Tous les champs sont requis"}, status=400)
+        return Response(
+            {"success": False, "message": "Tous les champs sont requis"},
+            status=400
+        )
 
-    # Check if email already exists in Utilisateur table
     if Utilisateur.objects.filter(email=email).exists():
-        return Response({"success": False, "message": "Cet email est déjà utilisé"}, status=400)
+        return Response(
+            {"success": False, "message": "Cet email est déjà utilisé"},
+            status=400
+        )
 
-    
     mot_de_passe_hash = make_password(mot_de_passe)
 
-    # Create child instance directly
     if role == "etudiant":
         Etudiant.objects.create(
             nom=nom,
@@ -156,7 +156,6 @@ def register_view(request):
     return Response({"success": True, "message": "Inscription réussie"})
 
 
-#Recommendations 
 @api_view(['GET'])
 def recommendations_view(request, user_id):
     try:

@@ -1,65 +1,47 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
-/* protection */
 import ProtectedRoute from "../components/common/ProtectedRoute";
 
-/* pages publiques */
 import Login from "../pages/auth/Login";
 import Inscription from "../pages/auth/Inscription";
 import Deconnexion from "../pages/Deconnexion";
-
-/* pages globales */
-import Accueil from "../pages/Accueil";
 import Chatbot from "../pages/Chatbot";
+import Accueil from "../pages/Accueil";
 
-/* layouts */
+/* student */
 import StudentLayout from "../pages/student/Layout";
-import TeacherLayout from "../pages/teacher/Layout";
-
-/* STUDENT */
 import StudentDashboard from "../pages/student/Dashboard";
 import StudentCourses from "../pages/student/Courses";
 import StudentQuiz from "../pages/student/Quiz";
 import StudentRecommendations from "../pages/student/Recommendations";
 import StudentProfile from "../pages/student/Profile";
 
-/* TEACHER */
+/* teacher */
+import TeacherLayout from "../pages/teacher/Layout";
 import TeacherDashboard from "../pages/teacher/Dashboard";
 import TeacherCourses from "../pages/teacher/Courses";
 import TeacherQuiz from "../pages/teacher/Quiz";
 import TeacherProfile from "../pages/teacher/Profile";
-
 import CreateCourse from "../pages/teacher/CreateCourse";
 import EditCourse from "../pages/teacher/EditCourse";
-
 import CreateQuiz from "../pages/teacher/CreateQuiz";
 import EditQuiz from "../pages/teacher/EditQuiz";
-
 import Results from "../pages/teacher/Results";
 import Students from "../pages/teacher/Students";
 import StudentsResults from "../pages/teacher/StudentsResults";
 
-/* ADMIN (optionnel plus tard)
-import AdminDashboard from "../pages/admin/Dashboard";
-import AdminUsers from "../pages/admin/Users";
-*/
-
 export default function AppRoutes() {
   return (
     <Routes>
+      {/* racine */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
-      {/* ========================= */}
-      {/* AUTH */}
-      {/* ========================= */}
-
+      {/* public */}
       <Route path="/login" element={<Login />} />
       <Route path="/inscription" element={<Inscription />} />
       <Route path="/deconnexion" element={<Deconnexion />} />
 
-      {/* ========================= */}
-      {/* STUDENT ROUTES */}
-      {/* ========================= */}
-
+      {/* student */}
       <Route
         path="/student"
         element={
@@ -68,26 +50,16 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       >
+        <Route path="accueil" element={<Accueil />} />
         <Route path="dashboard" element={<StudentDashboard />} />
-
         <Route path="courses" element={<StudentCourses />} />
-
         <Route path="quiz" element={<StudentQuiz />} />
-
-        <Route
-          path="recommendations"
-          element={<StudentRecommendations />}
-        />
-
+        <Route path="recommendations" element={<StudentRecommendations />} />
         <Route path="profile" element={<StudentProfile />} />
-
         <Route path="chatbot" element={<Chatbot />} />
       </Route>
 
-      {/* ========================= */}
-      {/* TEACHER ROUTES */}
-      {/* ========================= */}
-
+      {/* teacher */}
       <Route
         path="/teacher"
         element={
@@ -97,34 +69,20 @@ export default function AppRoutes() {
         }
       >
         <Route path="dashboard" element={<TeacherDashboard />} />
-
         <Route path="courses" element={<TeacherCourses />} />
-
         <Route path="courses/create" element={<CreateCourse />} />
-
         <Route path="courses/:id/edit" element={<EditCourse />} />
-
         <Route path="quiz" element={<TeacherQuiz />} />
-
         <Route path="quiz/create" element={<CreateQuiz />} />
-
         <Route path="quiz/:id/edit" element={<EditQuiz />} />
-
-        <Route path="profile" element={<TeacherProfile />} />
-
-        <Route path="chatbot" element={<Chatbot />} />
         <Route path="results" element={<Results />} />
-
         <Route path="students" element={<Students />} />
         <Route path="students-results" element={<StudentsResults />} />
+        <Route path="profile" element={<TeacherProfile />} />
+        <Route path="chatbot" element={<Chatbot />} />
       </Route>
 
-      {/* ========================= */}
-      {/* PAGE PAR DÉFAUT */}
-      {/* ========================= */}
-
-      <Route path="/" element={<Accueil />} />
-
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

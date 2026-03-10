@@ -89,37 +89,14 @@ export default function Courses() {
   const [loading, setLoading] = useState(true);
   const [apiDown, setApiDown] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
+useEffect(() => {
+  async function loadCourses() {
+    const data = await fetchCourses();
+    setCourses(data);
+  }
 
-    async function loadCourses() {
-      try {
-        setLoading(true);
-        setApiDown(false);
-
-        const data = await fetchCourses();
-        if (!isMounted) return;
-
-        const normalizedCourses = normalizeCourses(data);
-        setCourses(
-          normalizedCourses.length ? normalizedCourses : FALLBACK_COURSES
-        );
-      } catch (error) {
-        if (!isMounted) return;
-        console.error("Erreur lors du chargement des cours :", error);
-        setApiDown(true);
-        setCourses(FALLBACK_COURSES);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    }
-
-    loadCourses();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  loadCourses();
+}, []);
 
   const filteredCourses = useMemo(() => {
     let result = [...courses];

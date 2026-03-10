@@ -15,15 +15,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from rest_framework import routers
-<<<<<<< HEAD
-from API.views import EtudiantViewSet, login_view, logout_view, register_view
-=======
->>>>>>> refactor/structure-roles
 from django.urls import path, include
 from API.views import (
     EtudiantViewSet,
     CoursViewSet,
     login_view,
+    logout_view,
     register_view,
     recommendations_view,
 )
@@ -35,13 +32,8 @@ router.register(r'courses', CoursViewSet, basename='courses')
 urlpatterns = [
     path("api/", include(router.urls)),
     path("api/login/", login_view, name="login"),
-<<<<<<< HEAD
-    path('api/logout/', logout_view, name='logout'),
-    path('api/register/', register_view, name='register'),
-    path('api/chatbot/', include('chatbot.urls')),  # route du chatbot
-=======
+    path("api/logout/", logout_view, name="logout"),
     path("api/register/", register_view, name="register"),
     path("api/chatbot/", include("chatbot.urls")),
     path("api/recommendations/<int:user_id>/", recommendations_view, name="recommendations"),
->>>>>>> refactor/structure-roles
 ]
