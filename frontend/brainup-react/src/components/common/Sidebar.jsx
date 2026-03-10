@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 
-export default function Sidebar() {
+export default function Sidebar({ role = "student" }) {
   const linkClass = ({ isActive }) =>
     "nav__item" + (isActive ? " active" : "");
 
@@ -14,32 +14,60 @@ export default function Sidebar() {
       </div>
 
       <nav className="nav">
-        <NavLink className={linkClass} to="/">
-          🏠 Accueil
-        </NavLink>
+        {role === "student" && (
+          <>
+            <NavLink className={linkClass} to="/student/dashboard">
+              📊 Tableau de bord
+            </NavLink>
 
-        <NavLink className={linkClass} to="/student/courses">
-          📘 Cours
-        </NavLink>
+            <NavLink className={linkClass} to="/student/courses">
+              📘 Cours
+            </NavLink>
 
-        <NavLink className={linkClass} to="/student/dashboard">
-          📊 Tableau de bord
-        </NavLink>
+            <NavLink className={linkClass} to="/student/quiz">
+              ✅ Quiz
+            </NavLink>
 
-        <NavLink className={linkClass} to="/student/recommendations">
-          ⭐ Recommandations
-        </NavLink>
+            <NavLink className={linkClass} to="/student/recommendations">
+              ⭐ Recommandations
+            </NavLink>
 
-        <NavLink className={linkClass} to="/student/quiz">
-          ✅ Quiz
-        </NavLink>
+            <NavLink className={linkClass} to="/student/profile">
+              👤 Profil
+            </NavLink>
+          </>
+        )}
+
+        {role === "teacher" && (
+          <>
+            <NavLink className={linkClass} to="/teacher/dashboard">
+              📊 Dashboard
+            </NavLink>
+
+            <NavLink className={linkClass} to="/teacher/courses">
+              📘 Mes cours
+            </NavLink>
+
+            <NavLink className={linkClass} to="/teacher/courses/create">
+              ➕ Créer cours
+            </NavLink>
+
+            <NavLink className={linkClass} to="/teacher/quiz">
+              📝 Quiz
+            </NavLink>
+
+            <NavLink className={linkClass} to="/teacher/quiz/create">
+              ➕ Créer quiz
+            </NavLink>
+
+            <NavLink className={linkClass} to="/teacher/profile">
+              👨‍🏫 Profil
+            </NavLink>
+          </>
+        )}
 
         <NavLink className={linkClass} to="/chatbot">
           💬 Chatbot
-        </NavLink>
-
-        <NavLink className={linkClass} to="/student/profile">
-          👤 Profil
         </NavLink>
 
         <NavLink className={linkClass} to="/deconnexion">
