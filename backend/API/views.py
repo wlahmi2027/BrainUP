@@ -4,10 +4,9 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 
-<<<<<<< HEAD
 from rest_framework.decorators import api_view, permission_classes
 
-from .models import Utilisateur, Etudiant, Enseignant
+from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz
 import secrets
 
 from django.contrib.auth.hashers import make_password
@@ -15,6 +14,10 @@ from django.contrib.auth.hashers import check_password
 
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+
+from .serializers import EtudiantSerializer, CoursSerializer
+
+
 
 @api_view(['GET'])
 def profil_view(request):
@@ -57,11 +60,7 @@ def logout_view(request):
 
     return Response({"success": True})
 
-=======
-from API.serializers import EtudiantSerializer, CoursSerializer, QuizSerializer
-from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz
-from .recommendation_service import build_recommendations_payload
->>>>>>> refactor/structure-roles
+
 
 class EtudiantViewSet(viewsets.ModelViewSet):
     queryset = Etudiant.objects.all()
@@ -84,6 +83,7 @@ class CoursViewSet(viewsets.ReadOnlyModelViewSet):
         quizzes = Quiz.objects.filter(cours=cours)
         serializer = QuizSerializer(quizzes, many=True)
         return Response(serializer.data)
+
 
 # login check :
 @api_view(['POST'])
