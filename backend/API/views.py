@@ -31,6 +31,7 @@ def profil_view(request):
         "nom": user.nom,
         "email": user.email
     })
+    
 
 def get_user_from_token(request):
 
@@ -99,10 +100,22 @@ def login_view(request):
             utilisateur.token = token
             utilisateur.save()
 
+
+            # i dont like how this is written, to change:
+            if hasattr(utilisateur, "etudiant"):
+                role = "etudiant"
+            elif hasattr(utilisateur, "enseignant"):
+                role = "enseignant"
+            else:
+                role = "admin"
+
             return Response({
                 "success": True,
                 "token": token,
-                "user": utilisateur.email
+                "user": {
+                    "email": utilisateur.email,
+                    "role": role
+                }
             })
 
         return Response({"success": False, "message": "Mot de passe incorrect"}, status=401)

@@ -33,10 +33,9 @@ router.register(r'courses', CoursViewSet, basename='courses')
 urlpatterns = [
     path("api/", include(router.urls)),
     path("api/login/", login_view, name="login"),
-
     path('api/logout/', logout_view, name='logout'),
     path('api/register/', register_view, name='register'),
-    path('api/chatbot/', include('chatbot.urls')),  # route du chatbot
+    path('api/chatbot/', include('chatbot.urls')),
     path("api/recommendations/<int:user_id>/", recommendations_view, name="recommendations"),
 
 ]

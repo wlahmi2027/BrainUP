@@ -23,7 +23,7 @@ export default function Login() {
 
       if (data.success) {
         /* stockage login */
-        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("token", data.token);
 
         /* stocker l'utilisateur */
         localStorage.setItem("user", JSON.stringify(data.user));
@@ -32,16 +32,16 @@ export default function Login() {
         const role = data.user?.role;
 
         /* redirection selon rôle */
-        if (role === "student") {
-          navigate("/student/dashboard");
+        if (role === "etudiant") {
+          navigate("/student/");
         }
 
-        else if (role === "teacher") {
-          navigate("/teacher/dashboard");
+        else if (role === "enseignant") {
+          navigate("/teacher/");
         }
 
         else if (role === "admin") {
-          navigate("/admin/dashboard");
+          navigate("/admin/");
         }
 
         else {

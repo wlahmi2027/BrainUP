@@ -35,6 +35,10 @@ export default function Sidebar({ role = "student" }) {
             <NavLink className={linkClass} to="/student/profile">
               👤 Profil
             </NavLink>
+
+            <NavLink className={linkClass} to="/student/chatbot">
+            💬 Chatbot
+            </NavLink>
           </>
         )}
 
@@ -63,12 +67,13 @@ export default function Sidebar({ role = "student" }) {
             <NavLink className={linkClass} to="/teacher/profile">
               👨‍🏫 Profil
             </NavLink>
+
+            <NavLink className={linkClass} to="/teacher/chatbot">
+            💬 Chatbot
+            </NavLink>
+
           </>
         )}
-
-        <NavLink className={linkClass} to="/chatbot">
-          💬 Chatbot
-        </NavLink>
 
         <NavLink className={linkClass} to="/deconnexion">
           🚪 Déconnexion
