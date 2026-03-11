@@ -2,9 +2,20 @@ from django.db import models
 
 
 class Utilisateur(models.Model):
+    ROLE_CHOICES = [
+    ('etudiant', 'Etudiant'),
+    ('enseignant', 'Enseignant'),
+    ('admin', 'Admin'),
+    ]
     nom = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     mot_de_passe = models.CharField(max_length=255)
+
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default='etudiant'
+    )
 
     token = models.CharField(max_length=128, blank=True, null=True)
 
@@ -15,9 +26,28 @@ class Utilisateur(models.Model):
 class Etudiant(Utilisateur):
     progression = models.FloatField(default=0.0)
     score_moyen = models.FloatField(default=0.0)
+    cours = models.ManyToManyField('Cours', through='Inscription', related_name='etudiants_liste')   # etudiant_list for reverse lookup
 
     def __str__(self):
         return f"{self.nom} (Etudiant)"
+
+
+class Inscription(models.Model):
+    etudiant = models.ForeignKey(Etudiant, on_delete=models.CASCADE)
+    cours = models.ForeignKey('Cours', on_delete=models.CASCADE)
+
+    note_moyenne = models.FloatField(default=0.0)
+    evaluation = models.IntegerField(null=True, blank=True)
+    termine = models.BooleanField(default=False)
+
+    date_inscription = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('etudiant', 'cours')  # one record per student per course
+
+    def __str__(self):
+        return f"{self.etudiant.nom} - {self.cours.title}"
+
 
 
 
@@ -33,6 +63,11 @@ class Cours(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE)
+    temps_apprentissage = models.IntegerField(default=0)
+
+    etudiants = models.ManyToManyField('Etudiant', through='Inscription', related_name='cours_liste')   # cours_list for reverse lookup
+
+
 
     def __str__(self):
         return self.title
@@ -51,7 +86,7 @@ class Lecon(models.Model):
 
 class Quiz(models.Model):
     titre = models.CharField(max_length=255)
-    cours = models.ForeignKey(Cours, on_delete=models.CASCADE)
+    cours = models.ForeignKey('Cours', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.titre
@@ -81,7 +116,7 @@ class Resultat(models.Model):
 
 class Recommandation(models.Model):
     utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE)
-    cours = models.ForeignKey(Cours, on_delete=models.CASCADE)
+    cours = models.ForeignKey('Cours', on_delete=models.CASCADE)
     score_recommendation = models.FloatField()
 
     def __str__(self):

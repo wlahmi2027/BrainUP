@@ -45,7 +45,24 @@ def profil_view(request):
     return Response({
         "nom": user.nom,
         "email": user.email
-    }, status=status.HTTP_200_OK)
+
+    })
+    
+
+def get_user_from_token(request):
+
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        return None
+
+    try:
+        token = auth_header.split(" ")[1]
+        user = Utilisateur.objects.get(token=token)
+        return user
+    except:
+        return None
+
 
 
 @api_view(['POST'])
@@ -115,15 +132,24 @@ def login_view(request):
         utilisateur.token = token
         utilisateur.save()
 
-        return Response({
-            "success": True,
-            "token": token,
-            "user": {
-                "id": utilisateur.id,
-                "nom": utilisateur.nom,
-                "email": utilisateur.email
-            }
-        }, status=status.HTTP_200_OK)
+
+            # i dont like how this is written, to change:
+            if hasattr(utilisateur, "etudiant"):
+                role = "etudiant"
+            elif hasattr(utilisateur, "enseignant"):
+                role = "enseignant"
+            else:
+                role = "admin"
+
+            return Response({
+                "success": True,
+                "token": token,
+                "user": {
+                    "email": utilisateur.email,
+                    "role": role
+                }
+            })
+
 
     return Response(
         {"success": False, "message": "Mot de passe incorrect"},

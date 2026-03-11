@@ -56,16 +56,8 @@ export default function Sidebar({ role = "student" }) {
               📘 Mes cours
             </NavLink>
 
-            <NavLink className={linkClass} to="/teacher/courses/create">
-              ➕ Créer cours
-            </NavLink>
-
             <NavLink className={linkClass} to="/teacher/quiz">
               📝 Quiz
-            </NavLink>
-
-            <NavLink className={linkClass} to="/teacher/quiz/create">
-              ➕ Créer quiz
             </NavLink>
 
             <NavLink className={linkClass} to="/teacher/results">

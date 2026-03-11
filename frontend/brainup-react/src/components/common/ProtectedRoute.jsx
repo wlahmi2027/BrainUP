@@ -1,14 +1,11 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
-export default function ProtectedRoute({ children }) {
-  // Read the login flag from localStorage
-  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+export default function ProtectedRoute() {
+  const token = localStorage.getItem("token");
 
-  // If not logged in, redirect to login page
-  if (!isLoggedIn) {
+  if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  // Otherwise render the protected content
-  return children;
+  return <Outlet />; // render child routes
 }

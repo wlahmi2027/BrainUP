@@ -17,18 +17,26 @@ export default function Login() {
       const data = await loginUser(email, password);
 
       if (data.success) {
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("user", JSON.stringify(data.user || {}));
+
+        /* stockage login */
+        localStorage.setItem("token", data.token);
 
         const role = data.user?.role;
 
-        if (role === "student") {
-          navigate("/student/dashboard");
-        } else if (role === "teacher") {
-          navigate("/teacher/dashboard");
-        } else if (role === "admin") {
-          navigate("/admin/dashboard");
-        } else {
+        /* redirection selon rôle */
+        if (role === "etudiant") {
+          navigate("/student/");
+        }
+
+        else if (role === "enseignant") {
+          navigate("/teacher/");
+        }
+
+        else if (role === "admin") {
+          navigate("/admin/");
+        }
+
+        else {
           navigate("/");
         }
       } else {
