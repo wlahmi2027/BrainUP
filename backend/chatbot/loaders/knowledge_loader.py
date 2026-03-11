@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import List, Dict, Tuple
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 KB_DIR = BASE_DIR / "knowledge_base"
 
 
