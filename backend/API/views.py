@@ -14,24 +14,6 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
 
-def get_user_from_token(request):
-    auth_header = request.headers.get("Authorization")
-
-    if not auth_header:
-        return None
-
-    parts = auth_header.split()
-    if len(parts) != 2 or parts[0].lower() != "bearer":
-        return None
-
-    token = parts[1]
-
-    try:
-        return Utilisateur.objects.get(token=token)
-    except Utilisateur.DoesNotExist:
-        return None
-
-
 @api_view(['GET'])
 def profil_view(request):
     user = get_user_from_token(request)
@@ -96,15 +78,14 @@ class EtudiantViewSet(viewsets.ModelViewSet):
 
 
 class CoursViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Cours.objects.select_related("enseignant").all()
     serializer_class = CoursSerializer
+    #authentification verification?
 
-    @action(detail=True, methods=['get'])
-    def quizzes(self, request, pk=None):
-        cours = self.get_object()
-        quizzes = Quiz.objects.filter(cours=cours)
-        serializer = QuizSerializer(quizzes, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user, 'enseignant'):
+            return Cours.objects.filter(enseignant=user.enseignant)
+        return Cours.objects.none()
 
 
 @api_view(['POST'])
@@ -133,22 +114,22 @@ def login_view(request):
         utilisateur.save()
 
 
-            # i dont like how this is written, to change:
-            if hasattr(utilisateur, "etudiant"):
-                role = "etudiant"
-            elif hasattr(utilisateur, "enseignant"):
-                role = "enseignant"
-            else:
-                role = "admin"
+        # i dont like how this is written, to change:
+        if hasattr(utilisateur, "etudiant"):
+            role = "etudiant"
+        elif hasattr(utilisateur, "enseignant"):
+            role = "enseignant"
+        else:
+            role = "admin"
 
-            return Response({
-                "success": True,
-                "token": token,
-                "user": {
-                    "email": utilisateur.email,
-                    "role": role
-                }
-            })
+        return Response({
+            "success": True,
+            "token": token,
+            "user": {
+                "email": utilisateur.email,
+                "role": role
+            }
+        })
 
 
     return Response(
@@ -158,7 +139,6 @@ def login_view(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
 def register_view(request):
     nom = request.data.get('nom')
     email = request.data.get('email')

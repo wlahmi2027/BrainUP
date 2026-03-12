@@ -15,6 +15,15 @@ class QuizSerializer(serializers.ModelSerializer):
 
 
 class CoursSerializer(serializers.ModelSerializer):
+    enseignant_nom = serializers.CharField(source='enseignant.nom', read_only=True)
+
+    class Meta:
+        model = Cours
+        fields = ['title', 'description', 'temps_apprentissage']
+
+
+"""
+class CoursSerializer(serializers.ModelSerializer):
     author = serializers.CharField(source="enseignant.nom", read_only=True)
     subtitle = serializers.SerializerMethodField()
     level = serializers.SerializerMethodField()
@@ -55,3 +64,5 @@ class CoursSerializer(serializers.ModelSerializer):
 
     def get_isFavorite(self, obj):
         return False
+
+"""
