@@ -1,7 +1,7 @@
 from collections import defaultdict
 from django.db.models import Count
 
-from API.models import Cours, Resultat, Recommandation
+from API.models import Cours, Recommandation
 
 
 def _normalize(text):

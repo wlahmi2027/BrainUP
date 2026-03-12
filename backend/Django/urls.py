@@ -14,6 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from rest_framework import routers
 from django.urls import path, include
 from API.views import (
@@ -23,11 +24,20 @@ from API.views import (
     logout_view,
     register_view,
     recommendations_view,
+    QuizViewSet,
+    QuestionViewSet, 
+    ChoixQuestionViewSet
 )
+
+
+
 
 router = routers.DefaultRouter()
 router.register(r'etudiants', EtudiantViewSet)
 router.register(r'courses', CoursViewSet, basename='courses')
+router.register(r'quiz', QuizViewSet, basename='quiz')
+router.register(r'questions', QuestionViewSet, basename='questions')
+router.register(r'choix', ChoixQuestionViewSet, basename='choix')
 
 urlpatterns = [
     path("api/", include(router.urls)),
@@ -37,5 +47,6 @@ urlpatterns = [
     path('api/register/', register_view, name='register'),
     path('api/chatbot/', include('chatbot.urls')),
     path("api/recommendations/<int:user_id>/", recommendations_view, name="recommendations"),
+    
 
 ]

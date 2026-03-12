@@ -3,8 +3,14 @@ from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny
 
-from API.serializers import EtudiantSerializer, CoursSerializer, QuizSerializer
-from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz
+from API.serializers import (
+    EtudiantSerializer,
+    CoursSerializer,
+    QuizSerializer,
+    QuestionSerializer,
+    ChoixQuestionSerializer,
+)
+from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz, Question, ChoixQuestion
 from .recommendation_service import build_recommendations_payload
 
 import secrets
@@ -45,24 +51,7 @@ def profil_view(request):
     return Response({
         "nom": user.nom,
         "email": user.email
-
     })
-    
-
-def get_user_from_token(request):
-
-    auth_header = request.headers.get("Authorization")
-
-    if not auth_header:
-        return None
-
-    try:
-        token = auth_header.split(" ")[1]
-        user = Utilisateur.objects.get(token=token)
-        return user
-    except:
-        return None
-
 
 
 @api_view(['POST'])
@@ -96,15 +85,75 @@ class EtudiantViewSet(viewsets.ModelViewSet):
 
 
 class CoursViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Cours.objects.select_related("enseignant").all()
     serializer_class = CoursSerializer
+
+    def get_queryset(self):
+        queryset = Cours.objects.select_related("enseignant").all()
+
+        enseignant_id = self.request.query_params.get("enseignant")
+        if enseignant_id:
+            queryset = queryset.filter(enseignant_id=enseignant_id)
+
+        return queryset.order_by("id")
 
     @action(detail=True, methods=['get'])
     def quizzes(self, request, pk=None):
         cours = self.get_object()
-        quizzes = Quiz.objects.filter(cours=cours)
+        quizzes = Quiz.objects.filter(cours=cours).select_related("cours", "enseignant")
         serializer = QuizSerializer(quizzes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class QuizViewSet(viewsets.ModelViewSet):
+    serializer_class = QuizSerializer
+
+    def get_queryset(self):
+        queryset = (
+            Quiz.objects.all()
+            .select_related('cours', 'enseignant')
+            .prefetch_related('questions', 'tentatives')
+        )
+
+        enseignant_id = self.request.query_params.get('enseignant')
+        cours_id = self.request.query_params.get('cours')
+
+        if enseignant_id:
+            queryset = queryset.filter(enseignant_id=enseignant_id)
+
+        if cours_id:
+            queryset = queryset.filter(cours_id=cours_id)
+
+        return queryset.order_by('-date_creation')
+
+
+class QuestionViewSet(viewsets.ModelViewSet):
+    serializer_class = QuestionSerializer
+
+    def get_queryset(self):
+        queryset = (
+            Question.objects.all()
+            .select_related('quiz')
+            .prefetch_related('choix')
+        )
+
+        quiz_id = self.request.query_params.get('quiz')
+        if quiz_id:
+            queryset = queryset.filter(quiz_id=quiz_id)
+
+        return queryset.order_by('ordre')
+
+
+class ChoixQuestionViewSet(viewsets.ModelViewSet):
+    serializer_class = ChoixQuestionSerializer
+
+    def get_queryset(self):
+        queryset = ChoixQuestion.objects.all().select_related('question')
+
+        question_id = self.request.query_params.get('question')
+        if question_id:
+            queryset = queryset.filter(question_id=question_id)
+
+        return queryset.order_by('ordre')
 
 
 @api_view(['POST'])
@@ -132,24 +181,23 @@ def login_view(request):
         utilisateur.token = token
         utilisateur.save()
 
+        if hasattr(utilisateur, "etudiant"):
+            role = "etudiant"
+        elif hasattr(utilisateur, "enseignant"):
+            role = "enseignant"
+        else:
+            role = "admin"
 
-            # i dont like how this is written, to change:
-            if hasattr(utilisateur, "etudiant"):
-                role = "etudiant"
-            elif hasattr(utilisateur, "enseignant"):
-                role = "enseignant"
-            else:
-                role = "admin"
-
-            return Response({
-                "success": True,
-                "token": token,
-                "user": {
-                    "email": utilisateur.email,
-                    "role": role
-                }
-            })
-
+        return Response({
+            "success": True,
+            "token": token,
+            "user": {
+                "email": utilisateur.email,
+                "role": role,
+                "id": utilisateur.id,
+                "nom": utilisateur.nom,
+            }
+        })
 
     return Response(
         {"success": False, "message": "Mot de passe incorrect"},
@@ -235,7 +283,6 @@ def recommendations_view(request, user_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    # Vérifie que l'utilisateur connecté accède bien à ses propres recommandations
     if user.id != etudiant.id:
         return Response(
             {"error": "Accès interdit"},
