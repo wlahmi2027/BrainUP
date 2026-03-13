@@ -35,6 +35,7 @@ class QuizSerializer(serializers.ModelSerializer):
     questions_count = serializers.SerializerMethodField(read_only=True)
     tentatives_count = serializers.SerializerMethodField(read_only=True)
     moyenne_score = serializers.SerializerMethodField(read_only=True)
+    cours_title = serializers.CharField(source='cours.title', read_only=True)
 
     class Meta:
         model = Quiz
@@ -43,6 +44,7 @@ class QuizSerializer(serializers.ModelSerializer):
             'titre',
             'description',
             'cours',
+            'cours_title',
             'enseignant',
             'niveau',
             'temps_limite_minutes',
@@ -65,6 +67,7 @@ class QuizSerializer(serializers.ModelSerializer):
             'questions_count',
             'tentatives_count',
             'moyenne_score',
+            'cours_title',
         ]
 
     def get_questions_count(self, obj):
