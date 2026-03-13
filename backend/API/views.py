@@ -79,14 +79,15 @@ class EtudiantViewSet(viewsets.ModelViewSet):
 
 class CoursViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CoursSerializer
-    #authentification verification?
 
     def get_queryset(self):
         user = self.request.user
-        if hasattr(user, 'enseignant'):
-            return Cours.objects.filter(enseignant=user.enseignant)
-        return Cours.objects.none()
 
+        if not user.is_authenticated:
+            return Cours.objects.none()
+
+        return Cours.objects.filter(enseignant_id=user.id)
+        
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
