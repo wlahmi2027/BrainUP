@@ -1,159 +1,80 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { getStudentQuizzes } from "../../api/quizzes";
+import { useNavigate } from "react-router-dom";
 
-export default function Quiz() {
-  const options = useMemo(
-    () => [
-      { id: 1, text: "stop()", correct: false },
-      { id: 2, text: "exit()", correct: true },
-      { id: 3, text: "break", correct: false },
-      { id: 4, text: "stop_execution()", correct: false },
-    ],
-    []
-  );
+export default function StudentQuiz() {
+  const [quizzes, setQuizzes] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
-  const [pickedId, setPickedId] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
+  useEffect(() => {
+    async function fetchStudentQuizzes() {
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
 
-  const picked = options.find((option) => option.id === pickedId) || null;
-  const isCorrect = submitted && picked ? picked.correct : false;
-
-  function onPick(id) {
-    if (submitted) return;
-    setPickedId(id);
-  }
-
-  function onValidate() {
-    if (!picked) return;
-    setSubmitted(true);
-  }
-
-  function onReset() {
-    setPickedId(null);
-    setSubmitted(false);
-  }
-
-  function getOptClass(option) {
-    let className = "qOpt";
-
-    if (pickedId === option.id) {
-      className += " is-picked";
-    }
-
-    if (submitted) {
-      if (pickedId === option.id) {
-        className += option.correct ? " is-correct" : " is-wrong";
-      }
-
-      if (pickedId !== option.id && picked && !picked.correct && option.correct) {
-        className += " is-correct";
+        const data = await getStudentQuizzes(token);
+        setQuizzes(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Erreur chargement quiz étudiant :", error);
+        setErrorMessage("Impossible de charger les quiz.");
+      } finally {
+        setIsLoading(false);
       }
     }
 
-    return className;
-  }
-
-  function getOptStateText(option) {
-    if (!submitted) return "";
-
-    if (pickedId === option.id) {
-      return option.correct ? "✓ Correct" : "✕ Faux";
-    }
-
-    if (picked && !picked.correct && option.correct) {
-      return "✓ Bonne réponse";
-    }
-
-    return "";
-  }
+    fetchStudentQuizzes();
+  }, [token]);
 
   return (
-    <section className="page">
-      <div className="crumbs">
-        <Link to="/student/dashboard">Dashboard</Link>
-        <span className="sep">›</span>
-        <Link to="/student/courses">Cours</Link>
-        <span className="sep">›</span>
-        <span className="here">Quiz Python</span>
+    <section className="page student-page">
+      <div className="teacher-head">
+        <div>
+          <h1 className="page__title">Quiz disponibles</h1>
+          <p className="teacher-subtitle">
+            Retrouvez ici les quiz publiés par vos enseignants.
+          </p>
+        </div>
       </div>
 
-      <h1 className="quizTitle">
-        Quiz : <span>Introduction à Python</span>
-      </h1>
+      {isLoading && <p>Chargement des quiz...</p>}
 
-      <div className="quizGrid">
-        <section className="card card--pad quizCard">
-          <div className="qBanner">
-            <div className="qBanner__text">
-              <div className="qBanner__q">
-                Quelle instruction permet d’interrompre un programme en Python ?
-              </div>
-              <div className="qBanner__sub">QCM • 1 seule bonne réponse</div>
-            </div>
-            <div className="qBanner__bot">🤖+</div>
-          </div>
+      {!isLoading && errorMessage && (
+        <p style={{ color: "#c0392b" }}>{errorMessage}</p>
+      )}
 
-          <div className="qList">
-            {options.map((option) => (
-              <button
-                key={option.id}
-                className={getOptClass(option)}
-                type="button"
-                disabled={submitted}
-                onClick={() => onPick(option.id)}
-              >
-                <span className="qNum">{option.id}.</span>
-                <span className="qTxt">{option.text}</span>
-                <span className="qState">{getOptStateText(option)}</span>
-              </button>
-            ))}
-          </div>
+      {!isLoading && !errorMessage && quizzes.length === 0 && (
+        <div className="card card--pad">
+          <h2 className="card__title">Aucun quiz disponible</h2>
+          <p className="teacher-subtitle" style={{ marginTop: 10 }}>
+            Aucun quiz publié n’est disponible pour le moment.
+          </p>
+        </div>
+      )}
 
-          <button
-            className="qValidate"
-            type="button"
-            disabled={!picked || submitted}
-            onClick={onValidate}
-          >
-            Valider la réponse
-          </button>
-
-          {submitted && (
-            <div style={{ marginTop: "12px" }}>
-              <div className="assistant__bubble">
-                {isCorrect
-                  ? "Bravo ! Votre réponse est correcte."
-                  : "Réponse incorrecte. La bonne réponse est : exit()."}
+      {!isLoading && !errorMessage && quizzes.length > 0 && (
+        <div className="teacher-list teacher-list--space">
+          {quizzes.map((quiz) => (
+            <div key={quiz.id} className="teacher-row teacher-row--card">
+              <div>
+                <div className="teacher-row__title">{quiz.titre}</div>
+                <div className="teacher-row__meta">
+                  {quiz.cours_title} • {quiz.questions_count} question
+                  {quiz.questions_count > 1 ? "s" : ""} • {quiz.temps_limite_minutes} min
+                </div>
               </div>
 
-              <div style={{ marginTop: "10px" }}>
-                <button className="btn btn--soft" type="button" onClick={onReset}>
-                  Recommencer
+              <div className="teacher-row__right">
+                <button className="btn btn--primary" onClick={() => navigate(`/student/quiz/${quiz.id}`)}>
+                  Commencer
                 </button>
               </div>
             </div>
-          )}
-        </section>
-
-        <section className="card card--pad quizChat">
-          <div className="quizChat__row">
-            <div className="quizChat__avatar">👩</div>
-            <div className="quizChat__bubble">
-              Besoin d’aide pour ce quiz ? Posez votre question à l’assistant.
-            </div>
-          </div>
-
-          <div className="quizChat__inputRow">
-            <input
-              className="quizChat__input"
-              placeholder="Écrire un message..."
-            />
-            <button className="quizChat__send" type="button">
-              ➤
-            </button>
-          </div>
-        </section>
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

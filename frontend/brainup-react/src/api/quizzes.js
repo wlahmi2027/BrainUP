@@ -11,6 +11,10 @@ export async function submitQuiz(quizId, payload) {
   return data;
 }
 
+export async function getStudentQuizzes() {
+  const { data } = await api.get("/student/quizzes/");
+  return data;
+}
 /* TEACHER */
 export async function fetchTeacherQuizzes() {
   const { data } = await api.get("/teacher/quizzes/");

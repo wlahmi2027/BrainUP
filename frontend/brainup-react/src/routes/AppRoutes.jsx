@@ -14,7 +14,7 @@ import StudentCourses from "../pages/student/Courses";
 import StudentQuiz from "../pages/student/Quiz";
 import StudentRecommendations from "../pages/student/Recommendations";
 import StudentProfile from "../pages/student/Profile";
-
+import StudentQuizDetails from "../pages/student/StudentQuizDetails";
 /* Teacher */
 import TeacherLayout from "../pages/teacher/Layout";
 import TeacherDashboard from "../pages/teacher/Dashboard";
@@ -51,6 +51,7 @@ export default function AppRoutes() {
           <Route path="recommendations" element={<StudentRecommendations />} />
           <Route path="profile" element={<StudentProfile />} />
           <Route path="chatbot" element={<Chatbot />} />
+          <Route path="quiz/:id" element={<StudentQuizDetails />} />
         </Route>
       </Route>
 
