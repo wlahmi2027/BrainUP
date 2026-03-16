@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function createEmptyQuestion() {
   return {
@@ -10,23 +10,62 @@ function createEmptyQuestion() {
   };
 }
 
-export default function CreateQuiz() {
-  const [quiz, setQuiz] = useState({
+function createInitialQuiz() {
+  return {
     title: "",
     courseId: "",
     level: "Débutant",
     duration: 10,
     status: "Brouillon",
     description: "",
-  });
+  };
+}
 
+export default function CreateQuiz() {
+  const [quiz, setQuiz] = useState(createInitialQuiz());
   const [questions, setQuestions] = useState([createEmptyQuestion()]);
+  const [courses, setCourses] = useState([]);
 
-  const courses = [
-    { id: 1, title: "Python avancé" },
-    { id: 2, title: "React moderne" },
-    { id: 3, title: "Bases de données" },
-  ];
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // À adapter plus tard avec l'utilisateur connecté
+  const teacherId = 37;
+
+  useEffect(() => {
+    console.log("CREATE QUIZ COMPONENT CHARGE");
+
+    async function fetchCourses() {
+      try {
+        setIsLoadingCourses(true);
+        setErrorMessage("");
+
+        const response = await fetch(
+          `http://127.0.0.1:8001/api/courses/?enseignant=${teacherId}`
+        );
+
+        console.log("GET /api/courses/ status =", response.status);
+
+        if (!response.ok) {
+          throw new Error("Impossible de charger les cours.");
+        }
+
+        const data = await response.json();
+        console.log("COURSES DATA =", data);
+
+        setCourses(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Erreur chargement cours :", error);
+        setCourses([]);
+      } finally {
+        setIsLoadingCourses(false);
+      }
+    }
+
+    fetchCourses();
+  }, []);
 
   function handleQuizChange(event) {
     const { name, value } = event.target;
@@ -72,24 +111,198 @@ export default function CreateQuiz() {
     );
   }
 
-  function handleSubmit(event) {
+  function resetForm() {
+    setQuiz(createInitialQuiz());
+    setQuestions([createEmptyQuestion()]);
+    setSaveSuccess(false);
+    setErrorMessage("");
+  }
+
+  function mapLevelToBackend(level) {
+    if (level === "Débutant") return "debutant";
+    if (level === "Intermédiaire") return "intermediaire";
+    if (level === "Avancé") return "avance";
+    return "debutant";
+  }
+
+  function mapStatusToBackend(status) {
+    if (status === "Brouillon") return "brouillon";
+    if (status === "Publié") return "publie";
+    return "brouillon";
+  }
+
+  function validateForm() {
+    if (!quiz.title.trim()) {
+      return "Le titre du quiz est obligatoire.";
+    }
+
+    if (!quiz.courseId) {
+      return "Veuillez sélectionner un cours.";
+    }
+
+    if (!quiz.duration || Number(quiz.duration) < 1) {
+      return "La durée doit être supérieure à 0.";
+    }
+
+    for (let i = 0; i < questions.length; i += 1) {
+      const question = questions[i];
+
+      if (!question.statement.trim()) {
+        return `L'énoncé de la question ${i + 1} est obligatoire.`;
+      }
+
+      if (!question.points || Number(question.points) < 1) {
+        return `Les points de la question ${i + 1} doivent être supérieurs à 0.`;
+      }
+
+      for (let j = 0; j < question.options.length; j += 1) {
+        if (!question.options[j].trim()) {
+          return `L'option ${j + 1} de la question ${i + 1} est obligatoire.`;
+        }
+      }
+    }
+
+    return "";
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault();
+    console.log("SUBMIT CLICK OK");
 
-    const payload = {
-      ...quiz,
-      duration: Number(quiz.duration),
-      questions: questions.map((question) => ({
-        statement: question.statement,
-        options: question.options,
-        correctIndex: Number(question.correctIndex),
-        points: Number(question.points),
-      })),
-    };
+    const validationError = validateForm();
 
-    console.log("Quiz à créer :", payload);
+    if (validationError) {
+      setErrorMessage(validationError);
+      setSaveSuccess(false);
+      return;
+    }
 
-    // Plus tard :
-    // await api.post("/teacher/quizzes/", payload)
+    try {
+      setIsSaving(true);
+      setSaveSuccess(false);
+      setErrorMessage("");
+
+      const quizPayload = {
+        titre: quiz.title.trim(),
+        description: quiz.description.trim(),
+        cours: Number(quiz.courseId),
+        enseignant: teacherId,
+        niveau: mapLevelToBackend(quiz.level),
+        temps_limite_minutes: Number(quiz.duration),
+        tentatives_autorisees: 1,
+        score_reussite: 10,
+        statut: mapStatusToBackend(quiz.status),
+        melanger_questions: false,
+        afficher_feedback: true,
+      };
+
+      console.log("QUIZ PAYLOAD =", quizPayload);
+
+      const quizResponse = await fetch("http://127.0.0.1:8001/api/quiz/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(quizPayload),
+      });
+
+      console.log("POST /api/quiz/ status =", quizResponse.status);
+
+      const quizData = await quizResponse.json();
+      console.log("QUIZ RESPONSE =", quizData);
+
+      if (!quizResponse.ok) {
+        throw new Error(
+          quizData?.detail || JSON.stringify(quizData) || "Erreur création quiz"
+        );
+      }
+
+      const createdQuiz = quizData;
+
+      for (let i = 0; i < questions.length; i += 1) {
+        const question = questions[i];
+
+        const questionPayload = {
+          quiz: createdQuiz.id,
+          enonce: question.statement.trim(),
+          type_question: "choix_unique",
+          points: Number(question.points),
+          ordre: i + 1,
+          explication: "",
+        };
+
+        console.log("QUESTION PAYLOAD =", questionPayload);
+
+        const questionResponse = await fetch(
+          "http://127.0.0.1:8001/api/questions/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(questionPayload),
+          }
+        );
+
+        console.log("POST /api/questions/ status =", questionResponse.status);
+
+        const questionData = await questionResponse.json();
+        console.log("QUESTION RESPONSE =", questionData);
+
+        if (!questionResponse.ok) {
+          throw new Error(
+            questionData?.detail ||
+              JSON.stringify(questionData) ||
+              "Erreur création question"
+          );
+        }
+
+        const createdQuestion = questionData;
+
+        for (let j = 0; j < question.options.length; j += 1) {
+          const optionPayload = {
+            question: createdQuestion.id,
+            texte: question.options[j].trim(),
+            est_correct: j === Number(question.correctIndex),
+            ordre: j + 1,
+          };
+
+          console.log("CHOIX PAYLOAD =", optionPayload);
+
+          const optionResponse = await fetch(
+            "http://127.0.0.1:8001/api/choix/",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(optionPayload),
+            }
+          );
+
+          console.log("POST /api/choix/ status =", optionResponse.status);
+
+          const optionData = await optionResponse.json();
+          console.log("CHOIX RESPONSE =", optionData);
+
+          if (!optionResponse.ok) {
+            throw new Error(
+              optionData?.detail ||
+                JSON.stringify(optionData) ||
+                "Erreur création option"
+            );
+          }
+        }
+      }
+
+      setSaveSuccess(true);
+    } catch (error) {
+      console.error("Erreur enregistrement quiz :", error);
+      setErrorMessage(String(error.message || error));
+      setSaveSuccess(false);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -102,6 +315,18 @@ export default function CreateQuiz() {
           </p>
         </div>
       </div>
+
+      {errorMessage && (
+        <div style={{ marginBottom: "16px", color: "#c0392b", fontWeight: 600 }}>
+          {errorMessage}
+        </div>
+      )}
+
+      {saveSuccess && (
+        <div style={{ marginBottom: "16px", color: "#1e8449", fontWeight: 600 }}>
+          Quiz enregistré avec succès.
+        </div>
+      )}
 
       <form className="teacher-form-card" onSubmit={handleSubmit}>
         <div className="teacher-form-grid">
@@ -123,8 +348,11 @@ export default function CreateQuiz() {
               name="courseId"
               value={quiz.courseId}
               onChange={handleQuizChange}
+              disabled={isLoadingCourses}
             >
-              <option value="">Sélectionner un cours</option>
+              <option value="">
+                {isLoadingCourses ? "Chargement des cours..." : "Sélectionner un cours"}
+              </option>
               {courses.map((course) => (
                 <option key={course.id} value={course.id}>
                   {course.title}
@@ -290,11 +518,25 @@ export default function CreateQuiz() {
         </div>
 
         <div className="teacher-form-actions">
-          <button type="button" className="btn btn--ghost">
+          <button type="button" className="btn btn--ghost" onClick={resetForm}>
             Annuler
           </button>
-          <button type="submit" className="btn btn--primary">
-            Enregistrer le quiz
+
+          <button
+            type="submit"
+            className="btn btn--primary"
+            disabled={isSaving}
+            style={
+              saveSuccess
+                ? { backgroundColor: "#1e8449", borderColor: "#1e8449" }
+                : {}
+            }
+          >
+            {isSaving
+              ? "Enregistrement..."
+              : saveSuccess
+              ? "Quiz enregistré"
+              : "Enregistrer le quiz"}
           </button>
         </div>
       </form>

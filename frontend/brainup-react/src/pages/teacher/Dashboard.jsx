@@ -57,11 +57,6 @@ export default function Dashboard() {
             Gérez vos cours, quiz et le suivi des étudiants.
           </p>
         </div>
-
-        <div className="teacher-head__actions">
-          <button className="btn btn--soft">+ Nouveau quiz</button>
-          <button className="btn btn--primary">+ Nouveau cours</button>
-        </div>
       </div>
 
       <div className="teacher-stats">

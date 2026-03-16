@@ -36,3 +36,8 @@ export async function fetchQuizResults(quizId) {
   const { data } = await api.get(`/teacher/quizzes/${quizId}/results/`);
   return data;
 }
+
+
+export function getTeacherQuizzes(teacherId) {
+  return request(`/quiz/?enseignant=${teacherId}`);
+}

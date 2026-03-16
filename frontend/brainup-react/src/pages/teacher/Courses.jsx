@@ -1,8 +1,12 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Courses() {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+
+
 
   const courses = useMemo(
     () => [
@@ -73,7 +77,7 @@ export default function Courses() {
           </p>
         </div>
 
-        <button className="btn btn--primary">+ Créer un cours</button>
+        <button className="btn btn--primary" onClick={() => navigate("/teacher/courses/create")}>+ Créer un cours</button>
       </div>
 
       <div className="teacher-toolbar">
