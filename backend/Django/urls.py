@@ -23,18 +23,35 @@ from API.views import (
     logout_view,
     register_view,
     recommendations_view,
+    StudentCourseViewSet
 )
 
 router = routers.DefaultRouter()
 router.register(r'etudiants', EtudiantViewSet)
 router.register(r'courses', CoursViewSet, basename='courses')
 
+student_courses = StudentCourseViewSet.as_view({
+    "get": "list",
+})
+student_course_detail = StudentCourseViewSet.as_view({
+    "get": "retrieve",
+})
+student_course_favorite = StudentCourseViewSet.as_view({
+    "post": "favorite",
+})
+
 urlpatterns = [
+
     path("api/", include(router.urls)),
 
     path("api/login/", login_view, name="login"),
     path('api/logout/', logout_view, name='logout'),
     path('api/register/', register_view, name='register'),
+
+    path("api/student/courses/", student_courses, name="student-courses"),
+    path("api/student/courses/<int:pk>/", student_course_detail, name="student-course-detail"),
+    path("api/student/courses/<int:pk>/favorite/", student_course_favorite, name="student-course-favorite"),
+
     
     path('api/chatbot/', include('chatbot.urls')),
     path("api/recommendations/<int:user_id>/", recommendations_view, name="recommendations"),

@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny
 
-from API.serializers import EtudiantSerializer, CoursSerializer, QuizSerializer
-from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz
+from API.serializers import EtudiantSerializer, CoursSerializer, QuizSerializer, StudentCourseSerializer
+from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz, Inscription
 from .recommendation_service import build_recommendations_payload
 
 import secrets
@@ -143,9 +143,67 @@ class CoursViewSet(viewsets.ReadOnlyModelViewSet):
 
         return super().retrieve(request, *args, **kwargs)
         
+class StudentCourseViewSet(viewsets.ViewSet):
+    """
+    List courses available to the student with their own Inscription data.
+    """
+
+    def list(self, request):
+        user = get_user_from_token(request)
+        if not user or user.role != "etudiant":
+            return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            student = Etudiant.objects.get(utilisateur_ptr=user)
+        except Etudiant.DoesNotExist:
+            return Response({"detail": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Filter only published courses
+        courses = Cours.objects.filter(status="publie")
+
+        serializer = StudentCourseSerializer(courses, many=True, context={"student": student})
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        user = get_user_from_token(request)
+        if not user or user.role != "etudiant":
+            return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            student = Etudiant.objects.get(utilisateur_ptr=user)
+        except Etudiant.DoesNotExist:
+            return Response({"detail": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            course = Cours.objects.get(pk=pk)
+        except Cours.DoesNotExist:
+            return Response({"detail": "Cours not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = StudentCourseSerializer(course, context={"student": student})
+        return Response(serializer.data)
+
+    def favorite(self, request, pk=None):
+        """
+        Toggle favorite for a student on a course
+        """
+        user = get_user_from_token(request)
+        if not user or user.role != "etudiant":
+            return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            student = Etudiant.objects.get(utilisateur_ptr=user)
+            course = Cours.objects.get(pk=pk)
+        except (Etudiant.DoesNotExist, Cours.DoesNotExist):
+            return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        insc, created = Inscription.objects.get_or_create(etudiant=student, cours=course)
+        insc.favoris = not insc.favoris
+        insc.save()
+
+        return Response({"favoris": insc.favoris}, status=status.HTTP_200_OK)
+
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
 def login_view(request):
     email = request.data.get('email')
     mot_de_passe = request.data.get('mot_de_passe')

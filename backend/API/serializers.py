@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from API.models import Etudiant, Cours, Quiz
+from API.models import Etudiant, Cours, Quiz, Inscription
 
 
 class EtudiantSerializer(serializers.ModelSerializer):
@@ -13,12 +13,54 @@ class QuizSerializer(serializers.ModelSerializer):
         model = Quiz
         fields = ["id", "titre"]
 
-
+#for teachers :
 class CoursSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cours
         fields = ['title', 'description', 'temps_apprentissage', 'niveau', 'status']
+
+class StudentCourseSerializer(serializers.ModelSerializer):
+    enseignant = serializers.SerializerMethodField()
+    inscription = serializers.SerializerMethodField()
+    lecons_count = serializers.SerializerMethodField()
+    etudiants_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Cours
+        fields = [
+            "id",
+            "title",
+            "description",
+            "niveau",
+            "enseignant",
+            "inscription",
+            "lecons_count",
+            "etudiants_count",
+        ]
+
+    def get_enseignant(self, obj):
+        return {"id": obj.enseignant.id, "nom": obj.enseignant.nom}
+
+    def get_inscription(self, obj):
+        student = self.context.get("student")
+        if not student:
+            return None
+        try:
+            insc = Inscription.objects.get(etudiant=student, cours=obj)
+            return {
+                "progression": insc.progression,
+                "favoris": insc.favoris,
+                "note_moyenne": insc.note_moyenne,
+            }
+        except Inscription.DoesNotExist:
+            return None
+
+    def get_lecons_count(self, obj):
+        return obj.lecon_set.count()
+
+    def get_etudiants_count(self, obj):
+        return obj.etudiants.count()
 
 
 """
