@@ -2,15 +2,21 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny
-
+from django.db.models import Count, Avg, Q
 from API.serializers import (
     EtudiantSerializer,
     CoursSerializer,
     QuizSerializer,
     QuestionSerializer,
     ChoixQuestionSerializer,
+    StudentQuizSerializer,
+    TeacherQuizResultSerializer, 
+    QuizSubmissionResponseSerializer
+
 )
-from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz, Question, ChoixQuestion
+from django.utils import timezone
+
+from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz, Question, ChoixQuestion, TentativeQuiz, ReponseTentative
 from .recommendation_service import build_recommendations_payload
 
 import secrets
@@ -155,6 +161,191 @@ class ChoixQuestionViewSet(viewsets.ModelViewSet):
 
         return queryset.order_by('ordre')
 
+@api_view(['GET'])
+def student_quizzes_view(request):
+    user = get_user_from_token(request)
+
+    if not user:
+        return Response(
+            {"error": "Unauthorized"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    try:
+        Etudiant.objects.get(id=user.id)
+    except Etudiant.DoesNotExist:
+        return Response(
+            {"error": "Accès réservé aux étudiants"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    quizzes = Quiz.objects.filter(
+        statut="publie"
+    ).select_related("cours").prefetch_related("questions").distinct()
+
+    serializer = StudentQuizSerializer(quizzes, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def submit_quiz_view(request, quiz_id):
+    user = get_user_from_token(request)
+
+    if not user:
+        return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+        etudiant = Etudiant.objects.get(id=user.id)
+    except Etudiant.DoesNotExist:
+        return Response(
+            {"error": "Accès réservé aux étudiants"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    try:
+        quiz = Quiz.objects.prefetch_related("questions__choix").get(id=quiz_id)
+    except Quiz.DoesNotExist:
+        return Response(
+            {"error": "Quiz introuvable"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    answers = request.data.get("answers", [])
+    time_spent_seconds = request.data.get("time_spent_seconds", 0)
+
+    if not isinstance(answers, list):
+        return Response(
+            {"error": "Le champ answers doit être une liste."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    next_attempt_number = (
+        TentativeQuiz.objects.filter(quiz=quiz, etudiant=etudiant).count() + 1
+    )
+
+    if next_attempt_number > quiz.tentatives_autorisees:
+        return Response(
+            {"error": "Nombre maximal de tentatives atteint."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    score_max = sum(question.points for question in quiz.questions.all())
+    score = 0.0
+
+    tentative = TentativeQuiz.objects.create(
+        quiz=quiz,
+        etudiant=etudiant,
+        numero_tentative=next_attempt_number,
+        statut="soumis",
+        score=0,
+        score_max=score_max,
+        pourcentage=0,
+        reussi=False,
+        date_soumission=timezone.now(),
+        temps_passe_secondes=time_spent_seconds or 0,
+    )
+
+    answers_by_question = {}
+    for answer in answers:
+        question_id = answer.get("question_id")
+        choice_id = answer.get("choice_id")
+        if question_id is not None:
+            answers_by_question[question_id] = choice_id
+
+    for question in quiz.questions.all():
+        selected_choice_id = answers_by_question.get(question.id)
+
+        selected_choice = None
+        if selected_choice_id:
+            selected_choice = question.choix.filter(id=selected_choice_id).first()
+
+        is_correct = bool(selected_choice and selected_choice.est_correct)
+        points_earned = question.points if is_correct else 0
+
+        score += points_earned
+
+        ReponseTentative.objects.create(
+            tentative=tentative,
+            question=question,
+            choix_selectionne=selected_choice,
+            est_correcte=is_correct,
+            points_obtenus=points_earned,
+        )
+
+    pourcentage = (score / score_max * 100) if score_max > 0 else 0
+    reussi = pourcentage >= quiz.score_reussite
+
+    tentative.score = score
+    tentative.pourcentage = round(pourcentage, 2)
+    tentative.reussi = reussi
+    tentative.save()
+
+    serializer = QuizSubmissionResponseSerializer(tentative)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+@api_view(["GET"])
+def teacher_quizzes_view(request):
+    user = get_user_from_token(request)
+
+    if not user:
+        return Response(
+            {"error": "Unauthorized"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    try:
+        enseignant = Enseignant.objects.get(id=user.id)
+    except Enseignant.DoesNotExist:
+        return Response(
+            {"error": "Accès réservé aux enseignants"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    quizzes = (
+        Quiz.objects.filter(enseignant=enseignant)
+        .select_related("cours", "enseignant")
+        .prefetch_related("questions", "tentatives")
+        .order_by("-date_creation")
+    )
+
+    serializer = QuizSerializer(quizzes, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+def teacher_quiz_results_view(request, quiz_id):
+    user = get_user_from_token(request)
+
+    if not user:
+        return Response(
+            {"error": "Unauthorized"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    try:
+        enseignant = Enseignant.objects.get(id=user.id)
+    except Enseignant.DoesNotExist:
+        return Response(
+            {"error": "Accès réservé aux enseignants"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    try:
+        quiz = Quiz.objects.get(id=quiz_id, enseignant=enseignant)
+    except Quiz.DoesNotExist:
+        return Response(
+            {"error": "Quiz introuvable"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    tentatives = (
+        TentativeQuiz.objects
+        .filter(quiz=quiz)
+        .select_related("etudiant", "quiz")
+        .order_by("-date_soumission")
+    )
+
+    serializer = TeacherQuizResultSerializer(tentatives, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

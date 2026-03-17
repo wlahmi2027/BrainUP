@@ -1,20 +1,3 @@
-"""
-URL configuration for Django project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-
 from rest_framework import routers
 from django.urls import path, include
 from API.views import (
@@ -25,12 +8,13 @@ from API.views import (
     register_view,
     recommendations_view,
     QuizViewSet,
-    QuestionViewSet, 
-    ChoixQuestionViewSet
+    QuestionViewSet,
+    ChoixQuestionViewSet,
+    student_quizzes_view,
+    submit_quiz_view,
+    teacher_quizzes_view,
+    teacher_quiz_results_view,
 )
-
-
-
 
 router = routers.DefaultRouter()
 router.register(r'etudiants', EtudiantViewSet)
@@ -42,11 +26,12 @@ router.register(r'choix', ChoixQuestionViewSet, basename='choix')
 urlpatterns = [
     path("api/", include(router.urls)),
     path("api/login/", login_view, name="login"),
-
-    path('api/logout/', logout_view, name='logout'),
-    path('api/register/', register_view, name='register'),
-    path('api/chatbot/', include('chatbot.urls')),
+    path("api/logout/", logout_view, name="logout"),
+    path("api/register/", register_view, name="register"),
+    path("api/chatbot/", include("chatbot.urls")),
     path("api/recommendations/<int:user_id>/", recommendations_view, name="recommendations"),
-    
-
+    path("api/student/quizzes/", student_quizzes_view, name="student-quizzes"),
+    path("api/student/quizzes/<int:quiz_id>/submit/", submit_quiz_view, name="student-quiz-submit"),
+    path("api/teacher/quizzes/", teacher_quizzes_view, name="teacher-quizzes"),
+    path("api/teacher/quizzes/<int:quiz_id>/results/", teacher_quiz_results_view, name="teacher-quiz-results"),
 ]

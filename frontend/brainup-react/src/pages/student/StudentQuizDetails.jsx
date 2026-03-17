@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { submitStudentQuiz } from "../../api/quizzes";
 
 export default function StudentQuizDetails() {
   const { id } = useParams();
@@ -10,7 +11,9 @@ export default function StudentQuizDetails() {
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [results, setResults] = useState({});
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -69,24 +72,45 @@ export default function StudentQuizDetails() {
     }));
   }
 
-  function handleValidate() {
-    const newResults = {};
+  async function handleValidate() {
+    try {
+      setIsSubmitting(true);
+      setErrorMessage("");
 
-    questions.forEach((question) => {
-      const selectedChoiceId = selectedAnswers[question.id];
-      const selectedChoice = question.choix?.find(
-        (choice) => choice.id === selectedChoiceId
-      );
+      const newResults = {};
+      const answersPayload = questions.map((question) => {
+        const selectedChoiceId = selectedAnswers[question.id];
+        const selectedChoice = question.choix?.find(
+          (choice) => choice.id === selectedChoiceId
+        );
 
-      newResults[question.id] = {
-        isCorrect: Boolean(selectedChoice?.est_correct),
-        correctChoiceId:
-          question.choix?.find((choice) => choice.est_correct)?.id || null,
-      };
-    });
+        newResults[question.id] = {
+          isCorrect: Boolean(selectedChoice?.est_correct),
+          correctChoiceId:
+            question.choix?.find((choice) => choice.est_correct)?.id || null,
+        };
 
-    setResults(newResults);
-    setHasSubmitted(true);
+        return {
+          question_id: question.id,
+          choice_id: selectedChoiceId || null,
+        };
+      });
+
+      setResults(newResults);
+      setHasSubmitted(true);
+
+      const response = await submitStudentQuiz(id, {
+        answers: answersPayload,
+        time_spent_seconds: 0,
+      });
+
+      setSubmissionResult(response);
+    } catch (error) {
+      console.error("Erreur soumission quiz :", error);
+      setErrorMessage("Impossible d'enregistrer votre score.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (isLoading) {
@@ -125,6 +149,12 @@ export default function StudentQuizDetails() {
         </div>
       </div>
 
+      {submissionResult && (
+        <div style={{ marginBottom: "16px", color: "#1e8449", fontWeight: 700 }}>
+          Score enregistré : {submissionResult.score}/{submissionResult.score_max} ({submissionResult.pourcentage}%)
+        </div>
+      )}
+
       <div className="teacher-list teacher-list--space">
         {questions.map((question, index) => (
           <div
@@ -139,14 +169,10 @@ export default function StudentQuizDetails() {
             <div style={{ marginTop: 16 }}>
               {question.choix?.map((choice, choiceIndex) => {
                 const isSelected = selectedAnswers[question.id] === choice.id;
-                const questionResult = results[question.id];
                 const isCorrectChoice = choice.est_correct;
-                const isCorrectSelected =
-                  hasSubmitted && isSelected && isCorrectChoice;
-                const isWrongSelected =
-                  hasSubmitted && isSelected && !isCorrectChoice;
-                const showCorrectAnswer =
-                  hasSubmitted && isCorrectChoice;
+                const isCorrectSelected = hasSubmitted && isSelected && isCorrectChoice;
+                const isWrongSelected = hasSubmitted && isSelected && !isCorrectChoice;
+                const showCorrectAnswer = hasSubmitted && isCorrectChoice;
 
                 return (
                   <button
@@ -215,9 +241,13 @@ export default function StudentQuizDetails() {
           type="button"
           className="btn btn--primary"
           onClick={handleValidate}
-          disabled={hasSubmitted}
+          disabled={hasSubmitted || isSubmitting}
         >
-          {hasSubmitted ? "Réponse validée" : "Valider la réponse"}
+          {isSubmitting
+            ? "Enregistrement..."
+            : hasSubmitted
+            ? "Réponse validée"
+            : "Valider la réponse"}
         </button>
       </div>
     </section>

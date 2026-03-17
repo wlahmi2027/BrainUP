@@ -6,8 +6,8 @@ export default function StudentQuiz() {
   const [quizzes, setQuizzes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
 
   useEffect(() => {
     async function fetchStudentQuizzes() {
@@ -15,7 +15,7 @@ export default function StudentQuiz() {
         setIsLoading(true);
         setErrorMessage("");
 
-        const data = await getStudentQuizzes(token);
+        const data = await getStudentQuizzes();
         setQuizzes(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Erreur chargement quiz étudiant :", error);
@@ -26,7 +26,7 @@ export default function StudentQuiz() {
     }
 
     fetchStudentQuizzes();
-  }, [token]);
+  }, []);
 
   return (
     <section className="page student-page">
@@ -39,10 +39,16 @@ export default function StudentQuiz() {
         </div>
       </div>
 
-      {isLoading && <p>Chargement des quiz...</p>}
+      {isLoading && (
+        <div className="card card--pad">
+          <p>Chargement des quiz...</p>
+        </div>
+      )}
 
       {!isLoading && errorMessage && (
-        <p style={{ color: "#c0392b" }}>{errorMessage}</p>
+        <div className="card card--pad">
+          <p style={{ color: "#c0392b" }}>{errorMessage}</p>
+        </div>
       )}
 
       {!isLoading && !errorMessage && quizzes.length === 0 && (
@@ -61,13 +67,18 @@ export default function StudentQuiz() {
               <div>
                 <div className="teacher-row__title">{quiz.titre}</div>
                 <div className="teacher-row__meta">
-                  {quiz.cours_title} • {quiz.questions_count} question
-                  {quiz.questions_count > 1 ? "s" : ""} • {quiz.temps_limite_minutes} min
+                  {quiz.cours_title || `Cours #${quiz.cours}`} •{" "}
+                  {quiz.questions_count || 0} question
+                  {(quiz.questions_count || 0) > 1 ? "s" : ""} •{" "}
+                  {quiz.temps_limite_minutes || 0} min
                 </div>
               </div>
 
               <div className="teacher-row__right">
-                <button className="btn btn--primary" onClick={() => navigate(`/student/quiz/${quiz.id}`)}>
+                <button
+                  className="btn btn--primary"
+                  onClick={() => navigate(`/student/quiz/${quiz.id}`)}
+                >
                   Commencer
                 </button>
               </div>

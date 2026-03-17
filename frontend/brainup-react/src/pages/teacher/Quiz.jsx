@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { fetchTeacherQuizzes } from "../../api/quizzes";
 
-export default function Quiz() {
+export default function TeacherQuiz() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("quiz");
 
@@ -9,38 +10,26 @@ export default function Quiz() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const teacherId = 37;
+  const teacherId = localStorage.getItem("user_id") || 37;
 
   useEffect(() => {
-    async function fetchQuizzes() {
+    async function loadTeacherQuizzes() {
       try {
         setIsLoading(true);
         setErrorMessage("");
 
-        const response = await fetch(
-          `http://127.0.0.1:8001/api/quiz/?enseignant=${teacherId}`
-        );
-
-        console.log("GET /api/quiz/ status =", response.status);
-
-        if (!response.ok) {
-          throw new Error("Impossible de charger les quiz.");
-        }
-
-        const data = await response.json();
-        console.log("QUIZZES DATA =", data);
-
+        const data = await fetchTeacherQuizzes(teacherId);
         setQuizzes(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error("Erreur chargement quiz :", error);
+        console.error("Erreur chargement quiz professeur :", error);
         setErrorMessage("Impossible de charger les quiz.");
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchQuizzes();
-  }, []);
+    loadTeacherQuizzes();
+  }, [teacherId]);
 
   const resultsSummary = useMemo(() => {
     if (!quizzes.length) {
@@ -52,7 +41,12 @@ export default function Quiz() {
     }
 
     const totalAttempts = quizzes.reduce(
-      (sum, quiz) => sum + (quiz.tentatives_count || 0),
+      (sum, quiz) => sum + Number(quiz.tentatives_count || 0),
+      0
+    );
+
+    const totalSuccess = quizzes.reduce(
+      (sum, quiz) => sum + Number(quiz.reussites_count || 0),
       0
     );
 
@@ -60,15 +54,20 @@ export default function Quiz() {
       quizzes.reduce((sum, quiz) => sum + Number(quiz.moyenne_score || 0), 0) /
       quizzes.length;
 
+    const successRate =
+      totalAttempts > 0
+        ? `${Math.round((totalSuccess / totalAttempts) * 100)}%`
+        : "0%";
+
     return {
-      successRate: totalAttempts > 0 ? "—" : "0%",
+      successRate,
       globalAverage: `${averageValue.toFixed(1)}/20`,
       totalAttempts,
     };
   }, [quizzes]);
 
   function formatAverage(value) {
-    return `${Number(value || 0)}/20`;
+    return `${Number(value || 0).toFixed(1)}/20`;
   }
 
   return (
@@ -96,12 +95,14 @@ export default function Quiz() {
         >
           📝 Mes quiz
         </button>
+
         <button
           className={`chip ${activeTab === "results" ? "is-active" : ""}`}
           onClick={() => setActiveTab("results")}
         >
           📊 Résultats
         </button>
+
         <button
           className={`chip ${activeTab === "questions" ? "is-active" : ""}`}
           onClick={() => setActiveTab("questions")}
@@ -148,26 +149,29 @@ export default function Quiz() {
                 <div>
                   <div className="teacher-row__title">{quiz.titre}</div>
                   <div className="teacher-row__meta">
-                    {(quiz.cours_title || `Cours #${quiz.cours}`)} •{" "}
-                    {quiz.questions_count} question
-                    {quiz.questions_count > 1 ? "s" : ""}
+                    {quiz.cours_title || `Cours #${quiz.cours}`} •{" "}
+                    {quiz.questions_count || 0} question
+                    {(quiz.questions_count || 0) > 1 ? "s" : ""}
                   </div>
                 </div>
 
                 <div className="teacher-row__right">
                   <span className="teacher-mini-kpi">
-                    {quiz.tentatives_count} tentative
-                    {quiz.tentatives_count > 1 ? "s" : ""}
+                    {quiz.tentatives_count || 0} tentative
+                    {(quiz.tentatives_count || 0) > 1 ? "s" : ""}
                   </span>
+
                   <span className="teacher-mini-kpi">
                     Moyenne {formatAverage(quiz.moyenne_score)}
                   </span>
+
                   <button
                     className="btn btn--ghost"
                     onClick={() => navigate(`/teacher/quiz/${quiz.id}/edit`)}
                   >
                     Modifier
                   </button>
+
                   <button
                     className="btn btn--primary"
                     onClick={() => navigate(`/teacher/quiz/${quiz.id}`)}
@@ -183,6 +187,7 @@ export default function Quiz() {
       {activeTab === "results" && (
         <div className="card card--pad">
           <h2 className="card__title">Résumé des résultats</h2>
+
           <div className="teacher-results-grid">
             <div className="teacher-result-box">
               <div className="teacher-result-box__value">
@@ -190,19 +195,60 @@ export default function Quiz() {
               </div>
               <div className="teacher-result-box__label">Taux de réussite</div>
             </div>
+
             <div className="teacher-result-box">
               <div className="teacher-result-box__value">
                 {resultsSummary.globalAverage}
               </div>
               <div className="teacher-result-box__label">Moyenne générale</div>
             </div>
+
             <div className="teacher-result-box">
               <div className="teacher-result-box__value">
                 {resultsSummary.totalAttempts}
               </div>
-              <div className="teacher-result-box__label">Tentatives totales</div>
+              <div className="teacher-result-box__label">
+                Tentatives totales
+              </div>
             </div>
           </div>
+
+          {quizzes.length > 0 && (
+            <div style={{ marginTop: 20 }}>
+              {quizzes.map((quiz) => (
+                <div
+                  key={quiz.id}
+                  className="teacher-row teacher-row--card"
+                  style={{ marginTop: 12 }}
+                >
+                  <div>
+                    <div className="teacher-row__title">{quiz.titre}</div>
+                    <div className="teacher-row__meta">
+                      {quiz.cours_title || `Cours #${quiz.cours}`}
+                    </div>
+                  </div>
+
+                  <div className="teacher-row__right">
+                    <span className="teacher-mini-kpi">
+                      {quiz.tentatives_count || 0} tentative
+                      {(quiz.tentatives_count || 0) > 1 ? "s" : ""}
+                    </span>
+
+                    <span className="teacher-mini-kpi">
+                      Moyenne {formatAverage(quiz.moyenne_score)}
+                    </span>
+
+                    <button
+                      className="btn btn--primary"
+                      onClick={() => navigate(`/teacher/quiz/${quiz.id}/results`)}
+                    >
+                      Voir détails
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -213,6 +259,7 @@ export default function Quiz() {
             Vous pourrez ici ajouter, modifier et organiser les questions de vos
             quiz.
           </p>
+
           <div style={{ marginTop: 16 }}>
             <button
               className="btn btn--primary"
