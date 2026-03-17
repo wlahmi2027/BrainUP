@@ -60,10 +60,33 @@ class Enseignant(Utilisateur):
 
 
 class Cours(models.Model):
+    niveaux_choix = [
+    ('debutant', 'Débutant'),
+    ('intermediaire', 'Intermédiaire'),
+    ('avance', 'Avancé'),
+    ]
+
+    status_choix = [
+        ('brouillon', 'Brouillon'),
+        ('publie', 'Publié')
+    ]
+
     title = models.CharField(max_length=255)
     description = models.TextField()
     enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE)
     temps_apprentissage = models.IntegerField(default=0)
+    
+    niveau = models.CharField(
+        max_length=20,
+        choices=niveaux_choix,
+        default='debutant'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=status_choix,
+        default='brouillon'
+    )
 
     etudiants = models.ManyToManyField('Etudiant', through='Inscription', related_name='cours_liste')   # cours_list for reverse lookup
 

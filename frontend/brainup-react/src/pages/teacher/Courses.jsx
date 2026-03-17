@@ -1,57 +1,76 @@
-import { useState, useEffect, useMemo } from "react";
-import { api } from "../../api/client"; // named import
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Courses() {
-  const [courses, setCourses] = useState([]);
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Load courses from localStorage or fetch from API if empty
   useEffect(() => {
-    api.get("/courses/")
-      .then((res) => {
-        console.log("Courses API response:", res.data);
-        setCourses(res.data);
-        localStorage.setItem("courses", JSON.stringify(res.data));
-      })
-      .catch((err) => {
-        console.error("Failed to fetch courses:", err.response || err);
-      });
-  }, []);
+    const fetchCourses = async () => {
+      const token = localStorage.getItem("token");
 
-  // Filter courses by search query and optional status
-  const filteredCourses = useMemo(() => {
-    let result = [...courses];
+      if (!token) {
+        navigate("/login");
+        return;
+      }
 
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      result = result.filter(
-        (course) =>
-          course.title.toLowerCase().includes(q) ||
-          course.description.toLowerCase().includes(q)
-      );
-    }
+      try {
+        const res = await fetch("http://localhost:8001/api/courses/", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-    if (statusFilter !== "all") {
-      result = result.filter(
-        (course) => course.status?.toLowerCase() === statusFilter
-      );
-    }
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/login");
+          return;
+        }
 
-    return result;
-  }, [courses, query, statusFilter]);
+        if (!res.ok) throw new Error("Erreur lors du chargement des cours.");
+
+        const data = await res.json();
+        setCourses(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, [navigate]);
+
+  const filteredCourses = courses.filter((course) => {
+    const matchesQuery =
+      !query.trim() ||
+      course.title.toLowerCase().includes(query.toLowerCase()) ||
+      course.category.toLowerCase().includes(query.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "all" ||
+      course.status.toLowerCase() === statusFilter;
+
+    return matchesQuery && matchesStatus;
+  });
+
+  if (loading) return <p>Chargement...</p>;
+  if (error) return <p>{error}</p>;
 
   return (
     <section className="page teacher-page">
       <div className="teacher-head">
         <div>
           <h1 className="page__title">Gestion des cours</h1>
-          <p className="teacher-subtitle">
-            Créez, modifiez et publiez vos cours.
-          </p>
+          <p className="teacher-subtitle">Créez, modifiez et publiez vos cours.</p>
         </div>
-
-        <button className="btn btn--primary">+ Créer un cours</button>
+        <button className="btn btn--primary" onClick={() => navigate("/teacher/courses/create")}>
+          + Créer un cours
+        </button>
       </div>
 
       <div className="teacher-toolbar">
@@ -64,59 +83,52 @@ export default function Courses() {
         </div>
 
         <div className="seg">
-          <button
-            className={`seg__btn ${statusFilter === "all" ? "is-active" : ""}`}
-            onClick={() => setStatusFilter("all")}
-          >
-            Tous
-          </button>
-          <button
-            className={`seg__btn ${statusFilter === "publié" ? "is-active" : ""}`}
-            onClick={() => setStatusFilter("publié")}
-          >
-            Publiés
-          </button>
-          <button
-            className={`seg__btn ${statusFilter === "brouillon" ? "is-active" : ""}`}
-            onClick={() => setStatusFilter("brouillon")}
-          >
-            Brouillons
-          </button>
-          <button
-            className={`seg__btn ${statusFilter === "archivé" ? "is-active" : ""}`}
-            onClick={() => setStatusFilter("archivé")}
-          >
-            Archivés
-          </button>
+          {["all", "publié", "brouillon", "archivé"].map((s) => (
+            <button
+              key={s}
+              className={`seg__btn ${statusFilter === s ? "is-active" : ""}`}
+              onClick={() => setStatusFilter(s)}
+            >
+              {{ all: "Tous", publié: "Publiés", brouillon: "Brouillons", archivé: "Archivés" }[s]}
+            </button>
+          ))}
         </div>
       </div>
 
       <div className="teacher-courses-grid">
-        {filteredCourses.length > 0 ? (
-          filteredCourses.map((course, i) => (
-            <article key={i} className="teacher-course-card">
-              <div className="teacher-course-card__header">
-                <div className="teacher-course-card__icon">📘</div>
-                <span className="teacher-badge teacher-badge--muted"></span>
-              </div>
-
-              <h3 className="teacher-course-card__title">{course.title}</h3>
-              <p className="teacher-course-card__meta">{course.description}</p>
-
-              <div className="teacher-course-card__stats">
-                <span>{course.temps_apprentissage} min</span>
-              </div>
-
-              <div className="teacher-course-card__actions">
-                <button className="btn btn--ghost">Modifier</button>
-                <button className="btn btn--soft">Étudiants</button>
-                <button className="btn btn--primary">Publier</button>
-              </div>
-            </article>
-          ))
-        ) : (
-          <p>Aucun cours disponible.</p>
+        {filteredCourses.length === 0 && (
+          <p>Aucun cours trouvé.</p>
         )}
+        {filteredCourses.map((course) => (
+          <article key={course.id} className="teacher-course-card">
+            <div className="teacher-course-card__header">
+              <div className="teacher-course-card__icon">📘</div>
+              <span
+                className={`teacher-badge ${
+                  course.status === "Publié" ? "teacher-badge--success"
+                  : course.status === "Brouillon" ? "teacher-badge--warn"
+                  : "teacher-badge--muted"
+                }`}
+              >
+                {course.status}
+              </span>
+            </div>
+
+            <h3 className="teacher-course-card__title">{course.title}</h3>
+            <p className="teacher-course-card__meta">{course.category}</p>
+
+            <div className="teacher-course-card__stats">
+              <span>{course.students} étudiants</span>
+              <span>{course.lessons} leçons</span>
+            </div>
+
+            <div className="teacher-course-card__actions">
+              <button className="btn btn--ghost">Modifier</button>
+              <button className="btn btn--soft">Étudiants</button>
+              <button className="btn btn--primary">Publier</button>
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   );

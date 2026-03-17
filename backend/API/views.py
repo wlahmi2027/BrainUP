@@ -81,12 +81,67 @@ class CoursViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CoursSerializer
 
     def get_queryset(self):
-        user = self.request.user
+        user = get_user_from_token(self.request)  # returns Utilisateur
 
-        if not user.is_authenticated:
+        if not user:
             return Cours.objects.none()
 
-        return Cours.objects.filter(enseignant_id=user.id)
+        try:
+            enseignant = Enseignant.objects.get(utilisateur_ptr=user)
+        except Enseignant.DoesNotExist:
+            return Cours.objects.none()  # user is authenticated but not a teacher
+
+        return Cours.objects.filter(enseignant=enseignant)
+
+    def list(self, request, *args, **kwargs):
+        user = get_user_from_token(request)
+
+        if not user:
+            return Response(
+                {"success": False, "message": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        return super().list(request, *args, **kwargs)
+
+
+    def create(self, request, *args, **kwargs):
+        print("REQUEST DATA:", request.data)  # <-- add this
+
+        user = get_user_from_token(request)
+
+        if not user:
+            return Response({"message": "Unauthorized"}, status=401)
+
+        try:
+            enseignant = Enseignant.objects.get(utilisateur_ptr=user)
+        except Enseignant.DoesNotExist:
+            return Response({"message": "Forbidden"}, status=403)
+
+        data = request.data.copy()
+
+        if "temps_apprentissage" not in data:
+            data["temps_apprentissage"] = 0
+
+        serializer = self.get_serializer(data=data)
+
+        if not serializer.is_valid():
+            print("ERRORS:", serializer.errors)  # <-- add this
+            return Response(serializer.errors, status=400)
+
+        serializer.save(enseignant=enseignant)
+        return Response(serializer.data, status=201)
+
+    def retrieve(self, request, *args, **kwargs):
+        user = get_user_from_token(request)
+
+        if not user:
+            return Response(
+                {"success": False, "message": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        return super().retrieve(request, *args, **kwargs)
         
 
 @api_view(['POST'])

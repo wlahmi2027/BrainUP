@@ -15,11 +15,10 @@ class QuizSerializer(serializers.ModelSerializer):
 
 
 class CoursSerializer(serializers.ModelSerializer):
-    enseignant_nom = serializers.CharField(source='enseignant.nom', read_only=True)
 
     class Meta:
         model = Cours
-        fields = ['title', 'description', 'temps_apprentissage']
+        fields = ['title', 'description', 'temps_apprentissage', 'niveau', 'status']
 
 
 """
