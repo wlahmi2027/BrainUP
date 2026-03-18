@@ -38,7 +38,9 @@ class Cours(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, related_name='cours')
-    temps_apprentissage = models.IntegerField(default=0)
+    temps_apprentissage = models.IntegerField(default=0)  # durée estimée en minutes
+    is_published = models.BooleanField(default=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
 
     etudiants = models.ManyToManyField('Etudiant', through='Inscription', related_name='cours_liste')
 
@@ -47,13 +49,15 @@ class Cours(models.Model):
 
 
 class Inscription(models.Model):
-    etudiant = models.ForeignKey(Etudiant, on_delete=models.CASCADE)
-    cours = models.ForeignKey(Cours, on_delete=models.CASCADE)
+    etudiant = models.ForeignKey(Etudiant, on_delete=models.CASCADE, related_name='inscriptions')
+    cours = models.ForeignKey(Cours, on_delete=models.CASCADE, related_name='inscriptions')
 
     note_moyenne = models.FloatField(default=0.0)
     evaluation = models.IntegerField(null=True, blank=True)
     termine = models.BooleanField(default=False)
+    progression_percent = models.FloatField(default=0.0)
     date_inscription = models.DateTimeField(auto_now_add=True)
+    date_mise_a_jour = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('etudiant', 'cours')
@@ -66,6 +70,8 @@ class Lecon(models.Model):
     titre = models.CharField(max_length=255)
     contenu = models.TextField()
     cours = models.ForeignKey(Cours, on_delete=models.CASCADE, related_name='lecons')
+    ordre = models.PositiveIntegerField(default=1)
+    duree_estimee_minutes = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.titre
@@ -79,24 +85,26 @@ class Quiz(models.Model):
     ]
 
     NIVEAU_CHOICES = [
-    ('debutant', 'Débutant'),
-    ('intermediaire', 'Intermédiaire'),
-    ('avance', 'Avancé'),
+        ('debutant', 'Débutant'),
+        ('intermediaire', 'Intermédiaire'),
+        ('avance', 'Avancé'),
     ]
+
     titre = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     cours = models.ForeignKey(Cours, on_delete=models.CASCADE, related_name='quizzes')
     enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, related_name='quizzes')
 
     niveau = models.CharField(
-    max_length=20,
-    choices=NIVEAU_CHOICES,
-    default='debutant'
+        max_length=20,
+        choices=NIVEAU_CHOICES,
+        default='debutant'
     )
 
     temps_limite_minutes = models.PositiveIntegerField(default=0)
     tentatives_autorisees = models.PositiveIntegerField(default=1)
     score_reussite = models.FloatField(default=10.0)
+    score_max = models.FloatField(default=20.0)
 
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='brouillon')
     melanger_questions = models.BooleanField(default=False)
@@ -154,7 +162,7 @@ class TentativeQuiz(models.Model):
     statut = models.CharField(max_length=20, choices=STATUT_TENTATIVE, default='en_cours')
 
     score = models.FloatField(default=0.0)
-    score_max = models.FloatField(default=0.0)
+    score_max = models.FloatField(default=20.0)
     pourcentage = models.FloatField(default=0.0)
     reussi = models.BooleanField(default=False)
 
@@ -187,6 +195,33 @@ class ReponseTentative(models.Model):
 
     def __str__(self):
         return f"Tentative {self.tentative.id} - Question {self.question.id}"
+
+
+class SessionApprentissage(models.Model):
+    etudiant = models.ForeignKey(
+        Etudiant,
+        on_delete=models.CASCADE,
+        related_name='sessions_apprentissage'
+    )
+    cours = models.ForeignKey(
+        Cours,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sessions_apprentissage'
+    )
+    lecon = models.ForeignKey(
+        Lecon,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sessions_apprentissage'
+    )
+    duree_minutes = models.PositiveIntegerField(default=0)
+    date_session = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.etudiant.nom} - {self.duree_minutes} min"
 
 
 class Recommandation(models.Model):
