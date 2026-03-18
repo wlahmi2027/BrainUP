@@ -25,7 +25,7 @@ import CreateCourse from "../pages/teacher/CreateCourse";
 import EditCourse from "../pages/teacher/EditCourse";
 import CreateQuiz from "../pages/teacher/CreateQuiz";
 import EditQuiz from "../pages/teacher/EditQuiz";
-import Results from "../pages/teacher/Results";
+
 import Students from "../pages/teacher/Students";
 import StudentsResults from "../pages/teacher/StudentsResults";
 import QuizDetails from "../pages/teacher/QuizDetails";
@@ -69,7 +69,6 @@ export default function AppRoutes() {
           <Route path="quiz/:id" element={<QuizDetails />} />   
           <Route path="quiz/:id/edit" element={<EditQuiz />} />
           <Route path="quiz/:id/results" element={<QuizResults />} />
-          <Route path="results" element={<Results />} />
           <Route path="students" element={<Students />} />
           <Route path="students-results" element={<StudentsResults />} />
           <Route path="profile" element={<TeacherProfile />} />
