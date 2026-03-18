@@ -14,6 +14,7 @@ from API.views import (
     submit_quiz_view,
     teacher_quizzes_view,
     teacher_quiz_results_view,
+    student_dashboard_view,
 )
 
 router = routers.DefaultRouter()
@@ -34,4 +35,5 @@ urlpatterns = [
     path("api/student/quizzes/<int:quiz_id>/submit/", submit_quiz_view, name="student-quiz-submit"),
     path("api/teacher/quizzes/", teacher_quizzes_view, name="teacher-quizzes"),
     path("api/teacher/quizzes/<int:quiz_id>/results/", teacher_quiz_results_view, name="teacher-quiz-results"),
+    path("api/student/dashboard/", student_dashboard_view, name="student-dashboard"),
 ]

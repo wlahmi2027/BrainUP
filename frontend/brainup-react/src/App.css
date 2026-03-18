@@ -3262,3 +3262,366 @@ a { color: inherit; text-decoration: none; }
     align-items: flex-start;
   }
 }
+
+
+/*Dashboard Student*/
+.student-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.student-hero-card {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.student-hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.student-progress-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.student-progress-circle {
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.student-progress-circle__inner {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: #f3f7ff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #0f2f66;
+  text-align: center;
+}
+
+.student-progress-circle__value {
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.student-progress-circle__label {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #6880ad;
+  max-width: 120px;
+}
+
+.student-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.student-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #0f2f66;
+  font-weight: 600;
+}
+
+.student-legend-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.student-hero-right {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.student-kpi-card {
+  background: #f6f9ff;
+  border: 1px solid #dbe6fb;
+  border-radius: 20px;
+  padding: 18px;
+}
+
+.student-kpi-card__title {
+  font-size: 14px;
+  color: #6880ad;
+  margin-bottom: 10px;
+}
+
+.student-kpi-card__value {
+  font-size: 28px;
+  font-weight: 900;
+  color: #0f2f66;
+}
+
+.student-kpi-card__meta {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #6880ad;
+}
+
+@media (max-width: 1100px) {
+  .student-hero-card {
+    grid-template-columns: 1fr;
+  }
+
+  .student-hero-right {
+    grid-template-columns: 1fr;
+  }
+}.student-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 20px;
+}
+
+.student-hero-card {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.student-hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.student-progress-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.student-progress-circle {
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.student-progress-circle__inner {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: #f3f7ff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #0f2f66;
+  text-align: center;
+}
+
+.student-progress-circle__value {
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.student-progress-circle__label {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #6880ad;
+  max-width: 120px;
+}
+
+.student-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.student-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #0f2f66;
+  font-weight: 600;
+}
+
+.student-legend-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.student-hero-right {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.student-kpi-card {
+  background: #f6f9ff;
+  border: 1px solid #dbe6fb;
+  border-radius: 20px;
+  padding: 18px;
+}
+
+.student-kpi-card__title {
+  font-size: 14px;
+  color: #6880ad;
+  margin-bottom: 10px;
+}
+
+.student-kpi-card__value {
+  font-size: 28px;
+  font-weight: 900;
+  color: #0f2f66;
+}
+
+.student-kpi-card__meta {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #6880ad;
+}
+
+.student-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.student-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.student-list-item__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.student-list-item__title {
+  font-weight: 700;
+  color: #0f2f66;
+}
+
+.student-list-item__value {
+  font-weight: 800;
+  color: #2f6fed;
+}
+
+.student-progress-bar {
+  height: 10px;
+  background: #e9effb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.student-progress-bar__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2f6fed, #5ba8ff);
+  border-radius: 999px;
+}
+
+.student-score-item {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: #f8fbff;
+  border: 1px solid #dbe6fb;
+  border-radius: 18px;
+}
+
+.student-score-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #e8f0ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 800;
+  color: #2f6fed;
+}
+
+.student-score-content__title {
+  font-weight: 800;
+  color: #0f2f66;
+}
+
+.student-score-content__meta {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #6880ad;
+}
+
+.student-score-value {
+  font-weight: 900;
+  color: #0f2f66;
+}
+
+.student-activity-card {
+  grid-column: 1 / -1;
+}
+
+.student-activity-item {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.student-activity-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2f6fed;
+  margin-top: 7px;
+}
+
+.student-activity-content__title {
+  font-weight: 700;
+  color: #0f2f66;
+}
+
+.student-activity-content__meta {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #6880ad;
+}
+
+@media (max-width: 1100px) {
+  .student-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .student-hero-card {
+    grid-template-columns: 1fr;
+  }
+
+  .student-hero-right {
+    grid-template-columns: 1fr;
+  }
+}
+.student-list-item__meta {
+  font-size: 13px;
+  color: #6880ad;
+  font-weight: 600;
+}

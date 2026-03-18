@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny
-from django.db.models import Count, Avg, Q
+from django.db.models import Count, Avg, Q, Sum
 from API.serializers import (
     EtudiantSerializer,
     CoursSerializer,
@@ -16,7 +16,7 @@ from API.serializers import (
 )
 from django.utils import timezone
 
-from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz, Question, ChoixQuestion, TentativeQuiz, ReponseTentative
+from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz, Question, ChoixQuestion, TentativeQuiz, ReponseTentative, Inscription, SessionApprentissage
 from .recommendation_service import build_recommendations_payload
 
 import secrets
@@ -488,3 +488,84 @@ def recommendations_view(request, user_id):
             {"error": f"Erreur serveur : {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+
+@api_view(["GET"])
+def student_dashboard_view(request):
+    user = get_user_from_token(request)
+
+    if not user:
+        return Response(
+            {"error": "Unauthorized"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    try:
+        etudiant = Etudiant.objects.get(id=user.id)
+    except Etudiant.DoesNotExist:
+        return Response(
+            {"error": "Accès réservé aux étudiants"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    inscriptions = Inscription.objects.filter(etudiant=etudiant).select_related("cours")
+    tentatives = TentativeQuiz.objects.filter(etudiant=etudiant)
+    sessions = SessionApprentissage.objects.filter(etudiant=etudiant)
+
+    total_cours = inscriptions.count()
+    cours_termines = inscriptions.filter(termine=True).count()
+
+    moyenne_progression = inscriptions.aggregate(
+        avg_progress=Avg("progression_percent")
+    )["avg_progress"] or 0.0
+
+    quiz_passes = tentatives.count()
+    quiz_reussis = tentatives.filter(reussi=True).count()
+    quiz_score = (quiz_reussis / quiz_passes * 100) if quiz_passes > 0 else 0.0
+
+    temps_reel = sessions.aggregate(total=Sum("duree_minutes"))["total"] or 0
+    temps_estime_total = inscriptions.aggregate(
+        total=Sum("cours__temps_apprentissage")
+    )["total"] or 0
+
+    temps_score = (
+        min((temps_reel / temps_estime_total) * 100, 100)
+        if temps_estime_total > 0
+        else 0.0
+    )
+
+    score_global = (
+        0.50 * moyenne_progression +
+        0.35 * quiz_score +
+        0.15 * temps_score
+    )
+
+    # ✅ ICI BON ENDROIT (même niveau que score_global)
+    courses_progress = [
+        {
+            "id": inscription.cours.id,
+            "title": inscription.cours.title,
+            "progress": round(inscription.progression_percent or 0, 2),
+            "completed": inscription.termine,
+        }
+        for inscription in inscriptions
+    ]
+
+    return Response({
+        "score_global": round(score_global, 2),
+        "cours_score": round(moyenne_progression, 2),
+        "quiz_score": round(quiz_score, 2),
+        "temps_score": round(temps_score, 2),
+
+        "cours_termines": cours_termines,
+        "total_cours": total_cours,
+
+        "quiz_reussis": quiz_reussis,
+        "quiz_passes": quiz_passes,
+
+        "temps_reel_minutes": temps_reel,
+        "temps_estime_total_minutes": temps_estime_total,
+
+        "courses_progress": courses_progress,
+    }, status=status.HTTP_200_OK)
