@@ -75,6 +75,7 @@ class Cours(models.Model):
     description = models.TextField()
     enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE)
     temps_apprentissage = models.IntegerField(default=0)
+    banniere = models.ImageField(upload_to="bannieres/", null=True, blank=True)
     
     niveau = models.CharField(
         max_length=20,

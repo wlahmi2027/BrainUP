@@ -161,7 +161,7 @@ class StudentCourseViewSet(viewsets.ViewSet):
         # Filter only published courses
         courses = Cours.objects.filter(status="publie")
 
-        serializer = StudentCourseSerializer(courses, many=True, context={"student": student})
+        serializer = StudentCourseSerializer(courses, many=True, context={"student": student, "request": request})
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None):

@@ -31,6 +31,7 @@ class StudentCourseSerializer(serializers.ModelSerializer):
     lecons_count = serializers.SerializerMethodField()
     etudiants_count = serializers.SerializerMethodField()
     lecons = LeconSerializer(source="lecon_set", many=True)
+    banniere = serializers.SerializerMethodField()
 
     class Meta:
         model = Cours
@@ -43,7 +44,8 @@ class StudentCourseSerializer(serializers.ModelSerializer):
             "inscription",
             "lecons_count",
             "etudiants_count",
-            "lecons" ## ?
+            "lecons",
+            "banniere"
         ]
 
     def get_enseignant(self, obj):
@@ -68,4 +70,10 @@ class StudentCourseSerializer(serializers.ModelSerializer):
 
     def get_etudiants_count(self, obj):
         return obj.etudiants.count()
+
+    def get_banniere(self, obj):
+        request = self.context.get("request")
+        if obj.banniere:
+            return request.build_absolute_uri(obj.banniere.url) if request else obj.banniere.url
+        return None
 

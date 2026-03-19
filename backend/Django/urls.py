@@ -14,6 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from rest_framework import routers
 from django.urls import path, include
 from API.views import (
@@ -25,6 +26,14 @@ from API.views import (
     recommendations_view,
     StudentCourseViewSet
 )
+
+"""
+production -> fetches images and media using ngix, not directly via Django
+in developpment, NOT production :
+"""
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 router = routers.DefaultRouter()
 router.register(r'etudiants', EtudiantViewSet)
@@ -57,3 +66,7 @@ urlpatterns = [
     path("api/recommendations/<int:user_id>/", recommendations_view, name="recommendations"),
 
 ]
+
+# same, only for development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -30,6 +30,7 @@ export default function StudentCourses() {
           author: c.enseignant.nom,
           progression: c.inscription?.progression ?? 0,
           isFavorite: c.inscription?.favoris ?? false,
+          banner: c.banniere,
         }));
 
         setCourses(normalized);
@@ -162,7 +163,18 @@ export default function StudentCourses() {
           filteredAndSorted.map((c) => (
             <div key={c.id} className="course-card">
               {/* BANNER */}
-              <div className="course-banner">
+              <div
+                className="course-banner"
+                style={
+                  c.banner
+                    ? {
+                      backgroundImage: `url(${c.banner})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                    : undefined
+                }
+              >
                 <div className="banner-overlay">
                   <h3>{c.title}</h3>
                 </div>
