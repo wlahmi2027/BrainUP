@@ -99,8 +99,9 @@ class Cours(models.Model):
 
 class Lecon(models.Model):
     titre = models.CharField(max_length=255)
-    contenu = models.TextField()
+    contenu = models.FileField(upload_to="lecons/", null=True, blank=True)
     cours = models.ForeignKey(Cours, on_delete=models.CASCADE)
+    ordre = models.IntegerField(default=0)
 
     def __str__(self):
         return self.titre

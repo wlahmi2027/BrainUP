@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from API.models import Etudiant, Cours, Quiz, Inscription
+from API.models import Etudiant, Cours, Quiz, Inscription, Lecon
 
 
 class EtudiantSerializer(serializers.ModelSerializer):
@@ -20,11 +20,17 @@ class CoursSerializer(serializers.ModelSerializer):
         model = Cours
         fields = ['title', 'description', 'temps_apprentissage', 'niveau', 'status']
 
+class LeconSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lecon
+        fields = ["id", "titre", "ordre", "contenu"]
+
 class StudentCourseSerializer(serializers.ModelSerializer):
     enseignant = serializers.SerializerMethodField()
     inscription = serializers.SerializerMethodField()
     lecons_count = serializers.SerializerMethodField()
     etudiants_count = serializers.SerializerMethodField()
+    lecons = LeconSerializer(source="lecon_set", many=True)
 
     class Meta:
         model = Cours
@@ -37,6 +43,7 @@ class StudentCourseSerializer(serializers.ModelSerializer):
             "inscription",
             "lecons_count",
             "etudiants_count",
+            "lecons" ## ?
         ]
 
     def get_enseignant(self, obj):
@@ -62,48 +69,3 @@ class StudentCourseSerializer(serializers.ModelSerializer):
     def get_etudiants_count(self, obj):
         return obj.etudiants.count()
 
-
-"""
-class CoursSerializer(serializers.ModelSerializer):
-    author = serializers.CharField(source="enseignant.nom", read_only=True)
-    subtitle = serializers.SerializerMethodField()
-    level = serializers.SerializerMethodField()
-    rating = serializers.SerializerMethodField()
-    votes = serializers.SerializerMethodField()
-    isFavorite = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Cours
-        fields = [
-            "id",
-            "title",
-            "description",
-            "author",
-            "subtitle",
-            "level",
-            "rating",
-            "votes",
-            "isFavorite",
-        ]
-
-    def get_subtitle(self, obj):
-        return "Cours & exercices"
-
-    def get_level(self, obj):
-        text = (obj.title + " " + obj.description).lower()
-        if "début" in text or "introduction" in text:
-            return "Débutant"
-        if "avancé" in text:
-            return "Avancé"
-        return "Intermédiaire"
-
-    def get_rating(self, obj):
-        return 0
-
-    def get_votes(self, obj):
-        return 0
-
-    def get_isFavorite(self, obj):
-        return False
-
-"""

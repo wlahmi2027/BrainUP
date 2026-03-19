@@ -5,29 +5,29 @@ export default function CourseDetail() {
   const { id } = useParams();
 
   const [course, setCourse] = useState(null);
+  const [selectedLesson, setSelectedLesson] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchCourse() {
-      try {
-        const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
-        const res = await fetch(
-          `http://localhost:8001/api/student/courses/${id}/`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+      const res = await fetch(
+        `http://localhost:8001/api/student/courses/${id}/`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-        const data = await res.json();
-        setCourse(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+      const data = await res.json();
+      setCourse(data);
+
+      // select first lesson by default
+      if (data.lecons?.length) {
+        setSelectedLesson(data.lecons[0]);
       }
+
+      setLoading(false);
     }
 
     fetchCourse();
@@ -39,103 +39,73 @@ export default function CourseDetail() {
   const progress = course.inscription?.progression || 0;
 
   return (
-    <section className="page">
+    <section className="player">
       {/* ===== HEADER ===== */}
-      <div className="page__header">
+      <div className="player__header">
         <div>
-          <h1 className="page__title">{course.title}</h1>
-          <p className="course__sub">
-            Enseignant : <strong>{course.enseignant?.nom}</strong>
+          <h1>{course.titre}</h1>
+          <p>
+            {course.enseignant?.nom} • {course.niveau}
           </p>
         </div>
 
-        <span className="badgeOk">{course.niveau}</span>
+        <div className="player__progress">
+          {progress}% complété
+        </div>
       </div>
 
-      {/* ===== GRID ===== */}
-      <div className="grid">
-        {/* ===== LEFT: DESCRIPTION ===== */}
-        <div className="card span-2">
-          <div className="card__head">
-            <h2>Description</h2>
-          </div>
-          <div style={{ padding: "0 18px 18px" }}>
-            <p style={{ color: "#475569", lineHeight: 1.6 }}>
-              {course.description}
-            </p>
-          </div>
-        </div>
+      {/* ===== MAIN LAYOUT ===== */}
+      <div className="player__layout">
+        {/* ===== SIDEBAR (LESSONS) ===== */}
+        <aside className="player__sidebar">
+          <h3>Leçons</h3>
 
-        {/* ===== RIGHT: PROGRESS ===== */}
-        <div className="card">
-          <div className="card__head">
-            <h2>Progression</h2>
-          </div>
+          {course.lecons?.length === 0 && (
+            <p className="muted">Aucune leçon disponible</p>
+          )}
 
-          <div className="progress">
+          {course.lecons?.map((lesson) => (
             <div
-              className="donut"
-              style={{
-                background: `conic-gradient(#2fa5ff 0 ${progress}%, #eaf2ff ${progress}% 100%)`,
-              }}
+              key={lesson.id}
+              className={`lesson ${
+                selectedLesson?.id === lesson.id ? "is-active" : ""
+              }`}
+              onClick={() => setSelectedLesson(lesson)}
             >
-              <div className="donut__center">
-                <div className="donut__pct">{progress}%</div>
-                <div className="donut__label">Complété</div>
+              <span className="lesson__title">{lesson.titre}</span>
+            </div>
+          ))}
+        </aside>
+
+        {/* ===== CONTENT ===== */}
+        <main className="player__content">
+          {!selectedLesson ? (
+            <div className="card card--pad">
+              Sélectionnez une leçon
+            </div>
+          ) : (
+            <div className="card">
+              <div className="card__head">
+                <h2>{selectedLesson.titre}</h2>
+              </div>
+
+              <div className="lesson__content">
+                {selectedLesson.contenu ? (
+                  <iframe
+                    src={selectedLesson.contenu}
+                    titre="Lesson content"
+                    width="100%"
+                    height="500px"
+                  />
+                ) : (
+                  <p className="muted">
+                    Contenu non disponible pour cette leçon.
+                  </p>
+                )}
               </div>
             </div>
-
-            <div className="stats">
-              <div className="stat">
-                <span className="dot blue">•</span> Leçons :{" "}
-                {course.lecons_count}
-              </div>
-
-              <div className="stat">
-                <span className="dot green">•</span> Étudiants :{" "}
-                {course.etudiants_count}
-              </div>
-
-              <div className="stat">
-                <span className="dot yellow">•</span> Note :{" "}
-                {course.inscription?.note_moyenne ?? "—"}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ===== EXTRA INFO ===== */}
-        <div className="card span-2">
-          <div className="card__head">
-            <h2>Votre activité</h2>
-          </div>
-
-          <div style={{ padding: "0 18px 18px" }}>
-            <ul className="checklist">
-              <li>
-                <span className="check">✓</span>
-                Progression :{" "}
-                <span className="muted">{progress}% complété</span>
-              </li>
-
-              <li>
-                <span className="check">✓</span>
-                Note moyenne :{" "}
-                <span className="muted">
-                  {course.inscription?.note_moyenne ?? "Non évalué"}
-                </span>
-              </li>
-
-              <li>
-                <span className="check">✓</span>
-                Favori :{" "}
-                <span className="muted">
-                  {course.inscription?.favoris ? "Oui" : "Non"}
-                </span>
-              </li>
-            </ul>
-          </div>
-        </div>
+          )}
+        </main>
       </div>
     </section>
   );

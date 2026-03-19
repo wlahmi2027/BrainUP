@@ -58,6 +58,7 @@ export default function AppRoutes() {
       {/* Teacher routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/teacher" element={<TeacherLayout />}>
+          <Route path="accueil" element={<Accueil />} />
           <Route path="dashboard" element={<TeacherDashboard />} />
           <Route path="courses" element={<TeacherCourses />} />
           <Route path="courses/create" element={<CreateCourse />} />

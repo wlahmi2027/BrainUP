@@ -17,34 +17,35 @@ export default function Login() {
       const data = await loginUser(email, password);
 
       if (data.success) {
-
-        /* stockage login */
+        /* Store token */
         localStorage.setItem("token", data.token);
+        /* Store full user info in localStorage */
+        const user = {
+          name: data.user?.nom || "Utilisateur",
+          role: data.user?.role || "student",
+          email: data.user?.email || ""
+        };
+        localStorage.setItem("user", JSON.stringify(user));
 
-        const role = data.user?.role;
-
-        /* redirection selon rôle */
-        if (role === "etudiant") {
-          navigate("/student/");
-        }
-
-        else if (role === "enseignant") {
-          navigate("/teacher/");
-        }
-
-        else if (role === "admin") {
-          navigate("/admin/");
-        }
-
-        else {
-          navigate("/");
+        /* Redirect based on role */
+        switch (user.role) {
+          case "etudiant":
+            navigate("/student/accueil");
+            break;
+          case "enseignant":
+            navigate("/teacher/accueil");
+            break;
+          case "admin":
+            navigate("/admin/");
+            break;
+          default:
+            navigate("/");
         }
       } else {
         alert(data.message || "Email ou mot de passe invalide");
       }
     } catch (err) {
       console.error(err);
-
       if (err.response && err.response.status === 401) {
         alert("Email ou mot de passe invalide");
       } else {

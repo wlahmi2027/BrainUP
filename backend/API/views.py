@@ -205,6 +205,7 @@ class StudentCourseViewSet(viewsets.ViewSet):
 
 @api_view(['POST'])
 def login_view(request):
+    nom = request.data.get('nom')
     email = request.data.get('email')
     mot_de_passe = request.data.get('mot_de_passe')
 
@@ -240,6 +241,7 @@ def login_view(request):
             "success": True,
             "token": token,
             "user": {
+                "nom": utilisateur.nom,
                 "email": utilisateur.email,
                 "role": role
             }

@@ -14,6 +14,8 @@ export default function Deconnexion() {
     }
 
     localStorage.removeItem("token");
+    localStorage.removeItem("courses");
+    localStorage.removeItem("user");
 
     navigate("/login");
   };
