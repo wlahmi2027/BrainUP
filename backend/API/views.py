@@ -510,7 +510,7 @@ def student_dashboard_view(request):
         )
 
     inscriptions = Inscription.objects.filter(etudiant=etudiant).select_related("cours")
-    tentatives = TentativeQuiz.objects.filter(etudiant=etudiant)
+    tentatives = TentativeQuiz.objects.filter(etudiant=etudiant).select_related("quiz")
     sessions = SessionApprentissage.objects.filter(etudiant=etudiant)
 
     total_cours = inscriptions.count()
@@ -541,7 +541,6 @@ def student_dashboard_view(request):
         0.15 * temps_score
     )
 
-    # ✅ ICI BON ENDROIT (même niveau que score_global)
     courses_progress = [
         {
             "id": inscription.cours.id,
@@ -549,10 +548,26 @@ def student_dashboard_view(request):
             "progress": round(inscription.progression_percent or 0, 2),
             "completed": inscription.termine,
         }
-        for inscription in inscriptions
+        for inscription in inscriptions.order_by("-progression_percent", "cours__title")
     ]
 
-    return Response({
+    best_quiz_scores = [
+        {
+            "id": tentative.id,
+            "quiz_id": tentative.quiz.id,
+            "code": (tentative.quiz.titre[:3] or "QZ").upper(),
+            "title": tentative.quiz.titre,
+            "score": f"{round(tentative.score, 2)} / {round(tentative.score_max, 2)}",
+            "score_value": round(tentative.score, 2),
+            "score_max": round(tentative.score_max, 2),
+            "date_label": tentative.date_soumission.strftime("%d/%m/%Y")
+            if tentative.date_soumission
+            else "Date inconnue",
+        }
+        for tentative in tentatives.order_by("-score", "-date_soumission")[:4]
+    ]
+
+    payload = {
         "score_global": round(score_global, 2),
         "cours_score": round(moyenne_progression, 2),
         "quiz_score": round(quiz_score, 2),
@@ -568,4 +583,7 @@ def student_dashboard_view(request):
         "temps_estime_total_minutes": temps_estime_total,
 
         "courses_progress": courses_progress,
-    }, status=status.HTTP_200_OK)
+        "best_quiz_scores": best_quiz_scores,
+    }
+
+    return Response(payload, status=status.HTTP_200_OK)

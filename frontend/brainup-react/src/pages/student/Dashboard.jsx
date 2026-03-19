@@ -27,32 +27,7 @@ export default function StudentDashboard() {
 
   const coursesProgress = dashboard?.courses_progress || [];
 
-  const bestQuizScores = [
-    {
-      code: "JS",
-      title: "JavaScript avancé",
-      dateLabel: "Cette semaine",
-      score: "19 / 20",
-    },
-    {
-      code: "Py",
-      title: "Python bases",
-      dateLabel: "Il y a 3 jours",
-      score: "17 / 20",
-    },
-    {
-      code: "Rct",
-      title: "React Hooks",
-      dateLabel: "Il y a 5 jours",
-      score: "16 / 20",
-    },
-    {
-      code: "SQL",
-      title: "Bases de données",
-      dateLabel: "La semaine passée",
-      score: "12 / 20",
-    },
-  ];
+  const bestQuizScores = dashboard?.best_quiz_scores || [];
 
   const recentActivity = [
     {
@@ -254,23 +229,29 @@ export default function StudentDashboard() {
 </div>
 
         <div className="card card--pad">
-          <h2 className="card__title">Meilleurs scores de quiz</h2>
+            <h2 className="card__title">Meilleurs scores de quiz</h2>
 
-          <div className="student-list">
-            {bestQuizScores.map((quiz) => (
-              <div key={`${quiz.code}-${quiz.title}`} className="student-score-item">
-                <div className="student-score-badge">{quiz.code}</div>
+            <div className="student-list">
+              {bestQuizScores.length === 0 ? (
+                <p className="teacher-subtitle" style={{ marginTop: 12 }}>
+                  Aucun quiz passé pour le moment.
+                </p>
+              ) : (
+                bestQuizScores.map((quiz) => (
+                  <div key={quiz.id} className="student-score-item">
+                    <div className="student-score-badge">{quiz.code}</div>
 
-                <div className="student-score-content">
-                  <div className="student-score-content__title">{quiz.title}</div>
-                  <div className="student-score-content__meta">{quiz.dateLabel}</div>
-                </div>
+                    <div className="student-score-content">
+                      <div className="student-score-content__title">{quiz.title}</div>
+                      <div className="student-score-content__meta">{quiz.date_label}</div>
+                    </div>
 
-                <div className="student-score-value">{quiz.score}</div>
-              </div>
-            ))}
+                    <div className="student-score-value">{quiz.score}</div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
 
         <div className="card card--pad student-activity-card">
           <h2 className="card__title">Activité récente</h2>
