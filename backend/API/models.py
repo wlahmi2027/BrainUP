@@ -231,3 +231,56 @@ class Recommandation(models.Model):
 
     def __str__(self):
         return f"{self.utilisateur.nom} → {self.cours.title} ({self.score_recommendation})"
+
+
+class HistoriqueActivite(models.Model):
+    TYPE_CHOICES = [
+        ('quiz_reussi', 'Quiz réussi'),
+        ('quiz_echoue', 'Quiz échoué'),
+        ('cours_demarre', 'Cours démarré'),
+        ('cours_termine', 'Cours terminé'),
+        ('lecon_consultee', 'Leçon consultée'),
+        ('session_etude', 'Session d’étude'),
+    ]
+
+    etudiant = models.ForeignKey(
+        Etudiant,
+        on_delete=models.CASCADE,
+        related_name='historique_activites'
+    )
+
+    type_activite = models.CharField(max_length=30, choices=TYPE_CHOICES)
+    titre = models.CharField(max_length=255)
+    description = models.CharField(max_length=255, blank=True, null=True)
+
+    cours = models.ForeignKey(
+        Cours,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historique_activites'
+    )
+
+    quiz = models.ForeignKey(
+        Quiz,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historique_activites'
+    )
+
+    lecon = models.ForeignKey(
+        Lecon,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historique_activites'
+    )
+
+    date_creation = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date_creation']
+
+    def __str__(self):
+        return f"{self.etudiant.nom} - {self.titre}"

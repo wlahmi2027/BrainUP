@@ -3625,3 +3625,274 @@ a { color: inherit; text-decoration: none; }
   color: #6880ad;
   font-weight: 600;
 }
+/* ===== GLOBAL GRID ===== */
+.student-dashboard-grid {
+  display: grid;
+  gap: 24px;
+}
+
+/* ===== HERO ===== */
+.student-hero-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+.student-hero-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.student-progress-wrap {
+  margin-top: 20px;
+}
+
+/* ===== CIRCLE ===== */
+.student-progress-circle {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.student-progress-circle__inner {
+  width: 130px;
+  height: 130px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.student-progress-circle__value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #2f6fed;
+}
+
+.student-progress-circle__label {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+
+/* ===== LEGEND ===== */
+.student-legend {
+  margin-top: 20px;
+  display: flex;
+  gap: 16px;
+}
+
+.student-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.student-legend-color {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* ===== KPI ===== */
+.student-hero-right {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.student-kpi-card {
+  background: #f9fbff;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.student-kpi-card__title {
+  font-size: 13px;
+  color: #888;
+}
+
+.student-kpi-card__value {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.student-kpi-card__meta {
+  font-size: 12px;
+  color: #aaa;
+}
+
+/* ===== LIST ===== */
+.student-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.student-list-item {
+  padding: 12px;
+  border-radius: 10px;
+  background: #f9fbff;
+  transition: 0.2s;
+}
+
+.student-list-item:hover {
+  transform: translateY(-2px);
+  background: #eef4ff;
+}
+
+.student-list-item__top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.student-progress-bar {
+  height: 6px;
+  background: #eee;
+  border-radius: 10px;
+}
+
+.student-progress-bar__fill {
+  height: 100%;
+  background: #2f6fed;
+  border-radius: 10px;
+}
+
+/* ===== QUIZ SCORES ===== */
+.student-score-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.student-score-badge {
+  width: 40px;
+  height: 40px;
+  background: #2f6fed;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+.student-score-value {
+  margin-left: auto;
+  font-weight: bold;
+}
+
+/* ===== ACTIVITY ===== */
+.student-activity-item {
+  display: flex;
+  gap: 10px;
+}
+
+.student-activity-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 6px;
+  background: #2f6fed;
+}
+
+.student-activity-content__title {
+  font-size: 14px;
+}
+
+.student-activity-content__meta {
+  font-size: 12px;
+  color: #888;
+}
+.student-dashboard {
+  animation: fadeIn 0.5s ease;
+}
+
+.section-title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.student-kpi-card__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4f6ea8;
+  margin-bottom: 10px;
+}
+
+.student-activity-icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 10px;
+  background: #f4f7ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hover-lift {
+  transition: transform 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(20, 60, 140, 0.08);
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.55s ease;
+}
+
+.pulse-soft {
+  animation: pulseSoft 2.8s infinite ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseSoft {
+  0% {
+    box-shadow: 0 0 0 0 rgba(47, 111, 237, 0.12);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(47, 111, 237, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(47, 111, 237, 0);
+  }
+}

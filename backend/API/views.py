@@ -11,12 +11,13 @@ from API.serializers import (
     ChoixQuestionSerializer,
     StudentQuizSerializer,
     TeacherQuizResultSerializer, 
-    QuizSubmissionResponseSerializer
-
+    QuizSubmissionResponseSerializer,
 )
+from .activity_service import ajouter_activite
 from django.utils import timezone
 
-from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz, Question, ChoixQuestion, TentativeQuiz, ReponseTentative, Inscription, SessionApprentissage
+from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz, Question, ChoixQuestion, TentativeQuiz, ReponseTentative, Inscription, SessionApprentissage, HistoriqueActivite
+    
 from .recommendation_service import build_recommendations_payload
 
 import secrets
@@ -567,23 +568,31 @@ def student_dashboard_view(request):
         for tentative in tentatives.order_by("-score", "-date_soumission")[:4]
     ]
 
+    recent_activity = [
+        {
+            "id": item.id,
+            "type": item.type_activite,
+            "title": item.titre,
+            "meta": item.description or "",
+            "date_label": item.date_creation.strftime("%d/%m/%Y"),
+        }
+        for item in HistoriqueActivite.objects.filter(etudiant=etudiant)[:5]
+    ]
+
     payload = {
         "score_global": round(score_global, 2),
         "cours_score": round(moyenne_progression, 2),
         "quiz_score": round(quiz_score, 2),
         "temps_score": round(temps_score, 2),
-
         "cours_termines": cours_termines,
         "total_cours": total_cours,
-
         "quiz_reussis": quiz_reussis,
         "quiz_passes": quiz_passes,
-
         "temps_reel_minutes": temps_reel,
         "temps_estime_total_minutes": temps_estime_total,
-
         "courses_progress": courses_progress,
         "best_quiz_scores": best_quiz_scores,
+        "recent_activity": recent_activity,
     }
 
     return Response(payload, status=status.HTTP_200_OK)
