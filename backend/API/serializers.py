@@ -15,7 +15,7 @@ class QuizSerializer(serializers.ModelSerializer):
 
 #for teachers :
 class CoursSerializer(serializers.ModelSerializer):
-    banniere = serializers.SerializerMethodField()
+    banniere = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Cours
@@ -26,6 +26,17 @@ class CoursSerializer(serializers.ModelSerializer):
         if obj.banniere:
             return request.build_absolute_uri(obj.banniere.url)
         return None
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        request = self.context.get("request")
+        if instance.banniere:
+            representation["banniere"] = request.build_absolute_uri(instance.banniere.url)
+        else:
+            representation["banniere"] = None
+
+        return representation
 
 class LeconSerializer(serializers.ModelSerializer):
     class Meta:

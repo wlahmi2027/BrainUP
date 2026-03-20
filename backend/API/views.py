@@ -125,7 +125,7 @@ class CoursViewSet(viewsets.ReadOnlyModelViewSet):
         except Enseignant.DoesNotExist:
             return Response({"message": "Forbidden"}, status=403)
 
-        data = request.data.copy()
+        data = request.data
 
         if "temps_apprentissage" not in data:
             data["temps_apprentissage"] = 0

@@ -8,25 +8,21 @@ export default function CreateCourse() {
     category: "",
     level: "debutant",
     description: "",
-    status: "Brouillon",
+    status: "brouillon",
     temps_apprentissage: "0",
+    banniere: null
   });
-  const [pdfFile, setPdfFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   function handleChange(event) {
-    const { name, value } = event.target;
-    setForm((previous) => ({ ...previous, [name]: value }));
-  }
+    const { name, value, files } = event.target;
 
-  function handleFileChange(event) {
-    const file = event.target.files?.[0] || null;
-    if (file && file.type !== "application/pdf") {
-      alert("Veuillez sélectionner un fichier PDF.");
-      return;
+    if (name === "banniere") {
+      setForm((prev) => ({ ...prev, banniere: files[0] }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
-    setPdfFile(file);
   }
 
   async function handleSubmit(event) {
@@ -45,11 +41,12 @@ export default function CreateCourse() {
     formData.append("niveau", form.level);
     formData.append("temps_apprentissage", form.temps_apprentissage);
     formData.append("status", form.status);
-
-
-    if (pdfFile) {
-      formData.append("pdf", pdfFile);
+    
+    
+    if (form.banniere) {
+      formData.append("banniere", form.banniere);
     }
+
 
     try {
       setLoading(true);
@@ -86,7 +83,7 @@ export default function CreateCourse() {
       <div className="teacher-head">
         <div>
           <h1 className="page__title">Créer un cours</h1>
-          <p className="teacher-subtitle">Ajoutez un nouveau cours et son support PDF.</p>
+          <p className="teacher-subtitle">Ajoutez un nouveau cours</p>
         </div>
       </div>
 
@@ -171,19 +168,16 @@ export default function CreateCourse() {
               required
             />
           </div>
+        </div>
 
-          <div className="field teacher-field--full">
-            <label className="label">Support de cours (PDF)</label>
-            <input className="input" type="file" accept="application/pdf" onChange={handleFileChange} />
-            {pdfFile && (
-              <div className="teacher-file-box">
-                <span>📄 {pdfFile.name}</span>
-                <span className="teacher-file-box__meta">
-                  {(pdfFile.size / 1024 / 1024).toFixed(2)} MB
-                </span>
-              </div>
-            )}
-          </div>
+        <div className="field teacher-field--full">
+          <label className="label">Bannière</label>
+          <input
+            type="file"
+            name="banniere"
+            accept="image/*"
+            onChange={handleChange}
+          />
         </div>
 
         <div className="teacher-form-actions">

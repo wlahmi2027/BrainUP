@@ -8,6 +8,8 @@ export default function Courses() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const FILTERS = ["all", "publie", "brouillon", "archive"];
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -99,7 +101,7 @@ export default function Courses() {
 
       {/* STATUS FILTER */}
       <div className="courses-tabs">
-        {["all", "publié", "brouillon", "archivé"].map((s) => (
+        {FILTERS.map((s) => (
           <button
             key={s}
             className={statusFilter === s ? "active" : ""}
@@ -107,9 +109,9 @@ export default function Courses() {
           >
             {{
               all: "Tous",
-              publié: "Publiés",
+              publie: "Publiés",
               brouillon: "Brouillons",
-              archivé: "Archivés",
+              archive: "Archivés",
             }[s]}
           </button>
         ))}
