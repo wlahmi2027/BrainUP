@@ -15,10 +15,17 @@ class QuizSerializer(serializers.ModelSerializer):
 
 #for teachers :
 class CoursSerializer(serializers.ModelSerializer):
+    banniere = serializers.SerializerMethodField()
 
     class Meta:
         model = Cours
-        fields = ['title', 'description', 'temps_apprentissage', 'niveau', 'status']
+        fields = ["id", "title", "temps_apprentissage", "niveau", "description", "status", "banniere"]
+
+    def get_banniere(self, obj):
+        request = self.context.get("request")
+        if obj.banniere:
+            return request.build_absolute_uri(obj.banniere.url)
+        return None
 
 class LeconSerializer(serializers.ModelSerializer):
     class Meta:
