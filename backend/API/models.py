@@ -3,15 +3,15 @@ from django.db import models
 
 class Utilisateur(models.Model):
     ROLE_CHOICES = [
-        ('etudiant', 'Etudiant'),
-        ('enseignant', 'Enseignant'),
-        ('admin', 'Admin'),
+        ("etudiant", "Etudiant"),
+        ("enseignant", "Enseignant"),
+        ("admin", "Admin"),
     ]
 
     nom = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     mot_de_passe = models.CharField(max_length=255)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='etudiant')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="etudiant")
     token = models.CharField(max_length=128, blank=True, null=True)
 
     def __str__(self):
@@ -21,7 +21,7 @@ class Utilisateur(models.Model):
 class Etudiant(Utilisateur):
     progression = models.FloatField(default=0.0)
     score_moyen = models.FloatField(default=0.0)
-    cours = models.ManyToManyField('Cours', through='Inscription', related_name='etudiants_liste')
+    cours = models.ManyToManyField("Cours", through="Inscription", related_name="etudiants_liste")
 
     def __str__(self):
         return f"{self.nom} (Etudiant)"
@@ -35,32 +35,54 @@ class Enseignant(Utilisateur):
 
 
 class Cours(models.Model):
+    NIVEAUX_CHOIX = [
+        ("debutant", "Débutant"),
+        ("intermediaire", "Intermédiaire"),
+        ("avance", "Avancé"),
+    ]
+
+    STATUS_CHOIX = [
+        ("brouillon", "Brouillon"),
+        ("publie", "Publié"),
+    ]
+
     title = models.CharField(max_length=255)
     description = models.TextField()
-    enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, related_name='cours')
-    temps_apprentissage = models.IntegerField(default=0)  # durée estimée en minutes
+    enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, related_name="cours")
+    temps_apprentissage = models.IntegerField(default=0)
     is_published = models.BooleanField(default=True)
     date_creation = models.DateTimeField(auto_now_add=True)
 
-    etudiants = models.ManyToManyField('Etudiant', through='Inscription', related_name='cours_liste')
+    # Ajouts conservateurs
+    banniere = models.ImageField(upload_to="bannieres/", null=True, blank=True)
+    niveau = models.CharField(max_length=20, choices=NIVEAUX_CHOIX, default="debutant")
+    status = models.CharField(max_length=20, choices=STATUS_CHOIX, default="brouillon")
+
+    etudiants = models.ManyToManyField("Etudiant", through="Inscription", related_name="cours_liste")
 
     def __str__(self):
         return self.title
 
 
 class Inscription(models.Model):
-    etudiant = models.ForeignKey(Etudiant, on_delete=models.CASCADE, related_name='inscriptions')
-    cours = models.ForeignKey(Cours, on_delete=models.CASCADE, related_name='inscriptions')
+    etudiant = models.ForeignKey(Etudiant, on_delete=models.CASCADE, related_name="inscriptions")
+    cours = models.ForeignKey(Cours, on_delete=models.CASCADE, related_name="inscriptions")
 
     note_moyenne = models.FloatField(default=0.0)
     evaluation = models.IntegerField(null=True, blank=True)
+
+    # Tes champs existants
     termine = models.BooleanField(default=False)
     progression_percent = models.FloatField(default=0.0)
+
+    # Ajout du binôme sans casser l’existant
+    favoris = models.BooleanField(default=False)
+
     date_inscription = models.DateTimeField(auto_now_add=True)
     date_mise_a_jour = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('etudiant', 'cours')
+        unique_together = ("etudiant", "cours")
 
     def __str__(self):
         return f"{self.etudiant.nom} - {self.cours.title}"
@@ -68,8 +90,14 @@ class Inscription(models.Model):
 
 class Lecon(models.Model):
     titre = models.CharField(max_length=255)
+
+    # Ton champ actuel
     contenu = models.TextField()
-    cours = models.ForeignKey(Cours, on_delete=models.CASCADE, related_name='lecons')
+
+    # Ajout du binôme sans remplacement
+    fichier = models.FileField(upload_to="lecons/", null=True, blank=True)
+
+    cours = models.ForeignKey(Cours, on_delete=models.CASCADE, related_name="lecons")
     ordre = models.PositiveIntegerField(default=1)
     duree_estimee_minutes = models.PositiveIntegerField(default=0)
 
@@ -79,34 +107,29 @@ class Lecon(models.Model):
 
 class Quiz(models.Model):
     STATUT_CHOICES = [
-        ('brouillon', 'Brouillon'),
-        ('publie', 'Publié'),
-        ('archive', 'Archivé'),
+        ("brouillon", "Brouillon"),
+        ("publie", "Publié"),
+        ("archive", "Archivé"),
     ]
 
     NIVEAU_CHOICES = [
-        ('debutant', 'Débutant'),
-        ('intermediaire', 'Intermédiaire'),
-        ('avance', 'Avancé'),
+        ("debutant", "Débutant"),
+        ("intermediaire", "Intermédiaire"),
+        ("avance", "Avancé"),
     ]
 
     titre = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    cours = models.ForeignKey(Cours, on_delete=models.CASCADE, related_name='quizzes')
-    enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, related_name='quizzes')
+    cours = models.ForeignKey(Cours, on_delete=models.CASCADE, related_name="quizzes")
+    enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, related_name="quizzes")
 
-    niveau = models.CharField(
-        max_length=20,
-        choices=NIVEAU_CHOICES,
-        default='debutant'
-    )
-
+    niveau = models.CharField(max_length=20, choices=NIVEAU_CHOICES, default="debutant")
     temps_limite_minutes = models.PositiveIntegerField(default=0)
     tentatives_autorisees = models.PositiveIntegerField(default=1)
     score_reussite = models.FloatField(default=10.0)
     score_max = models.FloatField(default=20.0)
 
-    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='brouillon')
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default="brouillon")
     melanger_questions = models.BooleanField(default=False)
     afficher_feedback = models.BooleanField(default=True)
 
@@ -120,15 +143,15 @@ class Quiz(models.Model):
 
 class Question(models.Model):
     TYPE_CHOICES = [
-        ('choix_unique', 'Choix unique'),
-        ('choix_multiple', 'Choix multiple'),
-        ('vrai_faux', 'Vrai/Faux'),
-        ('reponse_courte', 'Réponse courte'),
+        ("choix_unique", "Choix unique"),
+        ("choix_multiple", "Choix multiple"),
+        ("vrai_faux", "Vrai/Faux"),
+        ("reponse_courte", "Réponse courte"),
     ]
 
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="questions")
     enonce = models.TextField()
-    type_question = models.CharField(max_length=30, choices=TYPE_CHOICES, default='choix_unique')
+    type_question = models.CharField(max_length=30, choices=TYPE_CHOICES, default="choix_unique")
     points = models.FloatField(default=1.0)
     ordre = models.PositiveIntegerField(default=1)
     explication = models.TextField(blank=True, null=True)
@@ -138,7 +161,7 @@ class Question(models.Model):
 
 
 class ChoixQuestion(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choix')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="choix")
     texte = models.CharField(max_length=255)
     est_correct = models.BooleanField(default=False)
     ordre = models.PositiveIntegerField(default=1)
@@ -149,17 +172,17 @@ class ChoixQuestion(models.Model):
 
 class TentativeQuiz(models.Model):
     STATUT_TENTATIVE = [
-        ('en_cours', 'En cours'),
-        ('soumis', 'Soumis'),
-        ('corrige', 'Corrigé'),
-        ('abandonne', 'Abandonné'),
+        ("en_cours", "En cours"),
+        ("soumis", "Soumis"),
+        ("corrige", "Corrigé"),
+        ("abandonne", "Abandonné"),
     ]
 
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='tentatives')
-    etudiant = models.ForeignKey(Etudiant, on_delete=models.CASCADE, related_name='tentatives_quiz')
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="tentatives")
+    etudiant = models.ForeignKey(Etudiant, on_delete=models.CASCADE, related_name="tentatives_quiz")
 
     numero_tentative = models.PositiveIntegerField(default=1)
-    statut = models.CharField(max_length=20, choices=STATUT_TENTATIVE, default='en_cours')
+    statut = models.CharField(max_length=20, choices=STATUT_TENTATIVE, default="en_cours")
 
     score = models.FloatField(default=0.0)
     score_max = models.FloatField(default=20.0)
@@ -171,22 +194,22 @@ class TentativeQuiz(models.Model):
     temps_passe_secondes = models.PositiveIntegerField(default=0)
 
     class Meta:
-        unique_together = ('quiz', 'etudiant', 'numero_tentative')
+        unique_together = ("quiz", "etudiant", "numero_tentative")
 
     def __str__(self):
         return f"{self.etudiant.nom} - {self.quiz.titre} (Tentative {self.numero_tentative})"
 
 
 class ReponseTentative(models.Model):
-    tentative = models.ForeignKey(TentativeQuiz, on_delete=models.CASCADE, related_name='reponses')
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='reponses_tentatives')
+    tentative = models.ForeignKey(TentativeQuiz, on_delete=models.CASCADE, related_name="reponses")
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="reponses_tentatives")
 
     choix_selectionne = models.ForeignKey(
         ChoixQuestion,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='reponses_selectionnees'
+        related_name="reponses_selectionnees",
     )
 
     reponse_texte = models.TextField(blank=True, null=True)
@@ -201,21 +224,21 @@ class SessionApprentissage(models.Model):
     etudiant = models.ForeignKey(
         Etudiant,
         on_delete=models.CASCADE,
-        related_name='sessions_apprentissage'
+        related_name="sessions_apprentissage",
     )
     cours = models.ForeignKey(
         Cours,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='sessions_apprentissage'
+        related_name="sessions_apprentissage",
     )
     lecon = models.ForeignKey(
         Lecon,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='sessions_apprentissage'
+        related_name="sessions_apprentissage",
     )
     duree_minutes = models.PositiveIntegerField(default=0)
     date_session = models.DateTimeField(auto_now_add=True)
@@ -235,18 +258,18 @@ class Recommandation(models.Model):
 
 class HistoriqueActivite(models.Model):
     TYPE_CHOICES = [
-        ('quiz_reussi', 'Quiz réussi'),
-        ('quiz_echoue', 'Quiz échoué'),
-        ('cours_demarre', 'Cours démarré'),
-        ('cours_termine', 'Cours terminé'),
-        ('lecon_consultee', 'Leçon consultée'),
-        ('session_etude', 'Session d’étude'),
+        ("quiz_reussi", "Quiz réussi"),
+        ("quiz_echoue", "Quiz échoué"),
+        ("cours_demarre", "Cours démarré"),
+        ("cours_termine", "Cours terminé"),
+        ("lecon_consultee", "Leçon consultée"),
+        ("session_etude", "Session d’étude"),
     ]
 
     etudiant = models.ForeignKey(
         Etudiant,
         on_delete=models.CASCADE,
-        related_name='historique_activites'
+        related_name="historique_activites",
     )
 
     type_activite = models.CharField(max_length=30, choices=TYPE_CHOICES)
@@ -258,7 +281,7 @@ class HistoriqueActivite(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='historique_activites'
+        related_name="historique_activites",
     )
 
     quiz = models.ForeignKey(
@@ -266,7 +289,7 @@ class HistoriqueActivite(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='historique_activites'
+        related_name="historique_activites",
     )
 
     lecon = models.ForeignKey(
@@ -274,13 +297,13 @@ class HistoriqueActivite(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='historique_activites'
+        related_name="historique_activites",
     )
 
     date_creation = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-date_creation']
+        ordering = ["-date_creation"]
 
     def __str__(self):
         return f"{self.etudiant.nom} - {self.titre}"

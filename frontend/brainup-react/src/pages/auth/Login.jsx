@@ -17,14 +17,21 @@ export default function Login() {
       const data = await loginUser(email, password);
 
       if (data.success) {
-        /* stockage login */
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user_id", String(data.user?.id || ""));
-        localStorage.setItem("role", data.user?.role || "");
-        localStorage.setItem("nom", data.user?.nom || "");
-        localStorage.setItem("email", data.user?.email || "");
+        const role = data.user?.role || "";
+        const user = {
+          id: data.user?.id || "",
+          nom: data.user?.nom || "Utilisateur",
+          role,
+          email: data.user?.email || "",
+        };
 
-        const role = data.user?.role;
+        /* stockage compatible avec les deux versions */
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user_id", String(user.id));
+        localStorage.setItem("role", user.role);
+        localStorage.setItem("nom", user.nom);
+        localStorage.setItem("email", user.email);
+        localStorage.setItem("user", JSON.stringify(user));
 
         /* redirection selon rôle */
         if (role === "etudiant") {

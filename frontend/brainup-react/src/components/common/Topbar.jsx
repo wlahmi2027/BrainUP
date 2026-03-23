@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function Topbar() {
@@ -7,19 +7,37 @@ export default function Topbar() {
 
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState({ name: "Utilisateur", role: "student", email: "" });
 
-  const user = useMemo(() => {
-    try {
+  // Load user from localStorage on mount and whenever it changes
+  useEffect(() => {
+    function loadUser() {
       const raw = localStorage.getItem("user");
-      if (!raw) return { name: "Frant", role: "student" };
-      const parsed = JSON.parse(raw);
-      return {
-        name: parsed?.name || "Frant",
-        role: parsed?.role || "student",
-      };
-    } catch {
-      return { name: "Frant", role: "student" };
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          setUser({
+            name: parsed?.name?.trim() || "Utilisateur",
+            role: parsed?.role || "student",
+            email: parsed?.email || ""
+          });
+        } catch {
+          setUser({ name: "Utilisateur", role: "student", email: "" });
+        }
+      } else {
+        setUser({ name: "Utilisateur", role: "student", email: "" });
+      }
     }
+
+    loadUser();
+
+    // Listen for changes to localStorage (e.g., another tab)
+    function handleStorageChange(e) {
+      if (e.key === "user") loadUser();
+    }
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   useEffect(() => {
@@ -37,13 +55,6 @@ export default function Topbar() {
     if (e.key === "Enter") {
       navigate("/student/courses");
     }
-  }
-
-  function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("isLoggedIn");
-    navigate("/deconnexion");
   }
 
   return (

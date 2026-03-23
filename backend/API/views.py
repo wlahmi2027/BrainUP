@@ -1,8 +1,9 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from django.db.models import Count, Avg, Q, Sum
+from rest_framework.decorators import action, api_view
+from django.db.models import Avg, Sum
+from django.utils import timezone
+
 from API.serializers import (
     EtudiantSerializer,
     CoursSerializer,
@@ -10,14 +11,24 @@ from API.serializers import (
     QuestionSerializer,
     ChoixQuestionSerializer,
     StudentQuizSerializer,
-    TeacherQuizResultSerializer, 
+    TeacherQuizResultSerializer,
     QuizSubmissionResponseSerializer,
+    StudentCourseSerializer,
 )
-from .activity_service import ajouter_activite
-from django.utils import timezone
-
-from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz, Question, ChoixQuestion, TentativeQuiz, ReponseTentative, Inscription, SessionApprentissage, HistoriqueActivite
-    
+from .models import (
+    Utilisateur,
+    Etudiant,
+    Enseignant,
+    Cours,
+    Quiz,
+    Question,
+    ChoixQuestion,
+    TentativeQuiz,
+    ReponseTentative,
+    Inscription,
+    SessionApprentissage,
+    HistoriqueActivite,
+)
 from .recommendation_service import build_recommendations_payload
 
 import secrets
@@ -45,7 +56,7 @@ def get_user_from_token(request):
         return None
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 def profil_view(request):
     user = get_user_from_token(request)
 
@@ -57,11 +68,13 @@ def profil_view(request):
 
     return Response({
         "nom": user.nom,
-        "email": user.email
+        "email": user.email,
+        "role": user.role,
+        "id": user.id,
     })
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 def logout_view(request):
     user = get_user_from_token(request)
 
@@ -84,14 +97,14 @@ class EtudiantViewSet(viewsets.ModelViewSet):
     queryset = Etudiant.objects.all()
     serializer_class = EtudiantSerializer
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=["get"])
     def progression(self, request, pk=None):
         etudiant = self.get_object()
         serializer = self.get_serializer(etudiant)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class CoursViewSet(viewsets.ReadOnlyModelViewSet):
+class CoursViewSet(viewsets.ModelViewSet):
     serializer_class = CoursSerializer
 
     def get_queryset(self):
@@ -101,14 +114,141 @@ class CoursViewSet(viewsets.ReadOnlyModelViewSet):
         if enseignant_id:
             queryset = queryset.filter(enseignant_id=enseignant_id)
 
+        user = get_user_from_token(self.request)
+        mine_only = self.request.query_params.get("mine")
+
+        if mine_only == "true" and user:
+            try:
+                enseignant = Enseignant.objects.get(id=user.id)
+                queryset = queryset.filter(enseignant=enseignant)
+            except Enseignant.DoesNotExist:
+                return Cours.objects.none()
+
         return queryset.order_by("id")
 
-    @action(detail=True, methods=['get'])
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
+    def create(self, request, *args, **kwargs):
+        user = get_user_from_token(request)
+
+        if not user:
+            return Response(
+                {"success": False, "message": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        try:
+            enseignant = Enseignant.objects.get(id=user.id)
+        except Enseignant.DoesNotExist:
+            return Response(
+                {"success": False, "message": "Accès réservé aux enseignants"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        data = request.data.copy()
+
+        if "temps_apprentissage" not in data:
+            data["temps_apprentissage"] = 0
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(enseignant=enseignant)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["get"])
     def quizzes(self, request, pk=None):
         cours = self.get_object()
         quizzes = Quiz.objects.filter(cours=cours).select_related("cours", "enseignant")
         serializer = QuizSerializer(quizzes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class StudentCourseViewSet(viewsets.ViewSet):
+    def list(self, request):
+        user = get_user_from_token(request)
+
+        if not user or user.role != "etudiant":
+            return Response(
+                {"detail": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        try:
+            student = Etudiant.objects.get(id=user.id)
+        except Etudiant.DoesNotExist:
+            return Response(
+                {"detail": "Student not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        courses = Cours.objects.filter(is_published=True).select_related("enseignant").prefetch_related("lecons")
+
+        serializer = StudentCourseSerializer(
+            courses,
+            many=True,
+            context={"student": student, "request": request},
+        )
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        user = get_user_from_token(request)
+
+        if not user or user.role != "etudiant":
+            return Response(
+                {"detail": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        try:
+            student = Etudiant.objects.get(id=user.id)
+        except Etudiant.DoesNotExist:
+            return Response(
+                {"detail": "Student not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            course = Cours.objects.select_related("enseignant").prefetch_related("lecons").get(pk=pk)
+        except Cours.DoesNotExist:
+            return Response(
+                {"detail": "Cours not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = StudentCourseSerializer(
+            course,
+            context={"student": student, "request": request},
+        )
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"])
+    def favorite(self, request, pk=None):
+        user = get_user_from_token(request)
+
+        if not user or user.role != "etudiant":
+            return Response(
+                {"detail": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        try:
+            student = Etudiant.objects.get(id=user.id)
+            course = Cours.objects.get(pk=pk)
+        except (Etudiant.DoesNotExist, Cours.DoesNotExist):
+            return Response(
+                {"detail": "Not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        insc, _created = Inscription.objects.get_or_create(etudiant=student, cours=course)
+        insc.favoris = not insc.favoris
+        insc.save()
+
+        return Response({"favoris": insc.favoris}, status=status.HTTP_200_OK)
 
 
 class QuizViewSet(viewsets.ModelViewSet):
@@ -117,12 +257,12 @@ class QuizViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = (
             Quiz.objects.all()
-            .select_related('cours', 'enseignant')
-            .prefetch_related('questions', 'tentatives')
+            .select_related("cours", "enseignant")
+            .prefetch_related("questions", "tentatives")
         )
 
-        enseignant_id = self.request.query_params.get('enseignant')
-        cours_id = self.request.query_params.get('cours')
+        enseignant_id = self.request.query_params.get("enseignant")
+        cours_id = self.request.query_params.get("cours")
 
         if enseignant_id:
             queryset = queryset.filter(enseignant_id=enseignant_id)
@@ -130,7 +270,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         if cours_id:
             queryset = queryset.filter(cours_id=cours_id)
 
-        return queryset.order_by('-date_creation')
+        return queryset.order_by("-date_creation")
 
 
 class QuestionViewSet(viewsets.ModelViewSet):
@@ -139,30 +279,31 @@ class QuestionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = (
             Question.objects.all()
-            .select_related('quiz')
-            .prefetch_related('choix')
+            .select_related("quiz")
+            .prefetch_related("choix")
         )
 
-        quiz_id = self.request.query_params.get('quiz')
+        quiz_id = self.request.query_params.get("quiz")
         if quiz_id:
             queryset = queryset.filter(quiz_id=quiz_id)
 
-        return queryset.order_by('ordre')
+        return queryset.order_by("ordre")
 
 
 class ChoixQuestionViewSet(viewsets.ModelViewSet):
     serializer_class = ChoixQuestionSerializer
 
     def get_queryset(self):
-        queryset = ChoixQuestion.objects.all().select_related('question')
+        queryset = ChoixQuestion.objects.all().select_related("question")
 
-        question_id = self.request.query_params.get('question')
+        question_id = self.request.query_params.get("question")
         if question_id:
             queryset = queryset.filter(question_id=question_id)
 
-        return queryset.order_by('ordre')
+        return queryset.order_by("ordre")
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 def student_quizzes_view(request):
     user = get_user_from_token(request)
 
@@ -180,9 +321,12 @@ def student_quizzes_view(request):
             status=status.HTTP_403_FORBIDDEN
         )
 
-    quizzes = Quiz.objects.filter(
-        statut="publie"
-    ).select_related("cours").prefetch_related("questions").distinct()
+    quizzes = (
+        Quiz.objects.filter(statut="publie")
+        .select_related("cours")
+        .prefetch_related("questions")
+        .distinct()
+    )
 
     serializer = StudentQuizSerializer(quizzes, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -284,6 +428,7 @@ def submit_quiz_view(request, quiz_id):
     serializer = QuizSubmissionResponseSerializer(tentative)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
 @api_view(["GET"])
 def teacher_quizzes_view(request):
     user = get_user_from_token(request)
@@ -311,6 +456,7 @@ def teacher_quizzes_view(request):
 
     serializer = QuizSerializer(quizzes, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(["GET"])
 def teacher_quiz_results_view(request, quiz_id):
@@ -348,11 +494,11 @@ def teacher_quiz_results_view(request, quiz_id):
     serializer = TeacherQuizResultSerializer(tentatives, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
+
+@api_view(["POST"])
 def login_view(request):
-    email = request.data.get('email')
-    mot_de_passe = request.data.get('mot_de_passe')
+    email = request.data.get("email")
+    mot_de_passe = request.data.get("mot_de_passe")
 
     if not email or not mot_de_passe:
         return Response(
@@ -397,13 +543,12 @@ def login_view(request):
     )
 
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
+@api_view(["POST"])
 def register_view(request):
-    nom = request.data.get('nom')
-    email = request.data.get('email')
-    mot_de_passe = request.data.get('mot_de_passe')
-    role = request.data.get('role', 'etudiant')
+    nom = request.data.get("nom")
+    email = request.data.get("email")
+    mot_de_passe = request.data.get("mot_de_passe")
+    role = request.data.get("role", "etudiant")
 
     if role:
         role = role.lower()
@@ -457,7 +602,7 @@ def register_view(request):
     )
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 def recommendations_view(request, user_id):
     user = get_user_from_token(request)
 
@@ -489,7 +634,6 @@ def recommendations_view(request, user_id):
             {"error": f"Erreur serveur : {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
 
 
 @api_view(["GET"])

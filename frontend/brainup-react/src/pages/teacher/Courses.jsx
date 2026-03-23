@@ -1,161 +1,206 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Courses() {
   const navigate = useNavigate();
+
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  const FILTERS = ["all", "publie", "brouillon", "archive"];
 
+  useEffect(() => {
+    const fetchCourses = async () => {
+      const token = localStorage.getItem("token");
 
-  const courses = useMemo(
-    () => [
-      {
-        id: 1,
-        title: "Python avancé",
-        category: "Programmation",
-        students: 34,
-        lessons: 12,
-        status: "Publié",
-      },
-      {
-        id: 2,
-        title: "React moderne",
-        category: "Frontend",
-        students: 41,
-        lessons: 9,
-        status: "Publié",
-      },
-      {
-        id: 3,
-        title: "Bases de données",
-        category: "Backend",
-        students: 22,
-        lessons: 7,
-        status: "Brouillon",
-      },
-      {
-        id: 4,
-        title: "Machine Learning",
-        category: "IA",
-        students: 17,
-        lessons: 15,
-        status: "Archivé",
-      },
-    ],
-    []
-  );
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      try {
+        const res = await fetch("http://127.0.0.1:8001/api/courses/?mine=true", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/login");
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error("Erreur lors du chargement des cours.");
+        }
+
+        const data = await res.json();
+
+        const normalized = data.map((c) => ({
+          id: c.id,
+          title: c.title,
+          author: c.author || "—",
+          banner: c.banniere || null,
+          status: c.status || "brouillon",
+          students: c.students ?? 0,
+          lessons: c.lessons ?? 0,
+        }));
+
+        setCourses(normalized);
+      } catch (err) {
+        setError(err.message || "Erreur lors du chargement.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, [navigate]);
 
   const filteredCourses = useMemo(() => {
-    let result = [...courses];
+    return courses.filter((course) => {
+      const matchesQuery =
+        !query.trim() ||
+        course.title.toLowerCase().includes(query.toLowerCase()) ||
+        course.author.toLowerCase().includes(query.toLowerCase());
 
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      result = result.filter(
-        (course) =>
-          course.title.toLowerCase().includes(q) ||
-          course.category.toLowerCase().includes(q)
-      );
-    }
+      const matchesStatus =
+        statusFilter === "all" ||
+        course.status?.toLowerCase() === statusFilter;
 
-    if (statusFilter !== "all") {
-      result = result.filter(
-        (course) => course.status.toLowerCase() === statusFilter
-      );
-    }
-
-    return result;
+      return matchesQuery && matchesStatus;
+    });
   }, [courses, query, statusFilter]);
 
+  const getStatusLabel = (status) => {
+    return {
+      publie: "Publié",
+      brouillon: "Brouillon",
+      archive: "Archivé",
+    }[status] || status;
+  };
+
+  const getStatusClass = (status) => {
+    if (status === "publie") return "teacher-badge--success";
+    if (status === "brouillon") return "teacher-badge--warn";
+    return "teacher-badge--muted";
+  };
+
+  if (loading) return <p>Chargement...</p>;
+  if (error) return <p>{error}</p>;
+
   return (
-    <section className="page teacher-page">
-      <div className="teacher-head">
-        <div>
-          <h1 className="page__title">Gestion des cours</h1>
-          <p className="teacher-subtitle">
-            Créez, modifiez et publiez vos cours.
-          </p>
-        </div>
+    <section className="courses-page">
+      <div className="courses-header">
+        <h1>Gestion des Cours</h1>
 
-        <button className="btn btn--primary" onClick={() => navigate("/teacher/courses/create")}>+ Créer un cours</button>
-      </div>
-
-      <div className="teacher-toolbar">
-        <div className="searchInline">
+        <div className="courses-toolbar">
           <input
+            placeholder="Rechercher un cours..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher un cours..."
           />
-        </div>
 
-        <div className="seg">
           <button
-            className={`seg__btn ${statusFilter === "all" ? "is-active" : ""}`}
-            onClick={() => setStatusFilter("all")}
+            className="btn btn--primary"
+            onClick={() => navigate("/teacher/courses/create")}
           >
-            Tous
-          </button>
-          <button
-            className={`seg__btn ${
-              statusFilter === "publié" ? "is-active" : ""
-            }`}
-            onClick={() => setStatusFilter("publié")}
-          >
-            Publiés
-          </button>
-          <button
-            className={`seg__btn ${
-              statusFilter === "brouillon" ? "is-active" : ""
-            }`}
-            onClick={() => setStatusFilter("brouillon")}
-          >
-            Brouillons
-          </button>
-          <button
-            className={`seg__btn ${
-              statusFilter === "archivé" ? "is-active" : ""
-            }`}
-            onClick={() => setStatusFilter("archivé")}
-          >
-            Archivés
+            + Créer un cours
           </button>
         </div>
       </div>
 
-      <div className="teacher-courses-grid">
-        {filteredCourses.map((course) => (
-          <article key={course.id} className="teacher-course-card">
-            <div className="teacher-course-card__header">
-              <div className="teacher-course-card__icon">📘</div>
-              <span
-                className={`teacher-badge ${
-                  course.status === "Publié"
-                    ? "teacher-badge--success"
-                    : course.status === "Brouillon"
-                    ? "teacher-badge--warn"
-                    : "teacher-badge--muted"
-                }`}
-              >
-                {course.status}
-              </span>
-            </div>
-
-            <h3 className="teacher-course-card__title">{course.title}</h3>
-            <p className="teacher-course-card__meta">{course.category}</p>
-
-            <div className="teacher-course-card__stats">
-              <span>{course.students} étudiants</span>
-              <span>{course.lessons} leçons</span>
-            </div>
-
-            <div className="teacher-course-card__actions">
-              <button className="btn btn--ghost">Modifier</button>
-              <button className="btn btn--soft">Étudiants</button>
-              <button className="btn btn--primary">Publier</button>
-            </div>
-          </article>
+      <div className="courses-tabs">
+        {FILTERS.map((s) => (
+          <button
+            key={s}
+            className={statusFilter === s ? "active" : ""}
+            onClick={() => setStatusFilter(s)}
+          >
+            {{
+              all: "Tous",
+              publie: "Publiés",
+              brouillon: "Brouillons",
+              archive: "Archivés",
+            }[s]}
+          </button>
         ))}
+      </div>
+
+      <div className="courses-grid">
+        {filteredCourses.length === 0 ? (
+          <p>Aucun cours trouvé.</p>
+        ) : (
+          filteredCourses.map((c) => (
+            <div key={c.id} className="course-card">
+              <div
+                className="course-banner"
+                style={
+                  c.banner
+                    ? {
+                        backgroundImage: `url(${c.banner})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
+                    : undefined
+                }
+              >
+                <div className="banner-overlay">
+                  <h3>{c.title}</h3>
+                </div>
+
+                <span
+                  className={`teacher-badge ${getStatusClass(c.status)}`}
+                  style={{ position: "absolute", top: 8, right: 8 }}
+                >
+                  {getStatusLabel(c.status)}
+                </span>
+              </div>
+
+              <div className="course-content">
+                <p className="course-author">{c.author}</p>
+
+                <div className="course-stats">
+                  <span>{c.students} étudiants</span>
+                  <span>{c.lessons} leçons</span>
+                </div>
+
+                <div className="teacher-course-card__actions">
+                  <button
+                    className="btn btn--primary"
+                    onClick={() => navigate(`/teacher/courses/${c.id}/edit`)}
+                  >
+                    Modifier
+                  </button>
+
+                  <button
+                    className="btn btn--primary"
+                    onClick={() => navigate(`/teacher/courses/${c.id}`)}
+                  >
+                    Voir
+                  </button>
+
+                  <div>
+                    <button
+                      className="btn btn--soft"
+                      onClick={() => navigate(`/teacher/courses/${c.id}/students`)}
+                    >
+                      Étudiants
+                    </button>
+
+                    <button className="btn btn--ghost">
+                      Publier
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </section>
   );

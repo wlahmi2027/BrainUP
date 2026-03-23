@@ -11,6 +11,7 @@ import Accueil from "../pages/Accueil";
 import StudentLayout from "../pages/student/Layout";
 import StudentDashboard from "../pages/student/Dashboard";
 import StudentCourses from "../pages/student/Courses";
+import StudentCourseDetail from "../pages/student/CourseDetail";
 import StudentQuiz from "../pages/student/Quiz";
 import StudentRecommendations from "../pages/student/Recommendations";
 import StudentProfile from "../pages/student/Profile";
@@ -49,6 +50,7 @@ export default function AppRoutes() {
           <Route path="accueil" element={<Accueil />} />
           <Route path="dashboard" element={<StudentDashboard />} />
           <Route path="courses" element={<StudentCourses />} />
+          <Route path="courses/:id" element={<StudentCourseDetail />} />
           <Route path="quiz" element={<StudentQuiz />} />
           <Route path="recommendations" element={<StudentRecommendations />} />
           <Route path="profile" element={<StudentProfile />} />
@@ -60,6 +62,7 @@ export default function AppRoutes() {
       {/* Teacher routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/teacher" element={<TeacherLayout />}>
+          <Route path="accueil" element={<Accueil />} />
           <Route path="dashboard" element={<TeacherDashboard />} />
           <Route path="courses" element={<TeacherCourses />} />
           <Route path="courses/create" element={<CreateCourse />} />
