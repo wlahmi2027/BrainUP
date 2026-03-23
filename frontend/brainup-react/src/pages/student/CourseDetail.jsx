@@ -3,12 +3,13 @@ import { useParams } from "react-router-dom";
 
 export default function CourseDetail() {
   const { id } = useParams();
-
+  const [pdfUrl, setPdfUrl] = useState(null);
   const [course, setCourse] = useState(null);
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    
     async function fetchCourse() {
       const token = localStorage.getItem("token");
 
@@ -67,9 +68,8 @@ export default function CourseDetail() {
           {course.lecons?.map((lesson) => (
             <div
               key={lesson.id}
-              className={`lesson ${
-                selectedLesson?.id === lesson.id ? "is-active" : ""
-              }`}
+              className={`lesson ${selectedLesson?.id === lesson.id ? "is-active" : ""
+                }`}
               onClick={() => setSelectedLesson(lesson)}
             >
               <span className="lesson__title">{lesson.titre}</span>
@@ -90,17 +90,15 @@ export default function CourseDetail() {
               </div>
 
               <div className="lesson__content">
-                {selectedLesson.contenu ? (
+                {selectedLesson.contenu && selectedLesson.contenu.endsWith(".pdf") ? (
                   <iframe
                     src={selectedLesson.contenu}
-                    titre="Lesson content"
                     width="100%"
-                    height="500px"
+                    height="600px"
                   />
                 ) : (
-                  <p className="muted">
-                    Contenu non disponible pour cette leçon.
-                  </p>
+                  <p className="muted">Contenu non disponible</p>
+
                 )}
               </div>
             </div>

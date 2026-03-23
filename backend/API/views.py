@@ -186,7 +186,13 @@ class StudentCourseViewSet(viewsets.ViewSet):
         except Cours.DoesNotExist:
             return Response({"detail": "Cours not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = StudentCourseSerializer(course, context={"student": student})
+        serializer = StudentCourseSerializer(
+            course,
+            context={
+                "student": student,
+                "request": request
+            }
+        )
         return Response(serializer.data)
 
     def favorite(self, request, pk=None):

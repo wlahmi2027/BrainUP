@@ -42,6 +42,17 @@ class LeconSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lecon
         fields = ["id", "titre", "ordre", "contenu"]
+    
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+
+        request = self.context.get("request")
+        if instance.contenu:
+            rep["contenu"] = request.build_absolute_uri(instance.contenu.url)
+        else:
+            rep["contenu"] = None
+
+        return rep
 
 class StudentCourseSerializer(serializers.ModelSerializer):
     enseignant = serializers.SerializerMethodField()
