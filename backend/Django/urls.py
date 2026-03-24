@@ -20,6 +20,8 @@ from API.views import (
     teacher_quiz_results_view,
     student_dashboard_view,
     teacher_dashboard_view,
+    teacher_students_view,
+    teacher_student_detail_view,
 )
 router = routers.DefaultRouter()
 router.register(r"etudiants", EtudiantViewSet, basename="etudiants")
@@ -56,6 +58,8 @@ urlpatterns = [
     path("api/teacher/quizzes/<int:quiz_id>/results/", teacher_quiz_results_view, name="teacher-quiz-results"),
     path("api/student/dashboard/", student_dashboard_view, name="student-dashboard"),
     path("api/teacher/dashboard/", teacher_dashboard_view, name="teacher-dashboard"),
+    path("api/teacher/students/", teacher_students_view, name="teacher-students"),
+    path("api/teacher/students/<int:student_id>/", teacher_student_detail_view, name="teacher-student-detail"),
     path("api/chatbot/", include("chatbot.urls")),
 
 

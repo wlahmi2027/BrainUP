@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view
-from django.db.models import Avg, Sum, Count
+from django.db.models import Avg, Sum, Count, Max, Q
 from django.utils import timezone
 
 from API.serializers import (
@@ -940,6 +940,256 @@ def student_dashboard_view(request):
         "temps_estime_total_minutes": temps_estime_total,
         "courses_progress": courses_progress,
         "best_quiz_scores": best_quiz_scores,
+        "recent_activity": recent_activity,
+    }
+
+    return Response(payload, status=status.HTTP_200_OK)
+@api_view(["GET"])
+def teacher_students_view(request):
+    user = get_user_from_token(request)
+
+    if not user:
+        return Response(
+            {"error": "Unauthorized"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    try:
+        enseignant = Enseignant.objects.get(id=user.id)
+    except Enseignant.DoesNotExist:
+        return Response(
+            {"error": "Accès réservé aux enseignants"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    search = request.GET.get("search", "").strip().lower()
+    status_filter = request.GET.get("status", "").strip()
+    course_filter = request.GET.get("course", "").strip()
+
+    teacher_courses = Cours.objects.filter(enseignant=enseignant).order_by("title")
+
+    if course_filter:
+        teacher_courses = teacher_courses.filter(id=course_filter)
+
+    inscriptions = (
+        Inscription.objects.filter(cours__in=teacher_courses)
+        .select_related("etudiant", "cours")
+        .order_by("etudiant__nom", "cours__title")
+    )
+
+    grouped_students = {}
+
+    for inscription in inscriptions:
+        etudiant = inscription.etudiant
+
+        searchable_text = f"{etudiant.nom} {etudiant.email}".lower()
+        if search and search not in searchable_text:
+            continue
+
+        if etudiant.id not in grouped_students:
+            tentatives = TentativeQuiz.objects.filter(
+                etudiant=etudiant,
+                quiz__cours__enseignant=enseignant
+            )
+
+            moyenne_quiz = tentatives.aggregate(avg=Avg("pourcentage"))["avg"] or 0
+
+            derniere_activite = (
+                HistoriqueActivite.objects
+                .filter(etudiant=etudiant)
+                .order_by("-date_creation")
+                .first()
+            )
+
+            grouped_students[etudiant.id] = {
+                "id": etudiant.id,
+                "nom": etudiant.nom,
+                "email": etudiant.email,
+                "initial": etudiant.nom[:1].upper() if etudiant.nom else "E",
+                "courses": [],
+                "progression_moyenne": 0,
+                "moyenne_quiz": round(moyenne_quiz, 2),
+                "derniere_activite": (
+                    derniere_activite.titre if derniere_activite else "Aucune activité récente"
+                ),
+                "statut": "Actif",
+            }
+
+        grouped_students[etudiant.id]["courses"].append({
+            "id": inscription.cours.id,
+            "title": inscription.cours.title,
+            "progression_percent": round(inscription.progression_percent or 0, 2),
+            "termine": inscription.termine,
+        })
+
+    students = []
+
+    for _student_id, student in grouped_students.items():
+        progressions = [c["progression_percent"] for c in student["courses"]]
+        progression_moyenne = round(sum(progressions) / len(progressions), 2) if progressions else 0
+        student["progression_moyenne"] = progression_moyenne
+
+        if progression_moyenne >= 80 and student["moyenne_quiz"] >= 70:
+            student["statut"] = "Excellent"
+        elif progression_moyenne < 40:
+            student["statut"] = "À relancer"
+        else:
+            student["statut"] = "Actif"
+
+        if status_filter and student["statut"] != status_filter:
+            continue
+
+        students.append(student)
+
+    total_students = len(students)
+    active_students = len([s for s in students if s["statut"] == "Actif"])
+    excellent_students = len([s for s in students if s["statut"] == "Excellent"])
+    to_follow_students = len([s for s in students if s["statut"] == "À relancer"])
+
+    payload = {
+        "summary": {
+            "total_students": total_students,
+            "active_students": active_students,
+            "excellent_students": excellent_students,
+            "to_follow_students": to_follow_students,
+        },
+        "students": students,
+        "courses_filter": [
+            {"id": course.id, "title": course.title}
+            for course in Cours.objects.filter(enseignant=enseignant).order_by("title")
+        ],
+    }
+
+    return Response(payload, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def teacher_student_detail_view(request, student_id):
+    user = get_user_from_token(request)
+
+    if not user:
+        return Response(
+            {"error": "Unauthorized"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    try:
+        enseignant = Enseignant.objects.get(id=user.id)
+    except Enseignant.DoesNotExist:
+        return Response(
+            {"error": "Accès réservé aux enseignants"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    try:
+        etudiant = Etudiant.objects.get(id=student_id)
+    except Etudiant.DoesNotExist:
+        return Response(
+            {"error": "Étudiant introuvable"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    teacher_courses = Cours.objects.filter(enseignant=enseignant)
+
+    inscriptions = (
+        Inscription.objects.filter(etudiant=etudiant, cours__in=teacher_courses)
+        .select_related("cours")
+        .order_by("cours__title")
+    )
+
+    if not inscriptions.exists():
+        return Response(
+            {"error": "Cet étudiant n'est lié à aucun de vos cours"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    tentatives = (
+        TentativeQuiz.objects.filter(
+            etudiant=etudiant,
+            quiz__cours__in=teacher_courses
+        )
+        .select_related("quiz", "quiz__cours")
+        .order_by("-date_soumission")
+    )
+
+    activities = (
+        HistoriqueActivite.objects.filter(
+            etudiant=etudiant,
+            cours__in=teacher_courses
+        )
+        .order_by("-date_creation")[:8]
+    )
+
+    courses_data = []
+    all_progressions = []
+
+    for inscription in inscriptions:
+        all_progressions.append(inscription.progression_percent or 0)
+
+        tentatives_cours = tentatives.filter(quiz__cours=inscription.cours)
+        moyenne_quiz_cours = tentatives_cours.aggregate(avg=Avg("pourcentage"))["avg"] or 0
+
+        courses_data.append({
+            "course_id": inscription.cours.id,
+            "course_title": inscription.cours.title,
+            "progression_percent": round(inscription.progression_percent or 0, 2),
+            "termine": inscription.termine,
+            "note_moyenne": round(inscription.note_moyenne or 0, 2),
+            "quiz_count": tentatives_cours.count(),
+            "quiz_average": round(moyenne_quiz_cours, 2),
+        })
+
+    quizzes_data = [
+        {
+            "id": tentative.id,
+            "quiz_id": tentative.quiz.id,
+            "quiz_title": tentative.quiz.titre,
+            "course_title": tentative.quiz.cours.title,
+            "score": round(tentative.score, 2),
+            "score_max": round(tentative.score_max, 2),
+            "pourcentage": round(tentative.pourcentage, 2),
+            "reussi": tentative.reussi,
+            "date_label": (
+                tentative.date_soumission.strftime("%d/%m/%Y")
+                if tentative.date_soumission else "Date inconnue"
+            ),
+        }
+        for tentative in tentatives[:10]
+    ]
+
+    recent_activity = [
+        {
+            "id": item.id,
+            "type": item.type_activite,
+            "title": item.titre,
+            "description": item.description or "",
+            "date_label": item.date_creation.strftime("%d/%m/%Y"),
+        }
+        for item in activities
+    ]
+
+    progression_moyenne = round(sum(all_progressions) / len(all_progressions), 2) if all_progressions else 0
+    moyenne_quiz = round(tentatives.aggregate(avg=Avg("pourcentage"))["avg"] or 0, 2)
+
+    if progression_moyenne >= 80 and moyenne_quiz >= 70:
+        statut = "Excellent"
+    elif progression_moyenne < 40:
+        statut = "À relancer"
+    else:
+        statut = "Actif"
+
+    payload = {
+        "student": {
+            "id": etudiant.id,
+            "nom": etudiant.nom,
+            "email": etudiant.email,
+            "initial": etudiant.nom[:1].upper() if etudiant.nom else "E",
+            "progression_moyenne": progression_moyenne,
+            "moyenne_quiz": moyenne_quiz,
+            "statut": statut,
+        },
+        "courses": courses_data,
+        "quizzes": quizzes_data,
         "recent_activity": recent_activity,
     }
 
