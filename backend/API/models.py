@@ -68,7 +68,8 @@ class Cours(models.Model):
 
     status_choix = [
         ('brouillon', 'Brouillon'),
-        ('publie', 'Publié')
+        ('publie', 'Publié'),
+        ('archive', 'Archivé')
     ]
 
     title = models.CharField(max_length=255)

@@ -77,7 +77,7 @@ class EtudiantViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class CoursViewSet(viewsets.ReadOnlyModelViewSet):
+class CoursViewSet(viewsets.ModelViewSet):
     serializer_class = CoursSerializer
 
     def get_queryset(self):

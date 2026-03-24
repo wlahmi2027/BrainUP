@@ -8,9 +8,45 @@ export default function Courses() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  const FILTERS = ["all", "publie", "brouillon", "archive"];
 
+  const FILTERS = ["all", "publie", "brouillon", "archive"];
+  async function updateStatus(courseId, newStatus) {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const confirmMsg = `Passer ce cours en "${newStatus}" ?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:8001/api/courses/${courseId}/`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Erreur lors de la mise à jour.");
+
+      // update local state
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === courseId ? { ...c, status: newStatus } : c
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la mise à jour du statut.");
+    }
+  }
   useEffect(() => {
     const fetchCourses = async () => {
       const token = localStorage.getItem("token");
@@ -186,16 +222,22 @@ export default function Courses() {
                       Étudiants
                     </button>
 
-                    <button className="btn btn--ghost">
-                      Publication
-                    </button>
+                    <select
+                      className="btn btn--ghost"
+                      value={c.status}
+                      onChange={(e) => updateStatus(c.id, e.target.value)}
+                    >
+                      <option value="publie">Publier</option>
+                      <option value="brouillon">Brouillon</option>
+                      <option value="archive">Archiver</option>
+                    </select>
                   </div>
                 </div>
               </div>
             </div>
-          ))
+      ))
         )}
-      </div>
-    </section>
+    </div>
+    </section >
   );
 }

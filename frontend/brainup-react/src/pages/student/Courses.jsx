@@ -15,7 +15,7 @@ export default function StudentCourses() {
       navigate("/login");
       return;
     }
-
+    
     async function loadCourses() {
       try {
         const res = await fetch("http://localhost:8001/api/student/courses/", {
@@ -40,7 +40,6 @@ export default function StudentCourses() {
         setLoading(false);
       }
     }
-
     loadCourses();
   }, [navigate]);
 
@@ -101,6 +100,43 @@ export default function StudentCourses() {
       console.error(err);
     }
   };
+  async function updateStatus(courseId, newStatus) {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const confirmMsg = `Passer ce cours en "${newStatus}" ?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:8001/api/courses/${courseId}/`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Erreur lors de la mise à jour.");
+
+      // update local state
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === courseId ? { ...c, status: newStatus } : c
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la mise à jour du statut.");
+    }
+  }
 
   if (loading) return <p>Chargement...</p>;
 
