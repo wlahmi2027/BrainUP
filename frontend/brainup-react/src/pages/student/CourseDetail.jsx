@@ -9,7 +9,7 @@ export default function CourseDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    
+
     async function fetchCourse() {
       const token = localStorage.getItem("token");
 
@@ -91,14 +91,29 @@ export default function CourseDetail() {
 
               <div className="lesson__content">
                 {selectedLesson.contenu && selectedLesson.contenu.endsWith(".pdf") ? (
-                  <iframe
-                    src={selectedLesson.contenu}
-                    width="100%"
-                    height="600px"
-                  />
+                  <>
+                    {/* DOWNLOAD BUTTON */}
+                    <div style={{ marginBottom: "10px" }}>
+                      <a
+                        href={selectedLesson.contenu}
+                        download
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn--primary"
+                      >
+                        Télécharger le PDF
+                      </a>
+                    </div>
+
+                    {/* PDF VIEWER */}
+                    <iframe
+                      src={selectedLesson.contenu}
+                      width="100%"
+                      height="600px"
+                    />
+                  </>
                 ) : (
                   <p className="muted">Contenu non disponible</p>
-
                 )}
               </div>
             </div>

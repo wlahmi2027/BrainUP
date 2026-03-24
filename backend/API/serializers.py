@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from API.models import Etudiant, Cours, Quiz, Inscription, Lecon
-
+from PIL import Image
 
 class EtudiantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,6 +26,25 @@ class CoursSerializer(serializers.ModelSerializer):
         if obj.banniere:
             return request.build_absolute_uri(obj.banniere.url)
         return None
+
+
+    def validate_banniere(self, file):
+        max_size = 5 * 1024 * 1024
+        if file.size > max_size:
+            raise serializers.ValidationError("Image too large (max 5MB).")
+
+        try:
+            file.seek(0)
+
+            img = Image.open(file)
+            img.verify()
+
+        except Exception:
+            raise serializers.ValidationError("Invalid image file.")
+
+        file.seek(0)
+
+        return file
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

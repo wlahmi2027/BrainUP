@@ -187,7 +187,7 @@ export default function Courses() {
                     </button>
 
                     <button className="btn btn--ghost">
-                      Publier
+                      Publication
                     </button>
                   </div>
                 </div>
