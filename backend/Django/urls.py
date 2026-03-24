@@ -22,6 +22,7 @@ from API.views import (
     teacher_dashboard_view,
     teacher_students_view,
     teacher_student_detail_view,
+    topbar_view,
 )
 router = routers.DefaultRouter()
 router.register(r"etudiants", EtudiantViewSet, basename="etudiants")
@@ -42,7 +43,7 @@ student_course_favorite = StudentCourseViewSet.as_view({
 
 urlpatterns = [
     path("api/", include(router.urls)),
-
+    path("api/topbar/", topbar_view, name="topbar"),
     path("api/login/", login_view, name="login"),
     path("api/logout/", logout_view, name="logout"),
     path("api/register/", register_view, name="register"),

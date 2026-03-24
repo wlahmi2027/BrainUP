@@ -22,3 +22,20 @@ export async function updateProfile(payload) {
   const { data } = await api.put("/user/profile/", payload);
   return data;
 }
+
+
+export async function logoutUser() {
+  const token = localStorage.getItem("token");
+
+  const { data } = await api.post(
+    "/logout/",
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return data;
+}

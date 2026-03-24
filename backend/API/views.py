@@ -1194,3 +1194,42 @@ def teacher_student_detail_view(request, student_id):
     }
 
     return Response(payload, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+def topbar_view(request):
+    user = get_user_from_token(request)
+
+    if not user:
+        return Response({"error": "Unauthorized"}, status=401)
+
+    notifications = []
+
+    if hasattr(user, "enseignant"):
+        # notifications prof
+        courses = Cours.objects.filter(enseignant_id=user.id)
+
+        unpublished = courses.filter(status="brouillon").count()
+        if unpublished > 0:
+            notifications.append({
+                "type": "warning",
+                "message": f"{unpublished} cours non publiés"
+            })
+
+    elif hasattr(user, "etudiant"):
+        # notifications étudiant
+        inscriptions = Inscription.objects.filter(etudiant_id=user.id)
+
+        for insc in inscriptions:
+            if insc.progression_percent < 50:
+                notifications.append({
+                    "type": "info",
+                    "message": f"Continue le cours {insc.cours.title}"
+                })
+
+    return Response({
+        "user": {
+            "nom": user.nom,
+            "role": user.role,
+        },
+        "notifications": notifications
+    })
