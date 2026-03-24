@@ -1,27 +1,36 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Search, Bell, ChevronDown, User, LogOut } from "lucide-react";
 import { fetchTopbarData } from "../../api/topbar";
 import { logoutUser } from "../../api/auth";
-import { Search, Bell, ChevronDown, User, LogOut, Settings } from "lucide-react";
 
 export default function Topbar() {
   const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [openNotif, setOpenNotif] = useState(false);
-  const [openUser, setOpenUser] = useState(false);
-  const [loading, setLoading] = useState(true);
-
+  const menuRef = useRef(null);
   const notifRef = useRef(null);
-  const userRef = useRef(null);
+
+  const [query, setQuery] = useState("");
+  const [topbarData, setTopbarData] = useState({
+    user: null,
+    notifications: [],
+    notifications_count: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifMenu, setShowNotifMenu] = useState(false);
 
   useEffect(() => {
     async function loadTopbar() {
       try {
         setLoading(true);
-        const payload = await fetchTopbarData();
-        setData(payload);
-      } catch (err) {
-        console.error("Erreur topbar :", err);
+        const data = await fetchTopbarData();
+        setTopbarData({
+          user: data?.user || null,
+          notifications: data?.notifications || [],
+          notifications_count: data?.notifications_count || 0,
+        });
+      } catch (error) {
+        console.error("Erreur topbar :", error);
       } finally {
         setLoading(false);
       }
@@ -32,28 +41,88 @@ export default function Topbar() {
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (notifRef.current && !notifRef.current.contains(event.target)) {
-        setOpenNotif(false);
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
       }
-
-      if (userRef.current && !userRef.current.contains(event.target)) {
-        setOpenUser(false);
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotifMenu(false);
       }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
+
+  useEffect(() => {
+    const root = document.querySelector(".page-search-scope");
+    if (!root) return;
+
+    const marks = root.querySelectorAll("mark[data-search-highlight='true']");
+    marks.forEach((mark) => {
+      const parent = mark.parentNode;
+      if (!parent) return;
+      parent.replaceChild(document.createTextNode(mark.textContent), mark);
+      parent.normalize();
+    });
+
+    if (!query.trim()) return;
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        const parentTag = node.parentElement?.tagName;
+        if (["SCRIPT", "STYLE", "MARK", "INPUT", "TEXTAREA", "BUTTON"].includes(parentTag)) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
+
+    const textNodes = [];
+    while (walker.nextNode()) {
+      textNodes.push(walker.currentNode);
+    }
+
+    const search = query.toLowerCase();
+
+    textNodes.forEach((node) => {
+      const text = node.nodeValue;
+      const lower = text.toLowerCase();
+      const index = lower.indexOf(search);
+
+      if (index === -1) return;
+
+      const before = text.slice(0, index);
+      const match = text.slice(index, index + query.length);
+      const after = text.slice(index + query.length);
+
+      const fragment = document.createDocumentFragment();
+
+      if (before) fragment.appendChild(document.createTextNode(before));
+
+      const mark = document.createElement("mark");
+      mark.setAttribute("data-search-highlight", "true");
+      mark.style.background = "#fff3a3";
+      mark.style.padding = "0 2px";
+      mark.style.borderRadius = "4px";
+      mark.textContent = match;
+      fragment.appendChild(mark);
+
+      if (after) fragment.appendChild(document.createTextNode(after));
+
+      if (node.parentNode) {
+        node.parentNode.replaceChild(fragment, node);
+      }
+    });
+  }, [query]);
 
   async function handleLogout() {
     try {
-      const token = localStorage.getItem("token");
-
-      if (token) {
-        await logoutUser();
-      }
-    } catch (err) {
-      console.error("Erreur logout :", err);
+      await logoutUser();
+    } catch (error) {
+      console.error("Erreur logout :", error);
     } finally {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
@@ -65,93 +134,87 @@ export default function Topbar() {
     }
   }
 
-  const user = data?.user || {
-    nom: "Utilisateur",
-    initial: "U",
-    role: "",
-  };
-
-  const notifications = data?.notifications || [];
-  const notificationsCount = data?.notifications_count || 0;
-
-  const profileRoute =
-    user.role === "enseignant"
-      ? "/teacher/profile"
-      : user.role === "etudiant"
-      ? "/student/profile"
-      : "/profile";
+  const userName = topbarData?.user?.nom || "Utilisateur";
+  const firstLetter = userName?.charAt(0)?.toUpperCase() || "U";
 
   return (
-    <header className="topbar-dynamic">
-      <div className="topbar-dynamic__search">
-        <Search size={18} />
+    <header className="topbar topbar-modern">
+      <div className="topbar-modern__search">
+        <Search size={20} />
         <input
           type="text"
           placeholder="Rechercher un cours, quiz ou contenu"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
         />
       </div>
 
-      <div className="topbar-dynamic__right">
-        <div className="topbar-notif" ref={notifRef}>
+      <div className="topbar-modern__right">
+        <div className="topbar-modern__notif" ref={notifRef}>
           <button
-            className="topbar-icon-btn"
-            onClick={() => setOpenNotif((prev) => !prev)}
+            className="topbar-modern__iconbtn"
+            onClick={() => setShowNotifMenu((prev) => !prev)}
+            type="button"
           >
-            <Bell size={18} />
-            {notificationsCount > 0 && (
-              <span className="topbar-badge">{notificationsCount}</span>
+            <Bell size={20} />
+            {topbarData.notifications_count > 0 && (
+              <span className="topbar-modern__badge">
+                {topbarData.notifications_count}
+              </span>
             )}
           </button>
 
-          {openNotif && (
-            <div className="topbar-dropdown topbar-dropdown--notif">
-              <div className="topbar-dropdown__head">
-                <h4>Notifications</h4>
-              </div>
+          {showNotifMenu && (
+            <div className="topbar-modern__dropdown topbar-modern__dropdown--notif">
+              <div className="topbar-modern__dropdown-title">Notifications</div>
 
-              <div className="topbar-notif-list">
-                {notifications.length > 0 ? (
-                  notifications.map((item, index) => (
-                    <div key={index} className={`topbar-notif-item topbar-notif-item--${item.type}`}>
-                      <div className="topbar-notif-item__title">{item.title}</div>
-                      <div className="topbar-notif-item__message">{item.message}</div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="topbar-empty">Aucune notification.</div>
-                )}
-              </div>
+              {topbarData.notifications.length > 0 ? (
+                topbarData.notifications.map((notif, index) => (
+                  <div key={index} className="topbar-modern__notif-item">
+                    <span className="topbar-modern__notif-dot" />
+                    <span>{notif.message}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="topbar-modern__empty">
+                  Aucune notification
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        <div className="topbar-user" ref={userRef}>
+        <div className="topbar-modern__user" ref={menuRef}>
           <button
-            className="topbar-user__btn"
-            onClick={() => setOpenUser((prev) => !prev)}
+            className="topbar-modern__userbtn"
+            onClick={() => setShowUserMenu((prev) => !prev)}
+            type="button"
           >
-            <div className="topbar-user__avatar">{user.initial}</div>
-            <div className="topbar-user__text">
-              <strong>Hi, {user.nom}</strong>
-            </div>
-            <ChevronDown size={16} />
+            <div className="topbar-modern__avatar">{firstLetter}</div>
+            <span className="topbar-modern__username">
+              {loading ? "Chargement..." : `Hi, ${userName}`}
+            </span>
+            <ChevronDown size={18} />
           </button>
 
-          {openUser && (
-            <div className="topbar-dropdown topbar-dropdown--user">
-              <Link to={profileRoute} className="topbar-menu-item">
+          {showUserMenu && (
+            <div className="topbar-modern__dropdown">
+              <button
+                className="topbar-modern__menuitem"
+                onClick={() => navigate("/teacher/profile")}
+                type="button"
+              >
                 <User size={16} />
-                Profil
-              </Link>
+                <span>Mon profil</span>
+              </button>
 
-              <Link to={profileRoute} className="topbar-menu-item">
-                <Settings size={16} />
-                Paramètres
-              </Link>
-
-              <button className="topbar-menu-item topbar-menu-item--danger" onClick={handleLogout}>
+              <button
+                className="topbar-modern__menuitem topbar-modern__menuitem--danger"
+                onClick={handleLogout}
+                type="button"
+              >
                 <LogOut size={16} />
-                Déconnexion
+                <span>Déconnexion</span>
               </button>
             </div>
           )}

@@ -1200,36 +1200,88 @@ def topbar_view(request):
     user = get_user_from_token(request)
 
     if not user:
-        return Response({"error": "Unauthorized"}, status=401)
+        return Response(
+            {"error": "Unauthorized"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
 
     notifications = []
 
-    if hasattr(user, "enseignant"):
-        # notifications prof
-        courses = Cours.objects.filter(enseignant_id=user.id)
+    # -------- PROF --------
+    if user.role == "enseignant":
+        teacher_courses = Cours.objects.filter(enseignant_id=user.id)
 
-        unpublished = courses.filter(status="brouillon").count()
-        if unpublished > 0:
+        unpublished_courses_count = teacher_courses.filter(
+            status__iexact="brouillon"
+        ).count()
+
+        if unpublished_courses_count > 0:
             notifications.append({
                 "type": "warning",
-                "message": f"{unpublished} cours non publiés"
+                "message": f"{unpublished_courses_count} cours non publiés"
             })
 
-    elif hasattr(user, "etudiant"):
-        # notifications étudiant
-        inscriptions = Inscription.objects.filter(etudiant_id=user.id)
+        unpublished_quizzes_count = Quiz.objects.filter(
+            enseignant_id=user.id,
+            statut__iexact="brouillon"
+        ).count()
 
-        for insc in inscriptions:
-            if insc.progression_percent < 50:
-                notifications.append({
-                    "type": "info",
-                    "message": f"Continue le cours {insc.cours.title}"
-                })
+        if unpublished_quizzes_count > 0:
+            notifications.append({
+                "type": "info",
+                "message": f"{unpublished_quizzes_count} quiz non publiés"
+            })
 
-    return Response({
+        published_courses_without_quiz_count = teacher_courses.filter(
+            status__iexact="publie",
+            quizzes__isnull=True
+        ).distinct().count()
+
+        if published_courses_without_quiz_count > 0:
+            notifications.append({
+                "type": "reminder",
+                "message": f"{published_courses_without_quiz_count} cours publiés sans quiz"
+            })
+
+    # -------- ETUDIANT --------
+    elif user.role == "etudiant":
+        try:
+            etudiant = Etudiant.objects.get(id=user.id)
+        except Etudiant.DoesNotExist:
+            return Response(
+                {"error": "Étudiant introuvable"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        inscriptions = Inscription.objects.filter(etudiant=etudiant).select_related("cours")
+
+        low_progress_courses = inscriptions.filter(progression_percent__lt=50)
+        for inscription in low_progress_courses[:3]:
+            notifications.append({
+                "type": "progress",
+                "message": f"Continuez le cours « {inscription.cours.title} »"
+            })
+
+        failed_quizzes_count = Quiz.objects.filter(
+            tentatives__etudiant=etudiant,
+            tentatives__reussi=False
+        ).distinct().count()
+
+        if failed_quizzes_count > 0:
+            notifications.append({
+                "type": "quiz",
+                "message": f"{failed_quizzes_count} quiz à retravailler"
+            })
+
+    payload = {
         "user": {
+            "id": user.id,
             "nom": user.nom,
+            "email": user.email,
             "role": user.role,
         },
-        "notifications": notifications
-    })
+        "notifications_count": len(notifications),
+        "notifications": notifications[:5],
+    }
+
+    return Response(payload, status=status.HTTP_200_OK)

@@ -31,34 +31,45 @@ export default function CreateQuiz() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // À adapter plus tard avec l'utilisateur connecté
-  const teacherId = 37;
-
   useEffect(() => {
-    console.log("CREATE QUIZ COMPONENT CHARGE");
-
     async function fetchCourses() {
       try {
         setIsLoadingCourses(true);
         setErrorMessage("");
 
-        const response = await fetch(
-          `http://127.0.0.1:8001/api/courses/?enseignant=${teacherId}`
-        );
+        const token = localStorage.getItem("token");
 
-        console.log("GET /api/courses/ status =", response.status);
+        if (!token) {
+          throw new Error("Utilisateur non connecté.");
+        }
+
+        const response = await fetch(
+          "http://127.0.0.1:8001/api/courses/?mine=true",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Impossible de charger les cours.");
         }
 
         const data = await response.json();
-        console.log("COURSES DATA =", data);
 
-        setCourses(Array.isArray(data) ? data : []);
+        const publishedCourses = Array.isArray(data)
+          ? data.filter(
+              (course) =>
+                course.status === "publie" || course.is_published === true
+            )
+          : [];
+
+        setCourses(publishedCourses);
       } catch (error) {
         console.error("Erreur chargement cours :", error);
         setCourses([]);
+        setErrorMessage(error.message || "Erreur lors du chargement des cours.");
       } finally {
         setIsLoadingCourses(false);
       }
@@ -137,7 +148,7 @@ export default function CreateQuiz() {
     }
 
     if (!quiz.courseId) {
-      return "Veuillez sélectionner un cours.";
+      return "Veuillez sélectionner un cours publié.";
     }
 
     if (!quiz.duration || Number(quiz.duration) < 1) {
@@ -167,7 +178,6 @@ export default function CreateQuiz() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    console.log("SUBMIT CLICK OK");
 
     const validationError = validateForm();
 
@@ -182,11 +192,18 @@ export default function CreateQuiz() {
       setSaveSuccess(false);
       setErrorMessage("");
 
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("user_id");
+
+      if (!token || !userId) {
+        throw new Error("Session invalide. Veuillez vous reconnecter.");
+      }
+
       const quizPayload = {
         titre: quiz.title.trim(),
         description: quiz.description.trim(),
         cours: Number(quiz.courseId),
-        enseignant: teacherId,
+        enseignant: Number(userId),
         niveau: mapLevelToBackend(quiz.level),
         temps_limite_minutes: Number(quiz.duration),
         tentatives_autorisees: 1,
@@ -196,24 +213,23 @@ export default function CreateQuiz() {
         afficher_feedback: true,
       };
 
-      console.log("QUIZ PAYLOAD =", quizPayload);
-
       const quizResponse = await fetch("http://127.0.0.1:8001/api/quiz/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(quizPayload),
       });
 
-      console.log("POST /api/quiz/ status =", quizResponse.status);
-
       const quizData = await quizResponse.json();
-      console.log("QUIZ RESPONSE =", quizData);
 
       if (!quizResponse.ok) {
         throw new Error(
-          quizData?.detail || JSON.stringify(quizData) || "Erreur création quiz"
+          quizData?.detail ||
+            quizData?.message ||
+            JSON.stringify(quizData) ||
+            "Erreur lors de la création du quiz."
         );
       }
 
@@ -231,29 +247,26 @@ export default function CreateQuiz() {
           explication: "",
         };
 
-        console.log("QUESTION PAYLOAD =", questionPayload);
-
         const questionResponse = await fetch(
           "http://127.0.0.1:8001/api/questions/",
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(questionPayload),
           }
         );
 
-        console.log("POST /api/questions/ status =", questionResponse.status);
-
         const questionData = await questionResponse.json();
-        console.log("QUESTION RESPONSE =", questionData);
 
         if (!questionResponse.ok) {
           throw new Error(
             questionData?.detail ||
+              questionData?.message ||
               JSON.stringify(questionData) ||
-              "Erreur création question"
+              "Erreur lors de la création d'une question."
           );
         }
 
@@ -267,29 +280,26 @@ export default function CreateQuiz() {
             ordre: j + 1,
           };
 
-          console.log("CHOIX PAYLOAD =", optionPayload);
-
           const optionResponse = await fetch(
             "http://127.0.0.1:8001/api/choix/",
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify(optionPayload),
             }
           );
 
-          console.log("POST /api/choix/ status =", optionResponse.status);
-
           const optionData = await optionResponse.json();
-          console.log("CHOIX RESPONSE =", optionData);
 
           if (!optionResponse.ok) {
             throw new Error(
               optionData?.detail ||
+                optionData?.message ||
                 JSON.stringify(optionData) ||
-                "Erreur création option"
+                "Erreur lors de la création d'une option."
             );
           }
         }
@@ -351,8 +361,13 @@ export default function CreateQuiz() {
               disabled={isLoadingCourses}
             >
               <option value="">
-                {isLoadingCourses ? "Chargement des cours..." : "Sélectionner un cours"}
+                {isLoadingCourses
+                  ? "Chargement des cours..."
+                  : courses.length === 0
+                  ? "Aucun cours publié disponible"
+                  : "Sélectionner un cours"}
               </option>
+
               {courses.map((course) => (
                 <option key={course.id} value={course.id}>
                   {course.title}
