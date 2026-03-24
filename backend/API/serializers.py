@@ -1,5 +1,4 @@
 from rest_framework import serializers
-<<<<<<< HEAD
 from API.models import (
     Etudiant,
     Cours,
@@ -11,11 +10,7 @@ from API.models import (
     TentativeQuiz,
     ReponseTentative,
 )
-
-=======
-from API.models import Etudiant, Cours, Quiz, Inscription, Lecon
 from PIL import Image
->>>>>>> d41dae3ad4bd2916900443322d8e325cea644fe3
 
 class EtudiantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -226,23 +221,19 @@ class CoursSerializer(serializers.ModelSerializer):
         return representation
 
 
-class LeconSerializer(serializers.ModelSerializer):
-    fichier = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Lecon
-<<<<<<< HEAD
-        fields = ["id", "titre", "ordre", "contenu", "fichier", "duree_estimee_minutes"]
-
     def get_fichier(self, obj):
         request = self.context.get("request")
+
         if obj.fichier:
             return request.build_absolute_uri(obj.fichier.url) if request else obj.fichier.url
+
         return None
 
-=======
+class LeconSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lecon
         fields = ["id", "titre", "ordre", "contenu"]
-    
+   
     def to_representation(self, instance):
         rep = super().to_representation(instance)
 
@@ -253,7 +244,6 @@ class LeconSerializer(serializers.ModelSerializer):
             rep["contenu"] = None
 
         return rep
->>>>>>> d41dae3ad4bd2916900443322d8e325cea644fe3
 
 class StudentCourseSerializer(serializers.ModelSerializer):
     enseignant = serializers.SerializerMethodField()

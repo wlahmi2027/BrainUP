@@ -55,8 +55,10 @@ urlpatterns = [
     path("api/teacher/quizzes/", teacher_quizzes_view, name="teacher-quizzes"),
     path("api/teacher/quizzes/<int:quiz_id>/results/", teacher_quiz_results_view, name="teacher-quiz-results"),
     path("api/student/dashboard/", student_dashboard_view, name="student-dashboard"),
-
+    path("api/teacher/dashboard/", teacher_dashboard_view, name="teacher-dashboard"),
     path("api/chatbot/", include("chatbot.urls")),
+
+
 ]
 
 if settings.DEBUG:

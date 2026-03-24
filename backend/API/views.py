@@ -221,14 +221,7 @@ class StudentCourseViewSet(viewsets.ViewSet):
 
         serializer = StudentCourseSerializer(
             course,
-<<<<<<< HEAD
             context={"student": student, "request": request},
-=======
-            context={
-                "student": student,
-                "request": request
-            }
->>>>>>> d41dae3ad4bd2916900443322d8e325cea644fe3
         )
         return Response(serializer.data)
 
@@ -359,7 +352,6 @@ def teacher_dashboard_view(request):
     teacher_courses = (
         Cours.objects
         .filter(enseignant=enseignant)
-        .prefetch_related("inscriptions", "quizzes")
         .order_by("-date_creation")
     )
 
@@ -745,6 +737,108 @@ def recommendations_view(request, user_id):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+@api_view(["GET"])
+def teacher_dashboard_view(request):
+    user = get_user_from_token(request)
+
+    if not user:
+        return Response(
+            {"error": "Unauthorized"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    try:
+        enseignant = Enseignant.objects.get(id=user.id)
+    except Enseignant.DoesNotExist:
+        return Response(
+            {"error": "Accès réservé aux enseignants"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    teacher_courses = (
+        Cours.objects
+        .filter(enseignant=enseignant)
+        .prefetch_related("inscriptions", "quizzes")
+        .order_by("-date_creation")
+    )
+
+    teacher_quizzes = Quiz.objects.filter(enseignant=enseignant)
+    teacher_attempts = TentativeQuiz.objects.filter(quiz__enseignant=enseignant)
+
+    courses_count = teacher_courses.count()
+    published_quizzes_count = teacher_quizzes.filter(statut="publie").count()
+
+    students_count = (
+        Inscription.objects
+        .filter(cours__enseignant=enseignant)
+        .values("etudiant_id")
+        .distinct()
+        .count()
+    )
+
+    total_attempts = teacher_attempts.count()
+    success_attempts = teacher_attempts.filter(reussi=True).count()
+    average_success_rate = round(
+        (success_attempts / total_attempts * 100) if total_attempts > 0 else 0
+    )
+
+    recent_courses = []
+    for course in teacher_courses[:3]:
+        recent_courses.append({
+            "id": course.id,
+            "title": course.title,
+            "students": course.inscriptions.count(),
+            "quizzes": course.quizzes.count(),
+            "status": course.status,
+        })
+
+    pending_quizzes_count = teacher_attempts.filter(statut="soumis").count()
+    draft_courses_count = teacher_courses.filter(status="brouillon").count()
+    new_students_this_week = (
+        Inscription.objects.filter(
+            cours__enseignant=enseignant,
+            date_inscription__gte=timezone.now() - timezone.timedelta(days=7)
+        ).count()
+    )
+
+    alerts = []
+
+    if pending_quizzes_count > 0:
+        alerts.append({
+            "type": "quiz_pending",
+            "message": f"{pending_quizzes_count} quiz n’ont pas encore été corrigés automatiquement."
+        })
+
+    if draft_courses_count > 0:
+        alerts.append({
+            "type": "course_draft",
+            "message": f"{draft_courses_count} cours ne sont pas encore publiés."
+        })
+
+    if new_students_this_week > 0:
+        alerts.append({
+            "type": "new_students",
+            "message": f"{new_students_this_week} nouveaux étudiants se sont inscrits cette semaine."
+        })
+
+    if not alerts:
+        alerts.append({
+            "type": "info",
+            "message": "Aucune notification pour le moment."
+        })
+
+    payload = {
+        "stats": {
+            "courses_count": courses_count,
+            "published_quizzes_count": published_quizzes_count,
+            "students_count": students_count,
+            "average_success_rate": average_success_rate,
+        },
+        "recent_courses": recent_courses,
+        "alerts": alerts,
+    }
+
+    return Response(payload, status=status.HTTP_200_OK)
 
 @api_view(["GET"])
 def student_dashboard_view(request):
