@@ -1,4 +1,5 @@
 from rest_framework import serializers
+<<<<<<< HEAD
 from API.models import (
     Etudiant,
     Cours,
@@ -11,6 +12,10 @@ from API.models import (
     ReponseTentative,
 )
 
+=======
+from API.models import Etudiant, Cours, Quiz, Inscription, Lecon
+from PIL import Image
+>>>>>>> d41dae3ad4bd2916900443322d8e325cea644fe3
 
 class EtudiantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -186,6 +191,25 @@ class CoursSerializer(serializers.ModelSerializer):
     def get_isFavorite(self, obj):
         return False
 
+
+    def validate_banniere(self, file):
+        max_size = 5 * 1024 * 1024
+        if file.size > max_size:
+            raise serializers.ValidationError("Image too large (max 5MB).")
+
+        try:
+            file.seek(0)
+
+            img = Image.open(file)
+            img.verify()
+
+        except Exception:
+            raise serializers.ValidationError("Invalid image file.")
+
+        file.seek(0)
+
+        return file
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         request = self.context.get("request")
@@ -207,6 +231,7 @@ class LeconSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lecon
+<<<<<<< HEAD
         fields = ["id", "titre", "ordre", "contenu", "fichier", "duree_estimee_minutes"]
 
     def get_fichier(self, obj):
@@ -215,6 +240,20 @@ class LeconSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.fichier.url) if request else obj.fichier.url
         return None
 
+=======
+        fields = ["id", "titre", "ordre", "contenu"]
+    
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+
+        request = self.context.get("request")
+        if instance.contenu:
+            rep["contenu"] = request.build_absolute_uri(instance.contenu.url)
+        else:
+            rep["contenu"] = None
+
+        return rep
+>>>>>>> d41dae3ad4bd2916900443322d8e325cea644fe3
 
 class StudentCourseSerializer(serializers.ModelSerializer):
     enseignant = serializers.SerializerMethodField()

@@ -221,7 +221,14 @@ class StudentCourseViewSet(viewsets.ViewSet):
 
         serializer = StudentCourseSerializer(
             course,
+<<<<<<< HEAD
             context={"student": student, "request": request},
+=======
+            context={
+                "student": student,
+                "request": request
+            }
+>>>>>>> d41dae3ad4bd2916900443322d8e325cea644fe3
         )
         return Response(serializer.data)
 
