@@ -132,7 +132,7 @@ class CoursSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField()
     votes = serializers.SerializerMethodField()
     isFavorite = serializers.SerializerMethodField()
-    banniere = serializers.SerializerMethodField()
+    banniere = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Cours
@@ -156,13 +156,13 @@ class CoursSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "id",
+            "enseignant",
             "author",
             "subtitle",
             "level",
             "rating",
             "votes",
             "isFavorite",
-            "banniere",
             "date_creation",
         ]
 
@@ -170,20 +170,12 @@ class CoursSerializer(serializers.ModelSerializer):
         return "Cours & exercices"
 
     def get_level(self, obj):
-        if getattr(obj, "niveau", None):
-            mapping = {
-                "debutant": "Débutant",
-                "intermediaire": "Intermédiaire",
-                "avance": "Avancé",
-            }
-            return mapping.get(obj.niveau, "Intermédiaire")
-
-        text = (f"{obj.title} {obj.description}").lower()
-        if "début" in text or "introduction" in text:
-            return "Débutant"
-        if "avancé" in text:
-            return "Avancé"
-        return "Intermédiaire"
+        mapping = {
+            "debutant": "Débutant",
+            "intermediaire": "Intermédiaire",
+            "avance": "Avancé",
+        }
+        return mapping.get(obj.niveau, "Intermédiaire")
 
     def get_rating(self, obj):
         return 0
@@ -194,11 +186,20 @@ class CoursSerializer(serializers.ModelSerializer):
     def get_isFavorite(self, obj):
         return False
 
-    def get_banniere(self, obj):
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
         request = self.context.get("request")
-        if obj.banniere:
-            return request.build_absolute_uri(obj.banniere.url) if request else obj.banniere.url
-        return None
+
+        if instance.banniere:
+            representation["banniere"] = (
+                request.build_absolute_uri(instance.banniere.url)
+                if request
+                else instance.banniere.url
+            )
+        else:
+            representation["banniere"] = None
+
+        return representation
 
 
 class LeconSerializer(serializers.ModelSerializer):

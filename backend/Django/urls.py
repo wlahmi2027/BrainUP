@@ -19,8 +19,8 @@ from API.views import (
     teacher_quizzes_view,
     teacher_quiz_results_view,
     student_dashboard_view,
+    teacher_dashboard_view,
 )
-
 router = routers.DefaultRouter()
 router.register(r"etudiants", EtudiantViewSet, basename="etudiants")
 router.register(r"courses", CoursViewSet, basename="courses")

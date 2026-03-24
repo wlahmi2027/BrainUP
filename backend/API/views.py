@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view
-from django.db.models import Avg, Sum
+from django.db.models import Avg, Sum, Count
 from django.utils import timezone
 
 from API.serializers import (
@@ -331,7 +331,110 @@ def student_quizzes_view(request):
     serializer = StudentQuizSerializer(quizzes, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@api_view(["GET"])
+def teacher_dashboard_view(request):
+    user = get_user_from_token(request)
 
+    if not user:
+        return Response(
+            {"error": "Unauthorized"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    try:
+        enseignant = Enseignant.objects.get(id=user.id)
+    except Enseignant.DoesNotExist:
+        return Response(
+            {"error": "Accès réservé aux enseignants"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    teacher_courses = (
+        Cours.objects
+        .filter(enseignant=enseignant)
+        .prefetch_related("inscriptions", "quizzes")
+        .order_by("-date_creation")
+    )
+
+    teacher_quizzes = Quiz.objects.filter(enseignant=enseignant)
+    teacher_tentatives = TentativeQuiz.objects.filter(quiz__enseignant=enseignant)
+
+    courses_count = teacher_courses.count()
+    published_quizzes_count = teacher_quizzes.filter(statut="publie").count()
+
+    students_count = (
+        Inscription.objects
+        .filter(cours__enseignant=enseignant)
+        .values("etudiant_id")
+        .distinct()
+        .count()
+    )
+
+    total_attempts = teacher_tentatives.count()
+    success_attempts = teacher_tentatives.filter(reussi=True).count()
+    average_success_rate = round(
+        (success_attempts / total_attempts * 100) if total_attempts > 0 else 0
+    )
+
+    recent_courses = []
+    for course in teacher_courses[:3]:
+        recent_courses.append({
+            "id": course.id,
+            "title": course.title,
+            "students": course.inscriptions.count(),
+            "quizzes": course.quizzes.count(),
+            "status": course.status,
+        })
+
+    pending_quizzes_count = teacher_tentatives.filter(statut="soumis").count()
+    draft_courses_count = teacher_courses.filter(status="brouillon").count()
+    new_students_this_week = (
+        Inscription.objects
+        .filter(
+            cours__enseignant=enseignant,
+            date_inscription__gte=timezone.now() - timezone.timedelta(days=7)
+        )
+        .count()
+    )
+
+    alerts = []
+
+    if pending_quizzes_count > 0:
+        alerts.append({
+            "type": "quiz_pending",
+            "message": f"{pending_quizzes_count} quiz n’ont pas encore été corrigés automatiquement."
+        })
+
+    if draft_courses_count > 0:
+        alerts.append({
+            "type": "course_draft",
+            "message": f"{draft_courses_count} cours ne sont pas encore publiés."
+        })
+
+    if new_students_this_week > 0:
+        alerts.append({
+            "type": "new_students",
+            "message": f"{new_students_this_week} nouveaux étudiants se sont inscrits cette semaine."
+        })
+
+    if not alerts:
+        alerts.append({
+            "type": "info",
+            "message": "Aucune notification pour le moment."
+        })
+
+    payload = {
+        "stats": {
+            "courses_count": courses_count,
+            "published_quizzes_count": published_quizzes_count,
+            "students_count": students_count,
+            "average_success_rate": average_success_rate,
+        },
+        "recent_courses": recent_courses,
+        "alerts": alerts,
+    }
+
+    return Response(payload, status=status.HTTP_200_OK)
 @api_view(["POST"])
 def submit_quiz_view(request, quiz_id):
     user = get_user_from_token(request)

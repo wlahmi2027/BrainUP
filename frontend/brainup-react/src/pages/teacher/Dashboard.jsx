@@ -1,52 +1,104 @@
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { fetchTeacherDashboard } from "../../api/dashboard";
 
 export default function Dashboard() {
-  const stats = useMemo(
-    () => [
-      { label: "Cours créés", value: 6, icon: "📚" },
-      { label: "Quiz publiés", value: 14, icon: "📝" },
-      { label: "Étudiants inscrits", value: 128, icon: "👨‍🎓" },
-      { label: "Taux moyen de réussite", value: "82%", icon: "📈" },
-    ],
-    []
-  );
+  const navigate = useNavigate();
 
-  const recentCourses = useMemo(
-    () => [
-      {
-        id: 1,
-        title: "Python avancé",
-        students: 34,
-        quizzes: 3,
-        status: "Publié",
-      },
-      {
-        id: 2,
-        title: "React moderne",
-        students: 41,
-        quizzes: 4,
-        status: "Publié",
-      },
-      {
-        id: 3,
-        title: "Bases de données",
-        students: 22,
-        quizzes: 2,
-        status: "Brouillon",
-      },
-    ],
-    []
-  );
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const alerts = useMemo(
-    () => [
-      "3 quiz n’ont pas encore été corrigés automatiquement.",
-      "Le cours “Bases de données” n’est pas encore publié.",
-      "12 nouveaux étudiants se sont inscrits cette semaine.",
-    ],
-    []
-  );
+  useEffect(() => {
+    async function loadDashboard() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const payload = await fetchTeacherDashboard();
+        setData(payload);
+      } catch (err) {
+        console.error("Erreur chargement dashboard enseignant :", err);
+        setError("Impossible de charger le dashboard enseignant.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDashboard();
+  }, []);
+
+  const stats = useMemo(() => {
+    if (!data?.stats) return [];
+
+    return [
+      {
+        label: "Cours créés",
+        value: data.stats.courses_count ?? 0,
+        icon: "📚",
+      },
+      {
+        label: "Quiz publiés",
+        value: data.stats.published_quizzes_count ?? 0,
+        icon: "📝",
+      },
+      {
+        label: "Étudiants inscrits",
+        value: data.stats.students_count ?? 0,
+        icon: "👨‍🎓",
+      },
+      {
+        label: "Taux moyen de réussite",
+        value: `${data.stats.average_success_rate ?? 0}%`,
+        icon: "📈",
+      },
+    ];
+  }, [data]);
+
+  const recentCourses = data?.recent_courses || [];
+  const alerts = data?.alerts || [];
+
+  const getStatusLabel = (status) => {
+    return {
+      publie: "Publié",
+      brouillon: "Brouillon",
+      archive: "Archivé",
+    }[status] || status;
+  };
+
+  const getStatusClass = (status) => {
+    if (status === "publie") return "teacher-badge--success";
+    if (status === "brouillon") return "teacher-badge--warn";
+    return "teacher-badge--muted";
+  };
+
+  if (loading) {
+    return (
+      <section className="page teacher-page">
+        <div className="teacher-head">
+          <div>
+            <h1 className="page__title">Dashboard enseignant</h1>
+            <p className="teacher-subtitle">Chargement des données...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="page teacher-page">
+        <div className="teacher-head">
+          <div>
+            <h1 className="page__title">Dashboard enseignant</h1>
+            <p className="teacher-subtitle" style={{ color: "red" }}>
+              {error}
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="page teacher-page">
@@ -81,29 +133,32 @@ export default function Dashboard() {
           </div>
 
           <div className="teacher-list">
-            {recentCourses.map((course) => (
-              <div key={course.id} className="teacher-row">
-                <div>
-                  <div className="teacher-row__title">{course.title}</div>
-                  <div className="teacher-row__meta">
-                    {course.students} étudiants • {course.quizzes} quiz
+            {recentCourses.length > 0 ? (
+              recentCourses.map((course) => (
+                <div key={course.id} className="teacher-row">
+                  <div>
+                    <div className="teacher-row__title">{course.title}</div>
+                    <div className="teacher-row__meta">
+                      {course.students} étudiants • {course.quizzes} quiz
+                    </div>
+                  </div>
+
+                  <div className="teacher-row__right">
+                    <span className={`teacher-badge ${getStatusClass(course.status)}`}>
+                      {getStatusLabel(course.status)}
+                    </span>
+                    <button
+                      className="btn btn--ghost"
+                      onClick={() => navigate(`/teacher/courses/${course.id}`)}
+                    >
+                      Gérer
+                    </button>
                   </div>
                 </div>
-
-                <div className="teacher-row__right">
-                  <span
-                    className={`teacher-badge ${
-                      course.status === "Publié"
-                        ? "teacher-badge--success"
-                        : "teacher-badge--warn"
-                    }`}
-                  >
-                    {course.status}
-                  </span>
-                  <button className="btn btn--ghost">Gérer</button>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p>Aucun cours récent pour le moment.</p>
+            )}
           </div>
         </section>
 
@@ -114,12 +169,16 @@ export default function Dashboard() {
           </div>
 
           <div className="teacher-alerts">
-            {alerts.map((alert, index) => (
-              <div key={index} className="teacher-alert">
-                <span className="teacher-alert__icon">🔔</span>
-                <span>{alert}</span>
-              </div>
-            ))}
+            {alerts.length > 0 ? (
+              alerts.map((alert, index) => (
+                <div key={index} className="teacher-alert">
+                  <span className="teacher-alert__icon">🔔</span>
+                  <span>{alert.message}</span>
+                </div>
+              ))
+            ) : (
+              <p>Aucune notification.</p>
+            )}
           </div>
         </section>
       </div>
