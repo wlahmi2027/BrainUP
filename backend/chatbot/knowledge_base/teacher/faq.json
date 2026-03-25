@@ -1,0 +1,102 @@
+[
+  {
+    "id": "teacher_faq_1",
+    "question": "Comment créer un nouveau cours ?",
+    "answer": "Depuis l'espace enseignant, accédez à la section des cours puis cliquez sur le bouton de création. Renseignez le titre, la description, le niveau et la bannière si nécessaire, puis enregistrez."
+  },
+  {
+    "id": "teacher_faq_2",
+    "question": "Comment créer un cours ?",
+    "answer": "Ouvrez la section des cours dans l'espace enseignant, cliquez sur créer un cours, puis remplissez les informations demandées avant validation."
+  },
+  {
+    "id": "teacher_faq_3",
+    "question": "Où créer un cours ?",
+    "answer": "La création d'un cours se fait depuis la section des cours de l'espace enseignant."
+  },
+  {
+    "id": "teacher_faq_4",
+    "question": "Comment ajouter une leçon à un cours ?",
+    "answer": "Ouvrez le cours concerné, allez dans la gestion des leçons, puis cliquez sur ajouter une leçon. Saisissez le titre, le contenu et l'ordre d'affichage avant d'enregistrer."
+  },
+  {
+    "id": "teacher_faq_5",
+    "question": "Comment ajouter du contenu à un cours ?",
+    "answer": "Pour ajouter du contenu, ouvrez votre cours puis accédez à la section des leçons. Vous pouvez y créer de nouvelles leçons et y insérer du contenu pédagogique."
+  },
+  {
+    "id": "teacher_faq_6",
+    "question": "Comment modifier un cours existant ?",
+    "answer": "Depuis votre liste de cours, sélectionnez le cours voulu puis ouvrez l'option de modification. Vous pourrez mettre à jour les informations du cours avant de sauvegarder."
+  },
+  {
+    "id": "teacher_faq_7",
+    "question": "Comment éditer un cours ?",
+    "answer": "Accédez à votre liste de cours, sélectionnez celui que vous souhaitez modifier, puis utilisez l'option d'édition pour mettre à jour ses informations."
+  },
+  {
+    "id": "teacher_faq_8",
+    "question": "Comment créer un quiz ?",
+    "answer": "Accédez au cours concerné, puis à la section quiz. Cliquez sur créer un quiz, ajoutez les questions et réponses, puis enregistrez avant publication."
+  },
+  {
+    "id": "teacher_faq_9",
+    "question": "Comment ajouter des questions à un quiz ?",
+    "answer": "Dans la section quiz du cours, ouvrez un quiz existant ou créez-en un nouveau, puis ajoutez des questions avec leurs choix de réponses."
+  },
+  {
+    "id": "teacher_faq_10",
+    "question": "Comment publier un quiz ?",
+    "answer": "Après avoir créé et enregistré votre quiz, assurez-vous qu'il est bien activé ou publié selon les options disponibles dans l'interface."
+  },
+  {
+    "id": "teacher_faq_11",
+    "question": "Comment voir mes cours ?",
+    "answer": "Depuis le tableau de bord enseignant, accédez à la section des cours pour voir la liste complète de vos cours."
+  },
+  {
+    "id": "teacher_faq_12",
+    "question": "Où trouver mes cours ?",
+    "answer": "Vos cours sont accessibles depuis la section des cours dans l'espace enseignant."
+  },
+  {
+    "id": "teacher_faq_13",
+    "question": "Pourquoi mon cours n'apparaît pas ?",
+    "answer": "Vérifiez que le cours a bien été enregistré et qu'il est actif. Assurez-vous également que vous êtes connecté avec le bon compte enseignant."
+  },
+  {
+    "id": "teacher_faq_14",
+    "question": "Que faire si un cours n'apparaît pas ?",
+    "answer": "Vérifiez que le cours a bien été enregistré et que son statut permet son affichage. Vérifiez aussi que vous êtes connecté avec le bon compte enseignant."
+  },
+  {
+    "id": "teacher_faq_15",
+    "question": "Comment accéder au tableau de bord enseignant ?",
+    "answer": "Le tableau de bord enseignant est accessible après connexion. Il permet de visualiser vos cours et votre activité."
+  },
+  {
+    "id": "teacher_faq_16",
+    "question": "Que contient le tableau de bord enseignant ?",
+    "answer": "Le tableau de bord enseignant affiche un résumé de vos cours, de votre activité et des informations liées à votre contenu pédagogique."
+  },
+  {
+    "id": "teacher_faq_17",
+    "question": "Comment organiser un cours ?",
+    "answer": "Un cours peut être organisé en plusieurs leçons. Il est recommandé de structurer le contenu de manière progressive, du plus simple au plus avancé."
+  },
+  {
+    "id": "teacher_faq_18",
+    "question": "Comment structurer une leçon ?",
+    "answer": "Une leçon doit contenir un objectif clair, une explication du contenu, éventuellement des exemples, et une validation comme un quiz ou un exercice."
+  },
+  {
+    "id": "teacher_faq_19",
+    "question": "Comment améliorer mes cours ?",
+    "answer": "Pour améliorer vos cours, veillez à structurer le contenu, utiliser des exemples concrets et ajouter des quiz pour évaluer la compréhension des étudiants."
+  },
+  {
+    "id": "teacher_faq_20",
+    "question": "Comment rendre un cours plus interactif ?",
+    "answer": "Vous pouvez rendre un cours plus interactif en ajoutant des quiz, des exercices et en structurant les leçons avec des étapes claires."
+  }
+]

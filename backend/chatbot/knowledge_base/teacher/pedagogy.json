@@ -1,0 +1,17 @@
+[
+  {
+    "id": "teacher_pedagogy_1",
+    "title": "Structurer un cours",
+    "content": "Un bon cours commence par un objectif clair, puis une progression simple allant des notions de base vers les notions plus avancées."
+  },
+  {
+    "id": "teacher_pedagogy_2",
+    "title": "Créer un bon quiz",
+    "content": "Un bon quiz doit contenir des questions claires, non ambiguës, alignées avec le contenu du cours et réparties entre vérification des bases et compréhension."
+  },
+  {
+    "id": "teacher_pedagogy_3",
+    "title": "Découper une leçon",
+    "content": "Il est recommandé de découper une leçon en petites sections, avec un objectif, une explication, un exemple et une mini validation."
+  }
+]
