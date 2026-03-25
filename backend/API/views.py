@@ -13,6 +13,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
+from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import PermissionDenied
 
 @api_view(['GET'])
@@ -249,6 +250,7 @@ class StudentCourseViewSet(viewsets.ViewSet):
         )
         return Response(serializer.data)
 
+    @action(detail=True, methods=["post"], url_path="favorite")
     def favorite(self, request, pk=None):
         """
         Toggle favorite for a student on a course
@@ -268,6 +270,86 @@ class StudentCourseViewSet(viewsets.ViewSet):
         insc.save()
 
         return Response({"favoris": insc.favoris}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"], url_path="inscrire")
+    def inscrire(self, request, pk=None):
+
+        # 1. Get token from header
+        auth_header = request.headers.get("Authorization")
+
+        if not auth_header:
+            return Response(
+                {"error": "No token provided"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        token = auth_header.replace("Bearer ", "")
+
+        # 2. Get user from token
+        try:
+            user = Utilisateur.objects.get(token=token)
+        except Utilisateur.DoesNotExist:
+            return Response(
+                {"error": "Invalid token"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # 3. Check role
+        if user.role != "etudiant":
+            return Response(
+                {"error": "Unauthorized"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # 4. Get Etudiant instance
+        try:
+            etudiant = Etudiant.objects.get(pk=user.pk)
+        except Etudiant.DoesNotExist:
+            return Response(
+                {"error": "Student profile not found"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 5. Get course
+        course = get_object_or_404(Cours, pk=pk)
+
+        # 6. Create inscription
+        inscription, created = Inscription.objects.get_or_create(
+            etudiant=etudiant,
+            cours=course
+        )
+
+        return Response({"status": "inscrit"})
+
+
+    @action(detail=True, methods=["post"], url_path="desinscrire")
+    def desinscrire(self, request, pk=None):
+
+        user = get_user_from_token(request)  # your helper
+
+        if not user or user.role != "etudiant":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        course = get_object_or_404(Cours, pk=pk)
+
+        try:
+            etudiant = Etudiant.objects.get(pk=user.pk)
+        except Etudiant.DoesNotExist:
+            return Response({"error": "Student not found"}, status=400)
+
+        inscriptions = Inscription.objects.filter(
+            etudiant=etudiant,
+            cours=course
+        )
+
+        print("FOUND:", inscriptions.count())
+
+        deleted_count = inscriptions.delete()
+
+        return Response({
+            "status": "désinscrit",
+            "deleted": deleted_count
+        })
 
 
 @api_view(['POST'])

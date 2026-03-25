@@ -80,8 +80,8 @@ export default function Courses() {
           author: c.enseignant?.nom || "—",
           banner: c.banniere,
           status: c.status,
-          students: c.students ?? 0,
-          lessons: c.lessons ?? 0,
+          students: c.etudiants_count ?? 0,
+          lessons: c.lecons_count ?? 0,
         }));
 
         setCourses(normalized);
@@ -196,8 +196,12 @@ export default function Courses() {
                 <p className="course-author">{c.author}</p>
 
                 <div className="course-stats">
-                  <span>{c.students} étudiants</span>
-                  <span>{c.lessons} leçons</span>
+                  <span className="stat-badge">
+                    👥 {c.students} étudiants
+                  </span>
+                  <span className="stat-badge">
+                    📚 {c.lessons} leçons
+                  </span>
                 </div>
 
                 <div className="teacher-course-card__actions">
@@ -235,9 +239,9 @@ export default function Courses() {
                 </div>
               </div>
             </div>
-      ))
+          ))
         )}
-    </div>
+      </div>
     </section >
   );
 }

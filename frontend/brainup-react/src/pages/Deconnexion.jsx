@@ -40,16 +40,6 @@ export default function Deconnexion() {
               Déconnexion
             </button>
           </div>
-
-          <div className="logoutChat">
-            <div className="logoutChat__avatar"></div>
-            <div className="logoutChat__bubble">
-              Bonjour ! Comment puis-je vous aider ?
-            </div>
-            <button className="logoutChat__send" type="button" title="Ouvrir Chat">
-              💬
-            </button>
-          </div>
         </div>
       </div>
     </section>

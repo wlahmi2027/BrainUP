@@ -39,10 +39,22 @@ class LeconSerializer(serializers.ModelSerializer):
 class CoursSerializer(serializers.ModelSerializer):
     banniere = serializers.ImageField(required=False, allow_null=True)
     lecons = LeconSerializer(source="lecon_set", many=True, read_only=True)
+    lecons_count = serializers.SerializerMethodField()
+    etudiants_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Cours
-        fields = ["id", "title", "temps_apprentissage", "niveau", "description", "status", "banniere", "lecons"]
+        fields = ["id", 
+        "title", 
+        "temps_apprentissage", 
+        "niveau", 
+        "description", 
+        "status", 
+        "banniere", 
+        "lecons", 
+        "lecons_count", 
+        "etudiants_count"
+        ]
 
     def get_banniere(self, obj):
         request = self.context.get("request")
@@ -79,6 +91,12 @@ class CoursSerializer(serializers.ModelSerializer):
             representation["banniere"] = None
 
         return representation
+    
+    def get_lecons_count(self, obj):
+        return obj.lecon_set.count()
+
+    def get_etudiants_count(self, obj):
+        return obj.etudiants.count()
 
 
 class StudentCourseSerializer(serializers.ModelSerializer):

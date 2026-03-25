@@ -50,6 +50,12 @@ student_course_detail = StudentCourseViewSet.as_view({
 student_course_favorite = StudentCourseViewSet.as_view({
     "post": "favorite",
 })
+student_course_inscrire = StudentCourseViewSet.as_view({
+    "post": "inscrire",
+})
+student_course_desinscrire = StudentCourseViewSet.as_view({
+    "post": "desinscrire",
+})
 
 urlpatterns = [
 
@@ -62,6 +68,8 @@ urlpatterns = [
     path("api/student/courses/", student_courses, name="student-courses"),
     path("api/student/courses/<int:pk>/", student_course_detail, name="student-course-detail"),
     path("api/student/courses/<int:pk>/favorite/", student_course_favorite, name="student-course-favorite"),
+    path("api/student/courses/<int:pk>/inscrire/", student_course_inscrire, name="student-course-inscrire"),
+    path("api/student/courses/<int:pk>/desinscrire/", student_course_desinscrire, name="student-course-desinscrire"),
     
     path('api/chatbot/', include('chatbot.urls')),
     path("api/recommendations/<int:user_id>/", recommendations_view, name="recommendations"),
