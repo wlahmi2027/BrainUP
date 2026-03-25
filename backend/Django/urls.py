@@ -24,7 +24,8 @@ from API.views import (
     logout_view,
     register_view,
     recommendations_view,
-    StudentCourseViewSet
+    StudentCourseViewSet,
+    LeconViewSet
 )
 
 """
@@ -38,6 +39,7 @@ from django.conf.urls.static import static
 router = routers.DefaultRouter()
 router.register(r'etudiants', EtudiantViewSet)
 router.register(r'courses', CoursViewSet, basename='courses')
+router.register(r'lecons', LeconViewSet, basename='lecons')
 
 student_courses = StudentCourseViewSet.as_view({
     "get": "list",
@@ -60,7 +62,6 @@ urlpatterns = [
     path("api/student/courses/", student_courses, name="student-courses"),
     path("api/student/courses/<int:pk>/", student_course_detail, name="student-course-detail"),
     path("api/student/courses/<int:pk>/favorite/", student_course_favorite, name="student-course-favorite"),
-
     
     path('api/chatbot/', include('chatbot.urls')),
     path("api/recommendations/<int:user_id>/", recommendations_view, name="recommendations"),

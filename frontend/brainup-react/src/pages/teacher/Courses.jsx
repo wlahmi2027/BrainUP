@@ -210,14 +210,14 @@ export default function Courses() {
 
                   <button
                     className="btn btn--primary"
-                    onClick={() => navigate(`/teacher/courses/${c.id}`)} // view page
+                    onClick={() => navigate(`/teacher/courses/${c.id}`)}
                   >
                     Voir
                   </button>
                   <div>
                     <button
                       className="btn btn--soft"
-                      onClick={() => navigate(`/teacher/courses/${c.id}/students`)}
+                      onClick={() => navigate(`/teacher/courses/${c.id}`)}
                     >
                       Étudiants
                     </button>

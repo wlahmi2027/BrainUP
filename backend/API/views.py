@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny
 
-from API.serializers import EtudiantSerializer, CoursSerializer, QuizSerializer, StudentCourseSerializer
-from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz, Inscription
+from API.serializers import EtudiantSerializer, CoursSerializer, QuizSerializer, StudentCourseSerializer, LeconSerializer
+from .models import Utilisateur, Etudiant, Enseignant, Cours, Quiz, Inscription, Lecon
 from .recommendation_service import build_recommendations_payload
 
 import secrets
@@ -13,6 +13,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
+from rest_framework.exceptions import PermissionDenied
 
 @api_view(['GET'])
 def profil_view(request):
@@ -45,7 +46,10 @@ def get_user_from_token(request):
     except:
         return None
 
-
+def get_serializer_context(self):
+    return {
+        "request": self.request
+    }
 
 @api_view(['POST'])
 def logout_view(request):
@@ -149,6 +153,56 @@ class CoursViewSet(viewsets.ModelViewSet):
             )
 
         return super().retrieve(request, *args, **kwargs)
+
+class LeconViewSet(viewsets.ModelViewSet):
+    serializer_class = LeconSerializer
+
+    def get_queryset(self):
+        user = get_user_from_token(self.request)
+        if not user:
+            return Lecon.objects.none()
+
+        # Only lessons of courses owned by the teacher
+        return Lecon.objects.filter(cours__enseignant__utilisateur_ptr=user)
+
+    def perform_create(self, serializer):
+        user = get_user_from_token(self.request)
+
+        if not user:
+            raise PermissionDenied("Unauthorized")
+
+        try:
+            cours = Cours.objects.get(id=self.request.data.get("cours"))
+        except Cours.DoesNotExist:
+            raise serializers.ValidationError("Cours introuvable")
+
+        # Ensure teacher owns the course
+        if cours.enseignant.utilisateur_ptr != user:
+            raise PermissionDenied("Not your course")
+
+        serializer.save(cours=cours)
+
+    def perform_update(self, serializer):
+        user = get_user_from_token(self.request)
+
+        if not user:
+            raise PermissionDenied("Unauthorized")
+
+        if serializer.instance.cours.enseignant.utilisateur_ptr != user:
+            raise PermissionDenied("Not your course")
+
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        user = get_user_from_token(self.request)
+
+        if not user:
+            raise PermissionDenied("Unauthorized")
+
+        if instance.cours.enseignant.utilisateur_ptr != user:
+            raise PermissionDenied("Not your course")
+
+        instance.delete()
         
 class StudentCourseViewSet(viewsets.ViewSet):
     """
