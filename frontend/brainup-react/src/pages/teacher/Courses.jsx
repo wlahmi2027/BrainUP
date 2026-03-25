@@ -8,6 +8,9 @@ export default function Courses() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showStudentsModal, setShowStudentsModal] = useState(false);
+  const [studentsData, setStudentsData] = useState(null);
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
 
   const FILTERS = ["all", "publie", "brouillon", "archive"];
   async function updateStatus(courseId, newStatus) {
@@ -45,6 +48,25 @@ export default function Courses() {
     } catch (err) {
       console.error(err);
       alert("Erreur lors de la mise à jour du statut.");
+    }
+  }
+  async function openStudents(courseId) {
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(
+        `http://localhost:8001/api/courses/${courseId}/etudiants/`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const data = await res.json();
+      setStudentsData(data);
+      setSelectedCourseId(courseId);
+      setShowStudentsModal(true);
+    } catch (err) {
+      console.error(err);
     }
   }
   useEffect(() => {
@@ -221,7 +243,7 @@ export default function Courses() {
                   <div>
                     <button
                       className="btn btn--soft"
-                      onClick={() => navigate(`/teacher/courses/${c.id}`)}
+                      onClick={() => openStudents(c.id)}
                     >
                       Étudiants
                     </button>
@@ -242,6 +264,40 @@ export default function Courses() {
           ))
         )}
       </div>
+      {showStudentsModal && studentsData && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowStudentsModal(false)}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Étudiants inscrits ({studentsData.count})</h3>
+
+            {studentsData.students.length === 0 ? (
+              <p className="muted">Aucun étudiant inscrit</p>
+            ) : (
+              <ul>
+                {studentsData.students.map((s) => (
+                  <li key={s.id} style={{ marginBottom: "10px" }}>
+                    <strong>{s.username}</strong> — {s.email}
+                    <br />
+                    Progression: {s.progression}%
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="modal-actions">
+              <button onClick={() => setShowStudentsModal(false)}>
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section >
+
   );
 }

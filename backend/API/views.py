@@ -118,7 +118,7 @@ class CoursViewSet(viewsets.ModelViewSet):
 
 
     def create(self, request, *args, **kwargs):
-        print("REQUEST DATA:", request.data)  # <-- add this
+        print("REQUEST DATA:", request.data)
 
         user = get_user_from_token(request)
 
@@ -138,7 +138,7 @@ class CoursViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=data)
 
         if not serializer.is_valid():
-            print("ERRORS:", serializer.errors)  # <-- add this
+            print("ERRORS:", serializer.errors)
             return Response(serializer.errors, status=400)
 
         serializer.save(enseignant=enseignant)
@@ -154,6 +154,28 @@ class CoursViewSet(viewsets.ModelViewSet):
             )
 
         return super().retrieve(request, *args, **kwargs)
+
+
+    @action(detail=True, methods=["get"], url_path="etudiants")
+    def etudiants(self, request, pk=None):
+        course = self.get_object()
+
+        inscriptions = Inscription.objects.filter(cours=course).select_related("etudiant")
+
+        data = [
+            {
+                "id": insc.etudiant.id,
+                "username": insc.etudiant.utilisateur_ptr.nom,
+                "email": insc.etudiant.utilisateur_ptr.email,
+                "progression": insc.progression,
+            }
+            for insc in inscriptions
+        ]
+
+        return Response({
+            "count": inscriptions.count(),
+            "students": data
+        })
 
 class LeconViewSet(viewsets.ModelViewSet):
     serializer_class = LeconSerializer
