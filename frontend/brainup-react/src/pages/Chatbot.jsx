@@ -2,15 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { askBot } from "../api/chatbot";
 
-export default function Chatbot() {
+export default function Chatbot({ role = "student" }) {
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
+
+  const isTeacher = role === "teacher";
 
   const [messages, setMessages] = useState([
     {
       id: 1,
       role: "assistant",
-      text: "Bonjour 👋 Je suis Assistant BrainUP. Je peux t’aider à trouver un cours, t’orienter vers une page, ou répondre à des questions pédagogiques.",
+      text: isTeacher
+        ? "Bonjour 👋 Je suis Assistant BrainUP. Je peux vous aider à gérer vos cours, vos quiz et votre espace enseignant."
+        : "Bonjour 👋 Je suis Assistant BrainUP. Je peux t’aider à trouver un cours, t’orienter vers une page, ou répondre à des questions pédagogiques.",
       sources: [],
       actions: [],
     },
@@ -18,12 +22,21 @@ export default function Chatbot() {
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [quickSuggestions, setQuickSuggestions] = useState([
-    "Je veux apprendre Python",
-    "Où trouver les cours ?",
-    "Comment modifier mon profil ?",
-    "Où sont les quiz ?",
-  ]);
+  const [quickSuggestions, setQuickSuggestions] = useState(
+    isTeacher
+      ? [
+          "Comment créer un cours ?",
+          "Comment ajouter une leçon ?",
+          "Combien de cours ai-je ?",
+          "Quels sont mes cours ?",
+        ]
+      : [
+          "Je veux apprendre Python",
+          "Où trouver les cours ?",
+          "Comment modifier mon profil ?",
+          "Où sont les quiz ?",
+        ]
+  );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -33,6 +46,12 @@ export default function Chatbot() {
     if (!route) return;
     navigate(route);
   };
+
+  const buildHistory = (msgs) =>
+    msgs.map((msg) => ({
+      role: msg.role,
+      content: msg.text,
+    }));
 
   const sendMessage = async (customMessage = null) => {
     const finalMessage = (customMessage ?? message).trim();
@@ -52,12 +71,7 @@ export default function Chatbot() {
     setLoading(true);
 
     try {
-      const history = nextMessages.map((msg) => ({
-        role: msg.role,
-        text: msg.text,
-      }));
-
-      const data = await askBot(finalMessage, history);
+      const data = await askBot(finalMessage, buildHistory(nextMessages), role);
 
       const botMessage = {
         id: Date.now() + 1,
@@ -95,6 +109,19 @@ export default function Chatbot() {
     }
   };
 
+  const handleSourceClick = (src) => {
+    if (loading) return;
+
+    if (src.route) {
+      goToRoute(src.route);
+      return;
+    }
+
+    if (src.title) {
+      sendMessage(src.title);
+    }
+  };
+
   return (
     <div className="chatbot-page">
       <div className="chatbot-card">
@@ -103,7 +130,11 @@ export default function Chatbot() {
             <div className="chatbot-avatar">🧠</div>
             <div>
               <h2>Assistant BrainUP</h2>
-              <p>Ton assistant pédagogique intelligent</p>
+              <p>
+                {isTeacher
+                  ? "Votre assistant enseignant intelligent"
+                  : "Ton assistant pédagogique intelligent"}
+              </p>
             </div>
           </div>
 
@@ -119,6 +150,7 @@ export default function Chatbot() {
               key={index}
               className="suggestion-chip"
               onClick={() => sendMessage(item)}
+              disabled={loading}
             >
               {item}
             </button>
@@ -139,7 +171,9 @@ export default function Chatbot() {
 
               <div
                 className={`chat-bubble ${
-                  msg.role === "user" ? "chat-bubble-user" : "chat-bubble-assistant"
+                  msg.role === "user"
+                    ? "chat-bubble-user"
+                    : "chat-bubble-assistant"
                 }`}
               >
                 <div className="chat-text">{msg.text}</div>
@@ -147,24 +181,30 @@ export default function Chatbot() {
                 {msg.sources && msg.sources.length > 0 && (
                   <div className="chat-sources">
                     <div className="chat-sources-title">Liens utiles :</div>
-                    {msg.sources.map((src, index) => (
-                      <div key={index} className="chat-source-item">
-                        <strong>{src.title}</strong>
-                        {src.route && (
-                          <>
-                            {" "}
-                            →{" "}
-                            <button
-                              type="button"
-                              className="chat-link-btn"
-                              onClick={() => goToRoute(src.route)}
-                            >
-                              {src.route}
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    ))}
+
+                    <div className="chat-sources-list">
+                      {msg.sources.map((src, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          className="chat-source-chip"
+                          onClick={() => handleSourceClick(src)}
+                          disabled={loading}
+                          title={
+                            src.route
+                              ? `Ouvrir ${src.route}`
+                              : `Poser la question : ${src.title}`
+                          }
+                        >
+                          <span className="chat-source-chip-text">
+                            {src.title}
+                          </span>
+                          {src.route && (
+                            <span className="chat-source-chip-route">↗</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
 
@@ -176,6 +216,7 @@ export default function Chatbot() {
                         type="button"
                         className="chat-action-btn"
                         onClick={() => goToRoute(action.route)}
+                        disabled={loading}
                       >
                         {action.label}
                       </button>
@@ -208,14 +249,21 @@ export default function Chatbot() {
         <div className="chatbot-input-area">
           <input
             type="text"
-            placeholder="Pose ta question..."
+            placeholder={
+              isTeacher ? "Posez votre question..." : "Pose ta question..."
+            }
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             className="chatbot-input"
+            disabled={loading}
           />
 
-          <button className="chatbot-send-btn" onClick={() => sendMessage()}>
+          <button
+            className="chatbot-send-btn"
+            onClick={() => sendMessage()}
+            disabled={loading}
+          >
             Envoyer
           </button>
         </div>
