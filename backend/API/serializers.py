@@ -53,7 +53,8 @@ class CoursSerializer(serializers.ModelSerializer):
         "banniere", 
         "lecons", 
         "lecons_count", 
-        "etudiants_count"
+        "etudiants_count",
+        "category"
         ]
 
     def get_banniere(self, obj):

@@ -92,6 +92,8 @@ class Cours(models.Model):
 
     etudiants = models.ManyToManyField('Etudiant', through='Inscription', related_name='cours_liste')   # cours_list for reverse lookup
 
+    category = models.CharField(max_length=255, blank=True, null=True, default="")
+
 
 
     def __str__(self):

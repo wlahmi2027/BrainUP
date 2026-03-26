@@ -116,12 +116,8 @@ class CoursViewSet(viewsets.ModelViewSet):
             "request": self.request,
         }
 
-
-    def create(self, request, *args, **kwargs):
-        print("REQUEST DATA:", request.data)
-
+    def update(self, request, *args, **kwargs):
         user = get_user_from_token(request)
-
         if not user:
             return Response({"message": "Unauthorized"}, status=401)
 
@@ -130,19 +126,39 @@ class CoursViewSet(viewsets.ModelViewSet):
         except Enseignant.DoesNotExist:
             return Response({"message": "Forbidden"}, status=403)
 
-        data = request.data
+        course = self.get_object()
+        if course.enseignant != enseignant:
+            return Response({"message": "Forbidden"}, status=403)
 
+        data = request.data.copy()  # <-- make a mutable copy
+        if "banniere" not in request.FILES:
+            data.pop("banniere", None)
+
+        serializer = self.get_serializer(course, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=200)
+
+
+    def create(self, request, *args, **kwargs):
+        user = get_user_from_token(request)
+        if not user:
+            return Response({"message": "Unauthorized"}, status=401)
+
+        try:
+            enseignant = Enseignant.objects.get(utilisateur_ptr=user)
+        except Enseignant.DoesNotExist:
+            return Response({"message": "Forbidden"}, status=403)
+
+        data = request.data.copy()  # <-- important!
         if "temps_apprentissage" not in data:
             data["temps_apprentissage"] = 0
 
         serializer = self.get_serializer(data=data)
-
-        if not serializer.is_valid():
-            print("ERRORS:", serializer.errors)
-            return Response(serializer.errors, status=400)
-
+        serializer.is_valid(raise_exception=True)
         serializer.save(enseignant=enseignant)
         return Response(serializer.data, status=201)
+
 
     def retrieve(self, request, *args, **kwargs):
         user = get_user_from_token(request)
@@ -176,6 +192,22 @@ class CoursViewSet(viewsets.ModelViewSet):
             "count": inscriptions.count(),
             "students": data
         })
+    def destroy(self, request, *args, **kwargs):
+        user = get_user_from_token(request)
+        if not user:
+            return Response({"message": "Unauthorized"}, status=401)
+
+        try:
+            enseignant = Enseignant.objects.get(utilisateur_ptr=user)
+        except Enseignant.DoesNotExist:
+            return Response({"message": "Forbidden"}, status=403)
+
+        course = self.get_object()
+        if course.enseignant != enseignant:
+            return Response({"message": "Forbidden"}, status=403)
+
+        course.delete()
+        return Response({"message": "Cours supprimé"}, status=204)
 
 class LeconViewSet(viewsets.ModelViewSet):
     serializer_class = LeconSerializer

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function CreateCourse() {
   const navigate = useNavigate();
+  const [preview, setPreview] = useState(null);
   const [form, setForm] = useState({
     title: "",
     category: "",
@@ -19,7 +20,16 @@ export default function CreateCourse() {
     const { name, value, files } = event.target;
 
     if (name === "banniere") {
-      setForm((prev) => ({ ...prev, banniere: files[0] }));
+      const file = files[0];
+      setForm((prev) => ({ ...prev, banniere: file }));
+
+      // generate preview
+      if (file) {
+        const url = URL.createObjectURL(file);
+        setPreview(url);
+      } else {
+        setPreview(null);
+      }
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -41,8 +51,9 @@ export default function CreateCourse() {
     formData.append("niveau", form.level);
     formData.append("temps_apprentissage", form.temps_apprentissage);
     formData.append("status", form.status);
-    
-    
+    formData.append("category", form.category);
+
+
     if (form.banniere) {
       formData.append("banniere", form.banniere);
     }
@@ -172,6 +183,15 @@ export default function CreateCourse() {
 
         <div className="field teacher-field--full">
           <label className="label">Bannière</label>
+          {preview && (
+            <div style={{ marginTop: "10px" }}>
+              <img
+                src={preview}
+                alt="Aperçu de la bannière"
+                style={{ width: "200px", marginBottom: "10px" }}
+              />
+            </div>
+          )}
           <input
             type="file"
             name="banniere"

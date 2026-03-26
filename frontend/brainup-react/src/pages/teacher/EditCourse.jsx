@@ -1,70 +1,171 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 export default function EditCourse() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+
   const [form, setForm] = useState({
-    title: "React moderne",
-    category: "Frontend",
-    level: "Intermédiaire",
-    description: "Un cours complet pour maîtriser React et ses hooks.",
-    status: "Publié",
+    title: "",
+    category: "",
+    level: "debutant",
+    description: "",
+    status: "brouillon",
+    temps_apprentissage: 0,
+    banniere: null,
   });
+  const [currentBannerUrl, setCurrentBannerUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const [pdfFile, setPdfFile] = useState(null);
+  async function handleDelete() {
+    if (!window.confirm("Voulez-vous vraiment supprimer ce cours ?")) return;
 
-  const existingPdf = {
-    name: "react-moderne.pdf",
-    url: "#",
-  };
-
-  function handleChange(event) {
-    const { name, value } = event.target;
-    setForm((previous) => ({
-      ...previous,
-      [name]: value,
-    }));
-  }
-
-  function handleFileChange(event) {
-    const file = event.target.files?.[0] || null;
-
-    if (file && file.type !== "application/pdf") {
-      alert("Veuillez sélectionner un fichier PDF.");
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
       return;
     }
 
-    setPdfFile(file);
+    try {
+      setLoading(true);
+      const res = await fetch(`http://localhost:8001/api/courses/${id}/`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login");
+        return;
+      }
+
+      if (!res.ok && res.status !== 204) {
+        const data = await res.json();
+        throw new Error(data?.message || "Erreur lors de la suppression.");
+      }
+
+      // Redirect to course list after deletion
+      navigate("/teacher/courses");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function handleSubmit(event) {
+  // Fetch course data on mount
+  useEffect(() => {
+    async function fetchCourse() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:8001/api/courses/${id}/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/login");
+          return;
+        }
+
+        if (!res.ok) throw new Error("Impossible de récupérer le cours");
+
+        const data = await res.json();
+
+        setForm({
+          title: data.title || "",
+          category: data.category || "",
+          level: data.niveau || "debutant",
+          description: data.description || "",
+          status: data.status || "brouillon",
+          temps_apprentissage: data.temps_apprentissage || 0,
+          banniere: null, // never prefill file input
+        });
+
+        setCurrentBannerUrl(data.banniere || null);
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+
+    fetchCourse();
+  }, [id, navigate]);
+
+  function handleChange(event) {
+    const { name, value, files } = event.target;
+    if (name === "banniere") {
+      setForm((prev) => ({ ...prev, banniere: files[0] }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault();
+    setError(null);
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("title", form.title);
-    formData.append("category", form.category);
-    formData.append("level", form.level);
     formData.append("description", form.description);
+    formData.append("niveau", form.level);
+    formData.append("temps_apprentissage", form.temps_apprentissage);
     formData.append("status", form.status);
+    formData.append("category", form.category);
+    if (form.banniere) formData.append("banniere", form.banniere);
 
-    if (pdfFile) {
-      formData.append("pdf", pdfFile);
+    try {
+      setLoading(true);
+      const res = await fetch(`http://localhost:8001/api/courses/${id}/`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login");
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data?.message || "Erreur lors de la mise à jour du cours.");
+      }
+
+      navigate("/teacher/courses");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    console.log("Cours modifié :", {
-      ...form,
-      newPdf: pdfFile?.name || null,
-    });
   }
 
   return (
     <section className="page teacher-page">
       <div className="teacher-head">
         <div>
-          <h1 className="page__title">Modifier un cours</h1>
-          <p className="teacher-subtitle">
-            Mettez à jour les informations et le support PDF du cours.
-          </p>
+          <h1 className="page__title">Modifier le cours</h1>
+          <p className="teacher-subtitle">Mettez à jour les informations du cours</p>
         </div>
       </div>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
       <form className="teacher-form-card" onSubmit={handleSubmit}>
         <div className="teacher-form-grid">
@@ -75,6 +176,8 @@ export default function EditCourse() {
               name="title"
               value={form.title}
               onChange={handleChange}
+              placeholder="Ex. Introduction à Django"
+              required
             />
           </div>
 
@@ -85,6 +188,7 @@ export default function EditCourse() {
               name="category"
               value={form.category}
               onChange={handleChange}
+              placeholder="Ex. Backend"
             />
           </div>
 
@@ -96,9 +200,9 @@ export default function EditCourse() {
               value={form.level}
               onChange={handleChange}
             >
-              <option>Débutant</option>
-              <option>Intermédiaire</option>
-              <option>Avancé</option>
+              <option value="debutant">Débutant</option>
+              <option value="intermediaire">Intermédiaire</option>
+              <option value="avance">Avancé</option>
             </select>
           </div>
 
@@ -110,9 +214,23 @@ export default function EditCourse() {
               value={form.status}
               onChange={handleChange}
             >
-              <option>Brouillon</option>
-              <option>Publié</option>
+              <option value="brouillon">Brouillon</option>
+              <option value="publie">Publié</option>
             </select>
+          </div>
+
+          <div className="field">
+            <label className="label">Temps d’apprentissage (heures)</label>
+            <input
+              className="input"
+              type="number"
+              name="temps_apprentissage"
+              value={form.temps_apprentissage}
+              onChange={handleChange}
+              min="0"
+              max="999"
+              required
+            />
           </div>
 
           <div className="field teacher-field--full">
@@ -122,53 +240,47 @@ export default function EditCourse() {
               name="description"
               value={form.description}
               onChange={handleChange}
+              placeholder="Décrivez le contenu du cours..."
+              required
             />
-          </div>
-
-          <div className="field teacher-field--full">
-            <label className="label">Support PDF actuel</label>
-
-            <div className="teacher-file-actions">
-              <div className="teacher-file-box">
-                <span>📄 {existingPdf.name}</span>
-              </div>
-
-              <a
-                className="btn btn--soft"
-                href={existingPdf.url}
-                download
-              >
-                Télécharger
-              </a>
-            </div>
-          </div>
-
-          <div className="field teacher-field--full">
-            <label className="label">Remplacer le PDF</label>
-            <input
-              className="input"
-              type="file"
-              accept="application/pdf"
-              onChange={handleFileChange}
-            />
-
-            {pdfFile && (
-              <div className="teacher-file-box">
-                <span>📄 {pdfFile.name}</span>
-                <span className="teacher-file-box__meta">
-                  {(pdfFile.size / 1024 / 1024).toFixed(2)} MB
-                </span>
-              </div>
-            )}
           </div>
         </div>
 
+        <div className="field teacher-field--full">
+          <label className="label">Bannière</label>
+          {currentBannerUrl && (
+            <img
+              src={currentBannerUrl}
+              alt="Bannière actuelle"
+              style={{ width: "200px", marginBottom: "10px" }}
+            />
+          )}
+          <input
+            type="file"
+            name="banniere"
+            accept="image/*"
+            onChange={handleChange}
+          />
+        </div>
         <div className="teacher-form-actions">
-          <button type="button" className="btn btn--ghost">
+          <button
+            type="button"
+            className="btnDanger"
+            onClick={handleDelete}
+            disabled={loading}
+            style={{ marginRight: "auto" }}
+          >
+            Supprimer le cours
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => navigate("/teacher/courses")}
+          >
             Annuler
           </button>
-          <button type="submit" className="btn btn--primary">
-            Enregistrer les modifications
+          <button type="submit" className="btn btn--primary" disabled={loading}>
+            {loading ? "Enregistrement..." : "Enregistrer les modifications"}
           </button>
         </div>
       </form>
