@@ -16,6 +16,9 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import PermissionDenied
 
+from django.db.models import Prefetch
+
+
 @api_view(['GET'])
 def profil_view(request):
     user = get_user_from_token(request)
@@ -192,6 +195,51 @@ class CoursViewSet(viewsets.ModelViewSet):
             "count": inscriptions.count(),
             "students": data
         })
+    
+
+    @action(detail=False, methods=["get"], url_path="all-etudiants")
+    def all_etudiants(self, request):
+        user = get_user_from_token(request)
+
+        if not user:
+            return Response({"message": "Unauthorized"}, status=401)
+
+        try:
+            enseignant = Enseignant.objects.get(utilisateur_ptr=user)
+        except Enseignant.DoesNotExist:
+            return Response({"message": "Forbidden"}, status=403)
+
+        # Get all courses of this teacher
+        courses = Cours.objects.filter(enseignant=enseignant)
+
+        # Get all inscriptions linked to those courses
+        inscriptions = (
+            Inscription.objects
+            .filter(cours__in=courses)
+            .select_related("etudiant", "cours", "etudiant__utilisateur_ptr")
+        )
+
+        data = [
+            {
+                "id": insc.etudiant.id,
+                "name": insc.etudiant.utilisateur_ptr.nom,
+                "email": insc.etudiant.utilisateur_ptr.email,
+                "course": insc.cours.title,
+                "progress": insc.progression,
+                "status": (
+                    "Excellent" if insc.progression >= 80 else
+                    "À relancer" if insc.progression < 40 else
+                    "Actif"
+                ),
+            }
+            for insc in inscriptions
+        ]
+
+        return Response({
+            "count": inscriptions.count(),
+            "students": data
+        })
+
     def destroy(self, request, *args, **kwargs):
         user = get_user_from_token(request)
         if not user:

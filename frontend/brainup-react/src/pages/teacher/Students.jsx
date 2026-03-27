@@ -1,57 +1,105 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Students() {
   const [query, setQuery] = useState("");
+  const [students, setStudents] = useState([]);
+  const [error, setError] = useState(null);
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "desc",
+  });
 
-  const students = useMemo(
-    () => [
-      {
-        id: 1,
-        name: "Amine K.",
-        email: "amine@email.com",
-        course: "React moderne",
-        progress: 78,
-        status: "Actif",
-      },
-      {
-        id: 2,
-        name: "Sarah B.",
-        email: "sarah@email.com",
-        course: "Python avancé",
-        progress: 55,
-        status: "Actif",
-      },
-      {
-        id: 3,
-        name: "Nour D.",
-        email: "nour@email.com",
-        course: "Bases de données",
-        progress: 91,
-        status: "Excellent",
-      },
-      {
-        id: 4,
-        name: "Yassine M.",
-        email: "yassine@email.com",
-        course: "React moderne",
-        progress: 34,
-        status: "À relancer",
-      },
-    ],
-    []
-  );
+  const navigate = useNavigate();
 
+  // Fetch students
+  useEffect(() => {
+    async function fetchStudents() {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          "http://localhost:8001/api/courses/all-etudiants/",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/login");
+          return;
+        }
+
+        if (!res.ok) throw new Error("Erreur lors du chargement");
+
+        const data = await res.json();
+        setStudents(data.students);
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+
+    fetchStudents();
+  }, [navigate]);
+
+  // Handle sorting
+  function handleSort(key) {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        return {
+          key,
+          direction: prev.direction === "desc" ? "asc" : "desc",
+        };
+      }
+      return { key, direction: "desc" };
+    });
+  }
+
+  // Filter + Sort
   const filteredStudents = useMemo(() => {
-    if (!query.trim()) return students;
+    let result = students;
 
-    const q = query.toLowerCase();
-    return students.filter(
-      (student) =>
-        student.name.toLowerCase().includes(q) ||
-        student.email.toLowerCase().includes(q) ||
-        student.course.toLowerCase().includes(q)
-    );
-  }, [students, query]);
+    // Filter
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      result = result.filter(
+        (student) =>
+          student.name.toLowerCase().includes(q) ||
+          student.email.toLowerCase().includes(q) ||
+          student.course.toLowerCase().includes(q)
+      );
+    }
+
+    // Sort
+    if (sortConfig.key) {
+      result = [...result].sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+
+        if (typeof aValue === "string") aValue = aValue.toLowerCase();
+        if (typeof bValue === "string") bValue = bValue.toLowerCase();
+
+        if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return result;
+  }, [students, query, sortConfig]);
+
+  function renderArrow(key) {
+    if (sortConfig.key !== key) return "";
+    return sortConfig.direction === "desc" ? " ↓" : " ↑";
+  }
 
   return (
     <section className="page teacher-page">
@@ -64,27 +112,47 @@ export default function Students() {
         </div>
       </div>
 
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
       <div className="teacher-toolbar">
         <div className="searchInline">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher un étudiant..."
+            placeholder="Rechercher un cours ou un étudiant"
           />
         </div>
       </div>
 
       <div className="teacher-students-table">
         <div className="teacher-students-table__head">
-          <span>Étudiant</span>
-          <span>Cours</span>
-          <span>Progression</span>
+          <span
+            onClick={() => handleSort("name")}
+            style={{ cursor: "pointer" }}
+          >
+            Étudiant{renderArrow("name")}
+          </span>
+
+          <span
+            onClick={() => handleSort("course")}
+            style={{ cursor: "pointer" }}
+          >
+            Cours{renderArrow("course")}
+          </span>
+
+          <span
+            onClick={() => handleSort("progress")}
+            style={{ cursor: "pointer" }}
+          >
+            Progression{renderArrow("progress")}
+          </span>
+
           <span>Statut</span>
           <span>Actions</span>
         </div>
 
-        {filteredStudents.map((student) => (
-          <div key={student.id} className="teacher-students-table__row">
+        {filteredStudents.map((student, index) => (
+          <div key={index} className="teacher-students-table__row">
             <div className="teacher-student-user">
               <div className="teacher-student-avatar">
                 {student.name.charAt(0)}
@@ -95,7 +163,9 @@ export default function Students() {
               </div>
             </div>
 
-            <div className="teacher-student-course">{student.course}</div>
+            <div className="teacher-student-course">
+              {student.course}
+            </div>
 
             <div className="teacher-student-progress">
               <div className="teacher-progress-bar">
