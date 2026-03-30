@@ -23,6 +23,8 @@ from API.views import (
     teacher_students_view,
     teacher_student_detail_view,
     topbar_view,
+    StudentCourseViewSet,
+    LeconViewSet
 )
 router = routers.DefaultRouter()
 router.register(r"etudiants", EtudiantViewSet, basename="etudiants")
@@ -30,6 +32,8 @@ router.register(r"courses", CoursViewSet, basename="courses")
 router.register(r"quiz", QuizViewSet, basename="quiz")
 router.register(r"questions", QuestionViewSet, basename="questions")
 router.register(r"choix", ChoixQuestionViewSet, basename="choix")
+router.register(r'lecons', LeconViewSet, basename='lecons')
+
 
 student_courses = StudentCourseViewSet.as_view({
     "get": "list",
@@ -39,6 +43,12 @@ student_course_detail = StudentCourseViewSet.as_view({
 })
 student_course_favorite = StudentCourseViewSet.as_view({
     "post": "favorite",
+})
+student_course_inscrire = StudentCourseViewSet.as_view({
+    "post": "inscrire",
+})
+student_course_desinscrire = StudentCourseViewSet.as_view({
+    "post": "desinscrire",
 })
 
 urlpatterns = [
@@ -51,6 +61,9 @@ urlpatterns = [
     path("api/student/courses/", student_courses, name="student-courses"),
     path("api/student/courses/<int:pk>/", student_course_detail, name="student-course-detail"),
     path("api/student/courses/<int:pk>/favorite/", student_course_favorite, name="student-course-favorite"),
+
+    path("api/student/courses/<int:pk>/inscrire/", student_course_inscrire, name="student-course-inscrire"),
+    path("api/student/courses/<int:pk>/desinscrire/", student_course_desinscrire, name="student-course-desinscrire"),
 
     path("api/recommendations/<int:user_id>/", recommendations_view, name="recommendations"),
     path("api/student/quizzes/", student_quizzes_view, name="student-quizzes"),

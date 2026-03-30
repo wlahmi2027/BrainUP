@@ -9,42 +9,130 @@ export default function StudentCourses() {
   const [tab, setTab] = useState("all"); // all | favorites
   const [sortBy, setSortBy] = useState("title");
 
+  /*async function loadCourses() {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("http://localhost:8001/api/student/courses/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+
+      const normalized = data.map((c) => ({
+        id: c.id,
+        title: c.title,
+        author: c.enseignant.nom,
+        progression: c.inscription?.progression_percent ?? 0,
+        isFavorite: c.inscription?.favoris ?? false,
+        banner: c.banniere,
+        inscription: c.inscription,
+      }));
+
+      setCourses(normalized);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+*/
+async function loadCourses() {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch("http://localhost:8001/api/student/courses/", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log("student courses status =", res.status);
+    console.log("student courses ok =", res.ok);
+
+    const data = await res.json();
+
+    console.log("student courses data =", data);
+    console.log("is array =", Array.isArray(data));
+
+    const normalized = data.map((c) => ({
+      id: c.id,
+      title: c.title,
+      author: c.enseignant?.nom || "",
+      progression: c.inscription?.progression_percent ?? 0,
+      isFavorite: c.inscription?.favoris ?? false,
+      banner: c.banniere,
+      inscription: c.inscription,
+    }));
+
+    setCourses(normalized);
+  } catch (err) {
+    console.error("loadCourses error =", err);
+  } finally {
+    setLoading(false);
+  }
+}
+  async function handleEnroll(courseId) {
+    const token = localStorage.getItem("token");
+
+    if (!window.confirm("Voulez-vous vraiment vous inscrire à ce cours ?")) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:8001/api/student/courses/${courseId}/inscrire/`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error();
+
+      // reload data
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === courseId
+            ? { ...c, inscription: { progression: 0, favoris: false } }
+            : c
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  async function handleUnsubscribe(courseId) {
+    const token = localStorage.getItem("token");
+
+    if (!window.confirm("Voulez-vous vraiment vous désinscrire de ce cours ?")) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:8001/api/student/courses/${courseId}/desinscrire/`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error();
+
+      // refresh courses
+      await loadCourses();
+    } catch (err) {
+      console.error(err);
+    }
+  }
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login");
       return;
     }
-
-    async function loadCourses() {
-      try {
-        const res = await fetch("http://localhost:8001/api/student/courses/", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const data = await res.json();
-
-        const normalized = data.map((c) => ({
-          id: c.id,
-          title: c.title,
-          author: c.enseignant.nom,
-          progression: c.inscription?.progression ?? 0,
-          isFavorite: c.inscription?.favoris ?? false,
-          banner: c.banniere,
-        }));
-
-        setCourses(normalized);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     loadCourses();
   }, [navigate]);
 
   const filteredAndSorted = useMemo(() => {
+
     let result = [...courses];
 
     // SEARCH
@@ -101,6 +189,43 @@ export default function StudentCourses() {
       console.error(err);
     }
   };
+  async function updateStatus(courseId, newStatus) {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const confirmMsg = `Passer ce cours en "${newStatus}" ?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:8001/api/courses/${courseId}/`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Erreur lors de la mise à jour.");
+
+      // update local state
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === courseId ? { ...c, status: newStatus } : c
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la mise à jour du statut.");
+    }
+  }
 
   if (loading) return <p>Chargement...</p>;
 
@@ -160,62 +285,80 @@ export default function StudentCourses() {
         {filteredAndSorted.length === 0 ? (
           <p>Aucun cours trouvé.</p>
         ) : (
-          filteredAndSorted.map((c) => (
-            <div key={c.id} className="course-card">
-              {/* BANNER */}
-              <div
-                className="course-banner"
-                style={
-                  c.banner
-                    ? {
-                      backgroundImage: `url(${c.banner})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }
-                    : undefined
-                }
-              >
-                <div className="banner-overlay">
-                  <h3>{c.title}</h3>
+          filteredAndSorted.map((c) => {
+            const isEnrolled = !!c.inscription;
+            return (
+
+              <div key={c.id} className="course-card">
+                {/* BANNER */}
+                <div
+                  className="course-banner"
+                  style={
+                    c.banner
+                      ? {
+                        backgroundImage: `url(${c.banner})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
+                      : undefined
+                  }
+                >
+                  <div className="banner-overlay">
+                    <h3>{c.title}</h3>
+                  </div>
+                </div>
+
+                {/* CONTENT */}
+                <div className="course-content">
+                  <p className="course-author">{c.author}</p>
+
+                  <div className="course-progress">
+                    <div
+                      className="bar"
+                      style={{ width: `${c.progression}%` }}
+                    />
+                  </div>
+
+                  <p>{c.progression}% complété</p>
+
+                  <div className="course-actions">
+                    {!isEnrolled ? (
+                      <button
+                        className="btn-primary"
+                        onClick={() => handleEnroll(c.id)}
+                      >
+                        S’inscrire
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          className="btn-primary"
+                          onClick={() => navigate(`/student/courses/${c.id}`)}
+                        >
+                          Voir Cours
+                        </button>
+                        <button
+                          className="btn"
+                          onClick={() => handleUnsubscribe(c.id)}
+                        >
+                          Désinscrire
+                        </button>
+                        <button
+                          className={`favorite-btn ${c.isFavorite ? "active" : ""}`}
+                          onClick={() => toggleFavorite(c.id)}
+                        >
+                          ★
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-
-              {/* CONTENT */}
-              <div className="course-content">
-                <p className="course-author">{c.author}</p>
-
-                <div className="course-progress">
-                  <div
-                    className="bar"
-                    style={{ width: `${c.progression}%` }}
-                  />
-                </div>
-
-                <p>{c.progression}% complété</p>
-
-                <div className="course-actions">
-                  <button
-                    className="btn-primary"
-                    onClick={() =>
-                      navigate(`/student/courses/${c.id}`)
-                    }
-                  >
-                    Voir Cours
-                  </button>
-
-                  <button
-                    className={`favorite-btn ${c.isFavorite ? "active" : ""
-                      }`}
-                    onClick={() => toggleFavorite(c.id)}
-                  >
-                    ★
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
-    </section>
+
+    </section >
   );
 }

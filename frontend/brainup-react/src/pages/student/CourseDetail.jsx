@@ -37,14 +37,14 @@ export default function CourseDetail() {
   if (loading) return <p>Chargement...</p>;
   if (!course) return <p>Cours introuvable.</p>;
 
-  const progress = course.inscription?.progression || 0;
+  const progress = course.inscription?.progression_percent || 0;
 
   return (
     <section className="player">
       {/* ===== HEADER ===== */}
       <div className="player__header">
         <div>
-          <h1>{course.titre}</h1>
+          <h1>{course.title}</h1>
           <p>
             {course.enseignant?.nom} • {course.niveau}
           </p>
@@ -90,12 +90,12 @@ export default function CourseDetail() {
               </div>
 
               <div className="lesson__content">
-                {selectedLesson.contenu && selectedLesson.contenu.endsWith(".pdf") ? (
+                {selectedLesson.fichier ? (
                   <>
                     {/* DOWNLOAD BUTTON */}
                     <div style={{ marginBottom: "10px" }}>
                       <a
-                        href={selectedLesson.contenu}
+                        href={selectedLesson.fichier}
                         download
                         target="_blank"
                         rel="noopener noreferrer"
@@ -107,7 +107,7 @@ export default function CourseDetail() {
 
                     {/* PDF VIEWER */}
                     <iframe
-                      src={selectedLesson.contenu}
+                      src={selectedLesson.fichier}
                       width="100%"
                       height="600px"
                     />

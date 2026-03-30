@@ -26,7 +26,6 @@ class Etudiant(Utilisateur):
     def __str__(self):
         return f"{self.nom} (Etudiant)"
 
-
 class Enseignant(Utilisateur):
     specialite = models.CharField(max_length=255)
 
@@ -40,10 +39,10 @@ class Cours(models.Model):
         ("intermediaire", "Intermédiaire"),
         ("avance", "Avancé"),
     ]
-
     STATUS_CHOIX = [
-        ("brouillon", "Brouillon"),
-        ("publie", "Publié"),
+        ('brouillon', 'Brouillon'),
+        ('publie', 'Publié'),
+        ('archive', 'Archivé')
     ]
 
     title = models.CharField(max_length=255)
@@ -62,6 +61,8 @@ class Cours(models.Model):
 
     def __str__(self):
         return self.title
+
+    category = models.CharField(max_length=255, blank=True, null=True, default="")
 
 
 class Inscription(models.Model):

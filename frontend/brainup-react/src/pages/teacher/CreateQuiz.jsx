@@ -21,6 +21,19 @@ function createInitialQuiz() {
   };
 }
 
+function mapLevelToBackend(level) {
+  if (level === "Débutant") return "debutant";
+  if (level === "Intermédiaire") return "intermediaire";
+  if (level === "Avancé") return "avance";
+  return "debutant";
+}
+
+function mapStatusToBackend(status) {
+  if (status === "Brouillon") return "brouillon";
+  if (status === "Publié") return "publie";
+  return "brouillon";
+}
+
 export default function CreateQuiz() {
   const [quiz, setQuiz] = useState(createInitialQuiz());
   const [questions, setQuestions] = useState([createEmptyQuestion()]);
@@ -129,19 +142,6 @@ export default function CreateQuiz() {
     setErrorMessage("");
   }
 
-  function mapLevelToBackend(level) {
-    if (level === "Débutant") return "debutant";
-    if (level === "Intermédiaire") return "intermediaire";
-    if (level === "Avancé") return "avance";
-    return "debutant";
-  }
-
-  function mapStatusToBackend(status) {
-    if (status === "Brouillon") return "brouillon";
-    if (status === "Publié") return "publie";
-    return "brouillon";
-  }
-
   function validateForm() {
     if (!quiz.title.trim()) {
       return "Le titre du quiz est obligatoire.";
@@ -193,7 +193,10 @@ export default function CreateQuiz() {
       setErrorMessage("");
 
       const token = localStorage.getItem("token");
-      const userId = localStorage.getItem("user_id");
+      const userRaw = localStorage.getItem("user");
+      const userId =
+        localStorage.getItem("user_id") ||
+        (userRaw ? JSON.parse(userRaw)?.id : null);
 
       if (!token || !userId) {
         throw new Error("Session invalide. Veuillez vous reconnecter.");

@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from PIL import Image
+
 from API.models import (
     Etudiant,
     Cours,
@@ -10,7 +12,7 @@ from API.models import (
     TentativeQuiz,
     ReponseTentative,
 )
-from PIL import Image
+
 
 class EtudiantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -124,7 +126,29 @@ class StudentQuizSerializer(serializers.ModelSerializer):
     def get_questions_count(self, obj):
         return obj.questions.count()
 
+class LeconSerializer(serializers.ModelSerializer):
+    fichier_url = serializers.SerializerMethodField(read_only=True)
 
+    class Meta:
+        model = Lecon
+        fields = [
+            "id",
+            "titre",
+            "ordre",
+            "contenu",
+            "fichier",
+            "fichier_url",
+            "duree_estimee_minutes",
+            "cours",
+        ]
+        read_only_fields = ["id"]
+
+    def get_fichier_url(self, obj):
+        request = self.context.get("request")
+        if obj.fichier:
+            return request.build_absolute_uri(obj.fichier.url) if request else obj.fichier.url
+        return None
+        
 class CoursSerializer(serializers.ModelSerializer):
     author = serializers.CharField(source="enseignant.nom", read_only=True)
     subtitle = serializers.SerializerMethodField()
@@ -133,6 +157,9 @@ class CoursSerializer(serializers.ModelSerializer):
     votes = serializers.SerializerMethodField()
     isFavorite = serializers.SerializerMethodField()
     banniere = serializers.ImageField(required=False, allow_null=True)
+    lecons = LeconSerializer(many=True, read_only=True)
+    lecons_count = serializers.SerializerMethodField()
+    etudiants_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Cours
@@ -153,6 +180,10 @@ class CoursSerializer(serializers.ModelSerializer):
             "banniere",
             "is_published",
             "date_creation",
+            "lecons",
+            "lecons_count",
+            "etudiants_count",
+            "category",
         ]
         read_only_fields = [
             "id",
@@ -164,6 +195,8 @@ class CoursSerializer(serializers.ModelSerializer):
             "votes",
             "isFavorite",
             "date_creation",
+            "lecons_count",
+            "etudiants_count",
         ]
 
     def get_subtitle(self, obj):
@@ -186,6 +219,11 @@ class CoursSerializer(serializers.ModelSerializer):
     def get_isFavorite(self, obj):
         return False
 
+    def get_lecons_count(self, obj):
+        return obj.lecons.count()
+
+    def get_etudiants_count(self, obj):
+        return obj.etudiants.count()
 
     def validate_banniere(self, file):
         max_size = 5 * 1024 * 1024
@@ -194,15 +232,12 @@ class CoursSerializer(serializers.ModelSerializer):
 
         try:
             file.seek(0)
-
             img = Image.open(file)
             img.verify()
-
         except Exception:
             raise serializers.ValidationError("Invalid image file.")
 
         file.seek(0)
-
         return file
 
     def to_representation(self, instance):
@@ -220,30 +255,6 @@ class CoursSerializer(serializers.ModelSerializer):
 
         return representation
 
-
-    def get_fichier(self, obj):
-        request = self.context.get("request")
-
-        if obj.fichier:
-            return request.build_absolute_uri(obj.fichier.url) if request else obj.fichier.url
-
-        return None
-
-class LeconSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Lecon
-        fields = ["id", "titre", "ordre", "contenu"]
-   
-    def to_representation(self, instance):
-        rep = super().to_representation(instance)
-
-        request = self.context.get("request")
-        if instance.contenu:
-            rep["contenu"] = request.build_absolute_uri(instance.contenu.url)
-        else:
-            rep["contenu"] = None
-
-        return rep
 
 class StudentCourseSerializer(serializers.ModelSerializer):
     enseignant = serializers.SerializerMethodField()
@@ -269,15 +280,20 @@ class StudentCourseSerializer(serializers.ModelSerializer):
             "temps_apprentissage",
             "status",
             "is_published",
+            "category",
         ]
 
     def get_enseignant(self, obj):
-        return {"id": obj.enseignant.id, "nom": obj.enseignant.nom}
+        return {
+            "id": obj.enseignant.id,
+            "nom": obj.enseignant.nom,
+        }
 
     def get_inscription(self, obj):
         student = self.context.get("student")
         if not student:
             return None
+
         try:
             insc = Inscription.objects.get(etudiant=student, cours=obj)
             return {
@@ -346,3 +362,18 @@ class QuizSubmissionResponseSerializer(serializers.ModelSerializer):
             "statut",
             "date_soumission",
         ]
+
+
+class ReponseTentativeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReponseTentative
+        fields = [
+            "id",
+            "tentative",
+            "question",
+            "choix_selectionne",
+            "reponse_texte",
+            "est_correcte",
+            "points_obtenus",
+        ]
+        read_only_fields = ["id"]

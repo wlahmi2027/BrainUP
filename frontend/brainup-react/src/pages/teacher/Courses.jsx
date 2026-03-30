@@ -9,8 +9,79 @@ export default function Courses() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showStudentsModal, setShowStudentsModal] = useState(false);
+  const [studentsData, setStudentsData] = useState(null);
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
 
   const FILTERS = ["all", "publie", "brouillon", "archive"];
+
+  async function updateStatus(courseId, newStatus) {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const confirmMsg = `Passer ce cours en "${newStatus}" ?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetch(`http://127.0.0.1:8001/api/courses/${courseId}/`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Erreur lors de la mise à jour.");
+      }
+
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === courseId ? { ...c, status: newStatus } : c
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la mise à jour du statut.");
+    }
+  }
+
+  async function openStudents(courseId) {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8001/api/courses/${courseId}/etudiants/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Erreur lors du chargement des étudiants.");
+      }
+
+      const data = await res.json();
+      setStudentsData(data);
+      setSelectedCourseId(courseId);
+      setShowStudentsModal(true);
+    } catch (err) {
+      console.error(err);
+      alert("Impossible de charger les étudiants.");
+    }
+  }
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -43,11 +114,11 @@ export default function Courses() {
         const normalized = data.map((c) => ({
           id: c.id,
           title: c.title,
-          author: c.author || "—",
+          author: c.author || c.enseignant?.nom || "—",
           banner: c.banniere || null,
           status: c.status || "brouillon",
-          students: c.students ?? 0,
-          lessons: c.lessons ?? 0,
+          students: c.etudiants_count ?? c.students ?? 0,
+          lessons: c.lecons_count ?? c.lessons ?? 0,
         }));
 
         setCourses(normalized);
@@ -165,8 +236,12 @@ export default function Courses() {
                 <p className="course-author">{c.author}</p>
 
                 <div className="course-stats">
-                  <span>{c.students} étudiants</span>
-                  <span>{c.lessons} leçons</span>
+                  <span className="stat-badge">
+                    👥 {c.students} étudiants
+                  </span>
+                  <span className="stat-badge">
+                    📚 {c.lessons} leçons
+                  </span>
                 </div>
 
                 <div className="teacher-course-card__actions">
@@ -187,14 +262,20 @@ export default function Courses() {
                   <div>
                     <button
                       className="btn btn--soft"
-                      onClick={() => navigate(`/teacher/courses/${c.id}/students`)}
+                      onClick={() => openStudents(c.id)}
                     >
                       Étudiants
                     </button>
 
-                    <button className="btn btn--ghost">
-                      Publication
-                    </button>
+                    <select
+                      className="btn btn--ghost"
+                      value={c.status}
+                      onChange={(e) => updateStatus(c.id, e.target.value)}
+                    >
+                      <option value="publie">Publier</option>
+                      <option value="brouillon">Brouillon</option>
+                      <option value="archive">Archiver</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -202,6 +283,40 @@ export default function Courses() {
           ))
         )}
       </div>
+
+      {showStudentsModal && studentsData && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowStudentsModal(false)}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Étudiants inscrits ({studentsData.count})</h3>
+
+            {studentsData.students.length === 0 ? (
+              <p className="muted">Aucun étudiant inscrit</p>
+            ) : (
+              <ul>
+                {studentsData.students.map((s) => (
+                  <li key={s.id} style={{ marginBottom: "10px" }}>
+                    <strong>{s.username}</strong> — {s.email}
+                    <br />
+                    Progression: {s.progression}%
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="modal-actions">
+              <button onClick={() => setShowStudentsModal(false)}>
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
