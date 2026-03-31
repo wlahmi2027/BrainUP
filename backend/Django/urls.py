@@ -2,6 +2,9 @@ from rest_framework import routers
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 from API.views import (
     EtudiantViewSet,
@@ -51,6 +54,9 @@ student_course_desinscrire = StudentCourseViewSet.as_view({
     "post": "desinscrire",
 })
 
+student_course_lesson_progress = StudentCourseViewSet.as_view({
+    "post": "lesson_progress",
+})
 urlpatterns = [
     path("api/", include(router.urls)),
     path("api/topbar/", topbar_view, name="topbar"),
@@ -76,7 +82,11 @@ urlpatterns = [
     path("api/teacher/students/<int:student_id>/", teacher_student_detail_view, name="teacher-student-detail"),
     path("api/chatbot/", include("chatbot.urls")),
 
-
+    path(
+    "api/student/courses/<int:pk>/lesson-progress/",
+    student_course_lesson_progress,
+    name="student-course-lesson-progress"
+    ),
 ]
 
 if settings.DEBUG:

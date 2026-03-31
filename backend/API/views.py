@@ -36,6 +36,7 @@ from .models import (
     SessionApprentissage,
     HistoriqueActivite,
     Lecon,
+    ProgressionLecon,
 )
 from .recommendation_service import build_recommendations_payload
 
@@ -403,7 +404,10 @@ class StudentCourseViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        insc, _created = Inscription.objects.get_or_create(etudiant=student, cours=course)
+        insc, _created = Inscription.objects.get_or_create(
+            etudiant=student,
+            cours=course
+        )
         insc.favoris = not insc.favoris
         insc.save()
 
@@ -482,6 +486,83 @@ class StudentCourseViewSet(viewsets.ViewSet):
         return Response({
             "status": "désinscrit",
             "deleted": deleted_count
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"], url_path="lesson-progress")
+    def lesson_progress(self, request, pk=None):
+        user = get_user_from_token(request)
+
+        if not user or user.role != "etudiant":
+            return Response(
+                {"detail": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        lesson_id = request.data.get("lesson_id")
+        current_page = int(request.data.get("current_page", 0))
+        total_pages = int(request.data.get("total_pages", 0))
+
+        if not lesson_id or total_pages <= 0:
+            return Response(
+                {"detail": "Invalid data"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            student = Etudiant.objects.get(id=user.id)
+            course = Cours.objects.get(pk=pk)
+            lesson = Lecon.objects.get(id=lesson_id, cours=course)
+        except (Etudiant.DoesNotExist, Cours.DoesNotExist, Lecon.DoesNotExist):
+            return Response(
+                {"detail": "Not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        progression_lecon, _ = ProgressionLecon.objects.get_or_create(
+            etudiant=student,
+            cours=course,
+            lecon=lesson,
+        )
+
+        progression_lecon.pages_vues_max = max(
+            progression_lecon.pages_vues_max,
+            current_page
+        )
+        progression_lecon.total_pages = total_pages
+        progression_lecon.progression_percent = round(
+            (progression_lecon.pages_vues_max / total_pages) * 100,
+            2
+        )
+        progression_lecon.terminee = (
+            progression_lecon.pages_vues_max >= total_pages
+        )
+        progression_lecon.save()
+
+        total_lessons = course.lecons.count()
+        if total_lessons > 0:
+            lesson_progressions = ProgressionLecon.objects.filter(
+                etudiant=student,
+                cours=course
+            )
+            moyenne = (
+                sum(item.progression_percent for item in lesson_progressions)
+                / total_lessons
+            )
+        else:
+            moyenne = 0
+
+        inscription, _ = Inscription.objects.get_or_create(
+            etudiant=student,
+            cours=course
+        )
+        inscription.progression_percent = round(moyenne, 2)
+        inscription.termine = inscription.progression_percent >= 100
+        inscription.save()
+
+        return Response({
+            "lesson_progression_percent": progression_lecon.progression_percent,
+            "course_progression_percent": inscription.progression_percent,
+            "terminee": progression_lecon.terminee,
         }, status=status.HTTP_200_OK)
 
 
@@ -1079,7 +1160,81 @@ def student_dashboard_view(request):
 
     return Response(payload, status=status.HTTP_200_OK)
 
+@api_view(["POST"])
+def student_lesson_progress_view(request, pk):
+    user = get_user_from_token(request)
 
+    if not user or user.role != "etudiant":
+        return Response(
+            {"detail": "Unauthorized"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    lesson_id = request.data.get("lesson_id")
+    current_page = int(request.data.get("current_page", 0))
+    total_pages = int(request.data.get("total_pages", 0))
+
+    if not lesson_id or total_pages <= 0:
+        return Response(
+            {"detail": "Invalid data"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        student = Etudiant.objects.get(id=user.id)
+        course = Cours.objects.get(pk=pk)
+        lesson = Lecon.objects.get(id=lesson_id, cours=course)
+    except (Etudiant.DoesNotExist, Cours.DoesNotExist, Lecon.DoesNotExist):
+        return Response(
+            {"detail": "Not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    progression_lecon, _ = ProgressionLecon.objects.get_or_create(
+        etudiant=student,
+        cours=course,
+        lecon=lesson,
+    )
+
+    progression_lecon.pages_vues_max = max(
+        progression_lecon.pages_vues_max,
+        current_page
+    )
+    progression_lecon.total_pages = total_pages
+    progression_lecon.progression_percent = round(
+        (progression_lecon.pages_vues_max / total_pages) * 100,
+        2
+    )
+    progression_lecon.terminee = progression_lecon.pages_vues_max >= total_pages
+    progression_lecon.save()
+
+    total_lessons = course.lecons.count()
+    if total_lessons > 0:
+        lesson_progressions = ProgressionLecon.objects.filter(
+            etudiant=student,
+            cours=course
+        )
+        moyenne = (
+            sum(item.progression_percent for item in lesson_progressions)
+            / total_lessons
+        )
+    else:
+        moyenne = 0
+
+    inscription, _ = Inscription.objects.get_or_create(
+        etudiant=student,
+        cours=course
+    )
+    inscription.progression_percent = round(moyenne, 2)
+    inscription.termine = inscription.progression_percent >= 100
+    inscription.save()
+
+    return Response({
+        "lesson_progression_percent": progression_lecon.progression_percent,
+        "course_progression_percent": inscription.progression_percent,
+        "terminee": progression_lecon.terminee,
+    }, status=status.HTTP_200_OK)
+    
 @api_view(["GET"])
 def teacher_students_view(request):
     user = get_user_from_token(request)

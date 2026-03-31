@@ -105,7 +105,24 @@ class Lecon(models.Model):
     def __str__(self):
         return self.titre
 
+class ProgressionLecon(models.Model):
+    etudiant = models.ForeignKey(Etudiant, on_delete=models.CASCADE, related_name="progressions_lecons")
+    cours = models.ForeignKey(Cours, on_delete=models.CASCADE, related_name="progressions_lecons")
+    lecon = models.ForeignKey(Lecon, on_delete=models.CASCADE, related_name="progressions_lecons")
 
+    pages_vues_max = models.PositiveIntegerField(default=0)
+    total_pages = models.PositiveIntegerField(default=0)
+    progression_percent = models.FloatField(default=0.0)
+    terminee = models.BooleanField(default=False)
+
+    date_mise_a_jour = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("etudiant", "cours", "lecon")
+
+    def __str__(self):
+        return f"{self.etudiant.nom} - {self.lecon.titre} ({self.progression_percent}%)"
+        
 class Quiz(models.Model):
     STATUT_CHOICES = [
         ("brouillon", "Brouillon"),

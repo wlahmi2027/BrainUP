@@ -21,6 +21,7 @@ from .views import (
     profil_view,
     teacher_dashboard_view,
     student_dashboard_view,
+    student_lesson_progress_view,
 )
 router = DefaultRouter()
 router.register(r'etudiants', EtudiantViewSet, basename='etudiant')
