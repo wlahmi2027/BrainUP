@@ -384,34 +384,63 @@ class StudentCourseViewSet(viewsets.ViewSet):
             context={"student": student, "request": request},
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
+    from datetime import timedelta
 
-    @action(detail=True, methods=["post"], url_path="favorite")
-    def favorite(self, request, pk=None):
+    @action(detail=True, methods=["post"], url_path="study-session")
+    def study_session(self, request, pk=None):
         user = get_user_from_token(request)
 
         if not user or user.role != "etudiant":
-            return Response(
-                {"detail": "Unauthorized"},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+            return Response({"detail": "Unauthorized"}, status=401)
+
+        duration = int(request.data.get("duration_minutes", 0))
+        lesson_id = request.data.get("lesson_id")
+
+        if duration <= 0:
+            return Response({"detail": "Invalid duration"}, status=400)
 
         try:
             student = Etudiant.objects.get(id=user.id)
             course = Cours.objects.get(pk=pk)
+            lesson = Lecon.objects.get(id=lesson_id) if lesson_id else None
         except (Etudiant.DoesNotExist, Cours.DoesNotExist):
-            return Response(
-                {"detail": "Not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"detail": "Not found"}, status=404)
 
-        insc, _created = Inscription.objects.get_or_create(
+        SessionApprentissage.objects.create(
             etudiant=student,
-            cours=course
+            cours=course,
+            lecon=lesson,
+            duree_minutes=duration,
         )
-        insc.favoris = not insc.favoris
-        insc.save()
 
-        return Response({"favoris": insc.favoris}, status=status.HTTP_200_OK)
+        return Response({"status": "saved"}, status=200)
+        @action(detail=True, methods=["post"], url_path="favorite")
+        def favorite(self, request, pk=None):
+            user = get_user_from_token(request)
+
+            if not user or user.role != "etudiant":
+                return Response(
+                    {"detail": "Unauthorized"},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+            try:
+                student = Etudiant.objects.get(id=user.id)
+                course = Cours.objects.get(pk=pk)
+            except (Etudiant.DoesNotExist, Cours.DoesNotExist):
+                return Response(
+                    {"detail": "Not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            insc, _created = Inscription.objects.get_or_create(
+                etudiant=student,
+                cours=course
+            )
+            insc.favoris = not insc.favoris
+            insc.save()
+
+            return Response({"favoris": insc.favoris}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], url_path="inscrire")
     def inscrire(self, request, pk=None):
@@ -1087,8 +1116,13 @@ def student_dashboard_view(request):
     quiz_passes = tentatives.count()
     quiz_reussis = tentatives.filter(reussi=True).count()
     quiz_score = (quiz_reussis / quiz_passes * 100) if quiz_passes > 0 else 0.0
+    temps_etude = sessions.aggregate(total=Sum("duree_minutes"))["total"] or 0
 
-    temps_reel = sessions.aggregate(total=Sum("duree_minutes"))["total"] or 0
+    temps_quiz = (
+        tentatives.aggregate(total=Sum("temps_passe_secondes"))["total"] or 0
+    ) / 60
+
+    temps_reel = round(temps_etude + temps_quiz, 2)
     temps_estime_total = inscriptions.aggregate(
         total=Sum("cours__temps_apprentissage")
     )["total"] or 0

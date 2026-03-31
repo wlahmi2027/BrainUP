@@ -57,6 +57,9 @@ student_course_desinscrire = StudentCourseViewSet.as_view({
 student_course_lesson_progress = StudentCourseViewSet.as_view({
     "post": "lesson_progress",
 })
+student_course_study_session = StudentCourseViewSet.as_view({
+    "post": "study_session",
+})
 urlpatterns = [
     path("api/", include(router.urls)),
     path("api/topbar/", topbar_view, name="topbar"),
@@ -86,6 +89,12 @@ urlpatterns = [
     "api/student/courses/<int:pk>/lesson-progress/",
     student_course_lesson_progress,
     name="student-course-lesson-progress"
+    ),
+
+    path(
+    "api/student/courses/<int:pk>/study-session/",
+    student_course_study_session,
+    name="student-course-study-session"
     ),
 ]
 

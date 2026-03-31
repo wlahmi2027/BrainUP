@@ -17,12 +17,16 @@ export default function CourseDetail() {
   const [numPages, setNumPages] = useState(0);
   const [maxSeenPage, setMaxSeenPage] = useState(0);
   const [zoom, setZoom] = useState(1);
-
   const [pageWidth, setPageWidth] = useState(700);
 
   const viewerRef = useRef(null);
   const pageRefs = useRef([]);
   const lastSentPageRef = useRef(0);
+
+  // Temps d'étude
+  const activeStartRef = useRef(null);
+  const accumulatedMsRef = useRef(0);
+  const flushIntervalRef = useRef(null);
 
   useEffect(() => {
     async function fetchCourse() {
@@ -152,6 +156,119 @@ export default function CourseDetail() {
   function onDocumentLoadSuccess({ numPages }) {
     setNumPages(numPages);
   }
+
+  // -------------------------
+  // Gestion du temps d'étude
+  // -------------------------
+  function startStudyTimer() {
+    if (!selectedLesson?.id) return;
+    if (document.hidden) return;
+    if (activeStartRef.current !== null) return;
+
+    activeStartRef.current = Date.now();
+  }
+
+  function pauseStudyTimer() {
+    if (activeStartRef.current === null) return;
+
+    accumulatedMsRef.current += Date.now() - activeStartRef.current;
+    activeStartRef.current = null;
+  }
+
+  async function flushStudyTime() {
+    pauseStudyTimer();
+
+    const durationMinutes = Math.floor(accumulatedMsRef.current / 60000);
+
+    if (!selectedLesson?.id || durationMinutes <= 0) {
+      startStudyTimer();
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(
+        `http://localhost:8001/api/student/courses/${id}/study-session/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            lesson_id: selectedLesson.id,
+            duration_minutes: durationMinutes,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        console.error("Erreur temps étude:", data);
+      } else {
+        accumulatedMsRef.current = accumulatedMsRef.current % 60000;
+      }
+    } catch (error) {
+      console.error("Erreur temps étude:", error);
+    }
+
+    startStudyTimer();
+  }
+
+  useEffect(() => {
+    if (!selectedLesson?.id) return;
+
+    accumulatedMsRef.current = 0;
+    activeStartRef.current = null;
+
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        pauseStudyTimer();
+      } else {
+        startStudyTimer();
+      }
+    }
+
+    function handleBeforeUnload() {
+      pauseStudyTimer();
+
+      const durationMinutes = Math.floor(accumulatedMsRef.current / 60000);
+      if (!selectedLesson?.id || durationMinutes <= 0) return;
+
+      const token = localStorage.getItem("token");
+      const payload = JSON.stringify({
+        lesson_id: selectedLesson.id,
+        duration_minutes: durationMinutes,
+      });
+
+      try {
+        navigator.sendBeacon?.(
+          `http://localhost:8001/api/student/courses/${id}/study-session/`,
+          new Blob([payload], { type: "application/json" })
+        );
+      } catch (error) {
+        console.error("Erreur beacon temps étude:", error);
+      }
+    }
+
+    startStudyTimer();
+
+    flushIntervalRef.current = setInterval(() => {
+      flushStudyTime();
+    }, 30000);
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      clearInterval(flushIntervalRef.current);
+      pauseStudyTimer();
+      flushStudyTime();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [selectedLesson?.id, id]);
 
   useEffect(() => {
     if (!viewerRef.current || !numPages || !lessonFile) return;
