@@ -82,6 +82,34 @@ export default function Sidebar({ role = "student" }) {
           </>
         )}
 
+        {role === "admin" && (
+          <>
+            <NavLink className={linkClass} to="/admin/dashboard">
+              📊 Tableau de bord
+            </NavLink>
+
+            <NavLink className={linkClass} to="/admin/Users">
+              👤 Utilisateurs
+            </NavLink>
+
+            <NavLink className={linkClass} to="/admin/courses">
+              📘 Cours
+            </NavLink>
+
+            <NavLink className={linkClass} to="/admin/quiz">
+              ✅ Quiz
+            </NavLink>
+
+            <NavLink className={linkClass} to="/admin/results">
+              📈 Résultats
+            </NavLink>
+
+            <NavLink className={linkClass} to="/admin/students-results">
+              📋 Suivi étudiants
+            </NavLink>
+          </>
+        )}
+
         <NavLink className={linkClass} to="/deconnexion">
           🚪 Déconnexion
         </NavLink>

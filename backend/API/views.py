@@ -49,6 +49,9 @@ def get_user_from_token(request):
         return user
     except:
         return None
+        
+def is_admin(user):
+    return user and user.role == "admin"
 
 def get_serializer_context(self):
     return {
@@ -256,6 +259,157 @@ class CoursViewSet(viewsets.ModelViewSet):
 
         course.delete()
         return Response({"message": "Cours supprimé"}, status=204)
+
+
+class AdminCoursViewSet(viewsets.ModelViewSet):
+    serializer_class = CoursSerializer
+
+    def get_queryset(self):
+        user = get_user_from_token(self.request)
+
+        if not user:
+            return Cours.objects.none()
+
+        if user.role == "admin":
+            return Cours.objects.all()
+
+        return Cours.objects.none()
+
+
+    def list(self, request, *args, **kwargs):
+        user = get_user_from_token(request)
+
+        if not user:
+            return Response(
+                {"success": False, "message": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        return super().list(request, *args, **kwargs)
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        return {
+            **context,
+            "request": self.request,
+        }
+
+    def update(self, request, *args, **kwargs):
+        user = get_user_from_token(request)
+
+        if not user:
+            return Response({"message": "Unauthorized"}, status=401)
+
+        if user.role != "admin":
+            return Response({"message": "Forbidden"}, status=403)
+
+        course = self.get_object()
+
+        data = request.data.copy()
+        if "banniere" not in request.FILES:
+            data.pop("banniere", None)
+
+        serializer = self.get_serializer(course, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=200)
+
+    def retrieve(self, request, *args, **kwargs):
+        user = get_user_from_token(request)
+
+        if not user:
+            return Response(
+                {"success": False, "message": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        return super().retrieve(request, *args, **kwargs)
+
+
+    @action(detail=True, methods=["get"], url_path="etudiants")
+    def etudiants(self, request, pk=None):
+        course = self.get_object()
+
+        inscriptions = Inscription.objects.filter(cours=course).select_related("etudiant")
+
+        data = [
+            {
+                "id": insc.etudiant.id,
+                "username": insc.etudiant.utilisateur_ptr.nom,
+                "email": insc.etudiant.utilisateur_ptr.email,
+                "progression": insc.progression,
+            }
+            for insc in inscriptions
+        ]
+
+        return Response({
+            "count": inscriptions.count(),
+            "students": data
+        })
+    
+
+    @action(detail=False, methods=["get"], url_path="all-etudiants")
+    def all_etudiants(self, request):
+        user = get_user_from_token(request)
+
+        if not user:
+            return Response({"message": "Unauthorized"}, status=401)
+
+        try:
+            enseignant = Enseignant.objects.get(utilisateur_ptr=user)
+        except Enseignant.DoesNotExist:
+            return Response({"message": "Forbidden"}, status=403)
+
+        inscriptions = (
+            Inscription.objects
+            .select_related("etudiant", "cours", "etudiant__utilisateur_ptr")
+        )
+
+        # Get all inscriptions linked to those courses
+        inscriptions = (
+            Inscription.objects
+            .filter(cours__in=courses)
+            .select_related("etudiant", "cours", "etudiant__utilisateur_ptr")
+        )
+
+        data = [
+            {
+                "id": insc.etudiant.id,
+                "name": insc.etudiant.utilisateur_ptr.nom,
+                "email": insc.etudiant.utilisateur_ptr.email,
+                "course": insc.cours.title,
+                "progress": insc.progression,
+                "status": (
+                    "Excellent" if insc.progression >= 80 else
+                    "À relancer" if insc.progression < 40 else
+                    "Actif"
+                ),
+            }
+            for insc in inscriptions
+        ]
+
+        return Response({
+            "count": inscriptions.count(),
+            "students": data
+        })
+
+    def destroy(self, request, *args, **kwargs):
+        user = get_user_from_token(request)
+
+        if not user:
+            return Response({"message": "Unauthorized"}, status=401)
+
+        if user.role != "admin":
+            return Response({"message": "Forbidden"}, status=403)
+
+        course = self.get_object()
+        course.delete()
+
+        return Response({"message": "Cours supprimé"}, status=204)
+
+
+
 
 class LeconViewSet(viewsets.ModelViewSet):
     serializer_class = LeconSerializer
@@ -479,14 +633,12 @@ def login_view(request):
         utilisateur.token = token
         utilisateur.save()
 
-
-        # i dont like how this is written, to change:
-        if hasattr(utilisateur, "etudiant"):
+        if is_admin(utilisateur):
+            role = "admin"
+        elif hasattr(utilisateur, "etudiant"):
             role = "etudiant"
         elif hasattr(utilisateur, "enseignant"):
             role = "enseignant"
-        else:
-            role = "admin"
 
         return Response({
             "success": True,
