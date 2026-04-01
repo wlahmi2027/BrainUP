@@ -25,7 +25,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
             "last_online",
             "date_registered",
         ]
-        read_only_fields = ["id", "last_online", "date_registered", "courses"]
+        read_only_fields = ["id", "role", "last_online", "date_registered", "courses"]
 
     def get_courses(self, obj):
         # Include course title and progress if the user is a student
