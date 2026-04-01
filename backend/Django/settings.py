@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'chatbot',
 ]
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",   # doit être avant CommonMiddleware
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -56,6 +56,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'API.middleware.UpdateLastOnlineMiddleware',
 ]
 
 CORS_ALLOWED_ORIGINS = [

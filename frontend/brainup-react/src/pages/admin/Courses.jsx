@@ -26,7 +26,7 @@ export default function Courses() {
 
     try {
       const res = await fetch(
-        `http://localhost:8001/api/courses/${courseId}/`,
+        `http://localhost:8001/api/admin/courses/${courseId}/`,
         {
           method: "PATCH",
           headers: {
@@ -55,7 +55,7 @@ export default function Courses() {
 
     try {
       const res = await fetch(
-        `http://localhost:8001/api/courses/${courseId}/etudiants/`,
+        `http://localhost:8001/api/courses/${courseId}/etudiants/`, /* modify !! */
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -99,7 +99,7 @@ export default function Courses() {
         const normalized = data.map((c) => ({
           id: c.id,
           title: c.title,
-          author: c.enseignant?.nom || "—",
+          author: c.enseignant_nom || "—",
           banner: c.banniere,
           status: c.status,
           students: c.etudiants_count ?? 0,
@@ -219,17 +219,17 @@ export default function Courses() {
                   </span>
                 </div>
 
-                <div className="teacher-course-card__actions">
+                <div className="admin-course-card__actions">
                   <button
                     className="btn btn--primary"
-                    onClick={() => navigate(`/teacher/courses/${c.id}/edit`)}
+                    onClick={() => navigate(`/admin/courses/${c.id}/edit`)}
                   >
                     Modifier
                   </button>
 
                   <button
                     className="btn btn--primary"
-                    onClick={() => navigate(`/teacher/courses/${c.id}`)}
+                    onClick={() => navigate(`/admin/courses/${c.id}`)}
                   >
                     Voir
                   </button>

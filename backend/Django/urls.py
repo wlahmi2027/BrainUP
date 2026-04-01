@@ -26,7 +26,8 @@ from API.views import (
     register_view,
     recommendations_view,
     StudentCourseViewSet,
-    LeconViewSet
+    LeconViewSet,
+    UserAdminViewSet
 )
 
 """
@@ -41,6 +42,7 @@ router = routers.DefaultRouter()
 router.register(r'etudiants', EtudiantViewSet)
 router.register(r'courses', CoursViewSet, basename='courses')
 router.register(r'admin/courses', AdminCoursViewSet, basename='admin-courses')
+router.register(r'admin/users', UserAdminViewSet, basename='admin-users')
 router.register(r'lecons', LeconViewSet, basename='lecons')
 
 student_courses = StudentCourseViewSet.as_view({

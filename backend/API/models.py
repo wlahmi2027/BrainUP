@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 class Utilisateur(models.Model):
     ROLE_CHOICES = [
@@ -9,6 +10,8 @@ class Utilisateur(models.Model):
     nom = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     mot_de_passe = models.CharField(max_length=255)
+    last_online = models.DateTimeField(null=True, blank=True)
+    date_registered = models.DateTimeField(auto_now_add=True)
 
     role = models.CharField(
         max_length=20,

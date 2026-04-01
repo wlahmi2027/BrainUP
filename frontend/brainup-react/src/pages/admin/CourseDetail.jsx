@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
-export default function TeacherCourseDetail() {
+export default function AdminCourseDetail() {
   const { id } = useParams();
   const [course, setCourse] = useState(null);
   const [selectedLesson, setSelectedLesson] = useState(null);
@@ -75,7 +75,7 @@ export default function TeacherCourseDetail() {
     const token = localStorage.getItem("token");
 
     const res = await fetch(
-      `http://localhost:8001/api/courses/${id}/`,
+      `http://localhost:8001/api/admin/courses/${id}/`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
