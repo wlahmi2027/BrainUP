@@ -5,7 +5,7 @@ import Login from "../pages/auth/Login";
 import Inscription from "../pages/auth/Inscription";
 import Deconnexion from "../pages/Deconnexion";
 import Chatbot from "../pages/Chatbot";
-import Accueil from "../pages/Accueil";
+import Home from "../pages/public/Home";
 
 /* Student */
 import StudentLayout from "../pages/student/Layout";
@@ -37,10 +37,8 @@ import TeacherQuizResultDetails from "../pages/teacher/TeacherQuizResultDetails"
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Root */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
-
       {/* Public routes */}
+      <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/inscription" element={<Inscription />} />
       <Route path="/deconnexion" element={<Deconnexion />} />
@@ -48,7 +46,7 @@ export default function AppRoutes() {
       {/* Student routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/student" element={<StudentLayout />}>
-          <Route path="accueil" element={<Accueil />} />
+          <Route path="accueil" element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<StudentDashboard />} />
           <Route path="courses" element={<StudentCourses />} />
           <Route path="courses/:id" element={<StudentCourseDetail />} />
@@ -59,10 +57,11 @@ export default function AppRoutes() {
           <Route path="quiz/:id" element={<StudentQuizDetails />} />
         </Route>
       </Route>
+
       {/* Teacher routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/teacher" element={<TeacherLayout />}>
-          <Route path="accueil" element={<Accueil />} />
+          <Route path="accueil" element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<TeacherDashboard />} />
           <Route path="courses" element={<TeacherCourses />} />
           <Route path="courses/:id" element={<TeacherCourseDetail />} />
@@ -74,7 +73,6 @@ export default function AppRoutes() {
           <Route path="quiz/:id/edit" element={<EditQuiz />} />
           <Route path="quiz/:id/results" element={<QuizResults />} />
           <Route path="students" element={<Students />} />
-          <Route path="/teacher/students" element={<Students />} />
           <Route path="students/:studentId" element={<StudentDetail />} />
           <Route path="profile" element={<TeacherProfile />} />
           <Route path="chatbot" element={<Chatbot role="teacher" />} />
@@ -84,8 +82,9 @@ export default function AppRoutes() {
           />
         </Route>
       </Route>
+
       {/* Catch-all fallback */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

@@ -1,10 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Bell, ChevronDown, User, LogOut } from "lucide-react";
+import {
+  Search,
+  Bell,
+  ChevronDown,
+  User,
+  LogOut,
+  Sparkles,
+  Menu,
+} from "lucide-react";
 import { fetchTopbarData } from "../../api/topbar";
 import { logoutUser } from "../../api/auth";
 
-export default function Topbar() {
+export default function Topbar({
+  role = "student",
+  onToggleMobileMenu = () => {},
+}) {
   const navigate = useNavigate();
   const menuRef = useRef(null);
   const notifRef = useRef(null);
@@ -73,7 +84,11 @@ export default function Topbar() {
       acceptNode(node) {
         if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
         const parentTag = node.parentElement?.tagName;
-        if (["SCRIPT", "STYLE", "MARK", "INPUT", "TEXTAREA", "BUTTON"].includes(parentTag)) {
+        if (
+          ["SCRIPT", "STYLE", "MARK", "INPUT", "TEXTAREA", "BUTTON"].includes(
+            parentTag
+          )
+        ) {
           return NodeFilter.FILTER_REJECT;
         }
         return NodeFilter.FILTER_ACCEPT;
@@ -134,74 +149,107 @@ export default function Topbar() {
     }
   }
 
+  function goToProfile() {
+    if (role === "teacher") {
+      navigate("/teacher/profile");
+      return;
+    }
+
+    if (role === "student") {
+      navigate("/student/profile");
+      return;
+    }
+
+    navigate("/login");
+  }
+
   const userName = topbarData?.user?.nom || "Utilisateur";
   const firstLetter = userName?.charAt(0)?.toUpperCase() || "U";
 
   return (
-    <header className="topbar topbar-modern">
-      <div className="topbar-modern__search">
-        <Search size={20} />
-        <input
-          type="text"
-          placeholder="Rechercher un cours, quiz ou contenu"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+    <header className="app-topbar">
+      <div className="app-topbar__left">
+        <button
+          type="button"
+          className="app-topbar__mobile-menu-btn"
+          onClick={onToggleMobileMenu}
+          aria-label="Ouvrir le menu"
+        >
+          <Menu size={20} />
+        </button>
+
+        <div className="app-topbar__search">
+          <Search size={18} />
+          <input
+            type="text"
+            placeholder="Rechercher un cours, quiz ou contenu"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
       </div>
 
-      <div className="topbar-modern__right">
-        <div className="topbar-modern__notif" ref={notifRef}>
+      <div className="app-topbar__right">
+        <div className="app-topbar__hint">
+          <Sparkles size={16} />
+          <span>BrainUP smart</span>
+        </div>
+
+        <div className="app-topbar__notif" ref={notifRef}>
           <button
-            className="topbar-modern__iconbtn"
+            className="app-topbar__iconbtn"
             onClick={() => setShowNotifMenu((prev) => !prev)}
             type="button"
           >
-            <Bell size={20} />
+            <Bell size={18} />
             {topbarData.notifications_count > 0 && (
-              <span className="topbar-modern__badge">
+              <span className="app-topbar__badge">
                 {topbarData.notifications_count}
               </span>
             )}
           </button>
 
           {showNotifMenu && (
-            <div className="topbar-modern__dropdown topbar-modern__dropdown--notif">
-              <div className="topbar-modern__dropdown-title">Notifications</div>
+            <div className="app-topbar__dropdown app-topbar__dropdown--notif">
+              <div className="app-topbar__dropdown-title">Notifications</div>
 
               {topbarData.notifications.length > 0 ? (
                 topbarData.notifications.map((notif, index) => (
-                  <div key={index} className="topbar-modern__notif-item">
-                    <span className="topbar-modern__notif-dot" />
+                  <div key={index} className="app-topbar__notif-item">
+                    <span className="app-topbar__notif-dot" />
                     <span>{notif.message}</span>
                   </div>
                 ))
               ) : (
-                <div className="topbar-modern__empty">
-                  Aucune notification
-                </div>
+                <div className="app-topbar__empty">Aucune notification</div>
               )}
             </div>
           )}
         </div>
 
-        <div className="topbar-modern__user" ref={menuRef}>
+        <div className="app-topbar__user" ref={menuRef}>
           <button
-            className="topbar-modern__userbtn"
+            className="app-topbar__userbtn"
             onClick={() => setShowUserMenu((prev) => !prev)}
             type="button"
           >
-            <div className="topbar-modern__avatar">{firstLetter}</div>
-            <span className="topbar-modern__username">
-              {loading ? "Chargement..." : `Hi, ${userName}`}
-            </span>
+            <div className="app-topbar__avatar">{firstLetter}</div>
+            <div className="app-topbar__usertext">
+              <span className="app-topbar__username">
+                {loading ? "Chargement..." : userName}
+              </span>
+              <small className="app-topbar__role">
+                {role === "teacher" ? "Enseignant" : "Étudiant"}
+              </small>
+            </div>
             <ChevronDown size={18} />
           </button>
 
           {showUserMenu && (
-            <div className="topbar-modern__dropdown">
+            <div className="app-topbar__dropdown">
               <button
-                className="topbar-modern__menuitem"
-                onClick={() => navigate("/teacher/profile")}
+                className="app-topbar__menuitem"
+                onClick={goToProfile}
                 type="button"
               >
                 <User size={16} />
@@ -209,7 +257,7 @@ export default function Topbar() {
               </button>
 
               <button
-                className="topbar-modern__menuitem topbar-modern__menuitem--danger"
+                className="app-topbar__menuitem app-topbar__menuitem--danger"
                 onClick={handleLogout}
                 type="button"
               >

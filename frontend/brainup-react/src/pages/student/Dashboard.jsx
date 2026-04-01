@@ -10,7 +10,10 @@ import {
   XCircle,
   PlayCircle,
   GraduationCap,
+  ArrowUpRight,
+  Sparkles,
 } from "lucide-react";
+import "../../styles/student/dashboard.css";
 
 export default function StudentDashboard() {
   const [dashboard, setDashboard] = useState(null);
@@ -22,7 +25,6 @@ export default function StudentDashboard() {
       try {
         setIsLoading(true);
         setErrorMessage("");
-
         const data = await fetchStudentDashboard();
         setDashboard(data);
       } catch (error) {
@@ -91,163 +93,225 @@ export default function StudentDashboard() {
   function getActivityColor(type) {
     switch (type) {
       case "quiz_reussi":
-        return "#27ae60";
+        return "is-success";
       case "quiz_echoue":
-        return "#e74c3c";
+        return "is-danger";
       case "cours_demarre":
-        return "#f39c12";
+        return "is-warning";
       case "cours_termine":
-        return "#2f6fed";
+        return "is-primary";
       case "lecon_consultee":
-        return "#8e44ad";
+        return "is-purple";
       case "session_etude":
-        return "#16a085";
+        return "is-teal";
       default:
-        return "#7f8c8d";
+        return "is-neutral";
     }
   }
 
   if (isLoading) {
     return (
-      <section className="page student-page">
-        <p>Chargement du tableau de bord...</p>
+      <section className="student-dashboard-page">
+        <div className="student-dashboard-head">
+          <div>
+            <span className="student-dashboard-eyebrow">Étudiant</span>
+            <h1 className="student-dashboard-title">Tableau de bord</h1>
+            <p className="student-dashboard-subtitle">
+              Chargement de votre espace...
+            </p>
+          </div>
+        </div>
+
+        <div className="student-dashboard-skeleton-grid">
+          <div className="student-skeleton student-skeleton--hero" />
+          <div className="student-skeleton" />
+          <div className="student-skeleton" />
+          <div className="student-skeleton student-skeleton--wide" />
+        </div>
       </section>
     );
   }
 
   if (errorMessage) {
     return (
-      <section className="page student-page">
-        <p style={{ color: "#c0392b" }}>{errorMessage}</p>
+      <section className="student-dashboard-page">
+        <div className="student-dashboard-head">
+          <div>
+            <span className="student-dashboard-eyebrow">Étudiant</span>
+            <h1 className="student-dashboard-title">Tableau de bord</h1>
+            <p className="student-dashboard-subtitle student-dashboard-error">
+              {errorMessage}
+            </p>
+          </div>
+        </div>
       </section>
     );
   }
 
   if (!dashboard) {
     return (
-      <section className="page student-page">
-        <p>Aucune donnée disponible.</p>
+      <section className="student-dashboard-page">
+        <div className="student-dashboard-head">
+          <div>
+            <span className="student-dashboard-eyebrow">Étudiant</span>
+            <h1 className="student-dashboard-title">Tableau de bord</h1>
+            <p className="student-dashboard-subtitle">
+              Aucune donnée disponible.
+            </p>
+          </div>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="page student-page student-dashboard">
-      <div className="teacher-head fade-in">
+    <section className="student-dashboard-page">
+      <div className="student-dashboard-head">
         <div>
-          <h1 className="page__title">Tableau de bord étudiant</h1>
-          <p className="teacher-subtitle">
+          <span className="student-dashboard-eyebrow">Étudiant</span>
+          <h1 className="student-dashboard-title">Tableau de bord étudiant</h1>
+          <p className="student-dashboard-subtitle">
             Vue synthétique intelligente de votre progression.
           </p>
+        </div>
+
+        <div className="student-dashboard-live-badge">
+          <Sparkles size={16} />
+          Données à jour
         </div>
       </div>
 
       <div className="student-dashboard-grid">
-        <div className="card card--pad student-hero-card fade-in-up">
-          <div className="student-hero-left">
-            <h2 className="card__title">Ma progression globale</h2>
+        <div className="student-panel student-panel--hero">
+          <div className="student-hero">
+            <div className="student-hero__left">
+              <div className="student-panel__head student-panel__head--compact">
+                <div>
+                  <h2 className="student-panel__title">Ma progression globale</h2>
+                  <p className="student-panel__subtitle">
+                    Score global pondéré basé sur cours, quiz et temps d'étude.
+                  </p>
+                </div>
+              </div>
 
-            <div className="student-progress-wrap">
-              <div className="student-progress-circle pulse-soft" style={circleStyle}>
-                <div className="student-progress-circle__inner">
-                  <div className="student-progress-circle__value">
-                    {dashboard.score_global}%
+              <div className="student-progress-wrap">
+                <div className="student-progress-circle" style={circleStyle}>
+                  <div className="student-progress-circle__inner">
+                    <div className="student-progress-circle__value">
+                      {dashboard.score_global}%
+                    </div>
+                    <div className="student-progress-circle__label">
+                      Score global
+                    </div>
                   </div>
-                  <div className="student-progress-circle__label">
-                    Score global pondéré
-                  </div>
+                </div>
+              </div>
+
+              <div className="student-legend">
+                <div className="student-legend-item">
+                  <span
+                    className="student-legend-color"
+                    style={{ background: "#2f6fed" }}
+                  />
+                  <span>Cours ({dashboard.cours_score}%)</span>
+                </div>
+
+                <div className="student-legend-item">
+                  <span
+                    className="student-legend-color"
+                    style={{ background: "#27ae60" }}
+                  />
+                  <span>Quiz ({dashboard.quiz_score}%)</span>
+                </div>
+
+                <div className="student-legend-item">
+                  <span
+                    className="student-legend-color"
+                    style={{ background: "#f39c12" }}
+                  />
+                  <span>Temps ({dashboard.temps_score}%)</span>
                 </div>
               </div>
             </div>
 
-            <div className="student-legend">
-              <div className="student-legend-item">
-                <span
-                  className="student-legend-color"
-                  style={{ background: "#2f6fed" }}
-                />
-                <span>Cours ({dashboard.cours_score}%)</span>
+            <div className="student-hero__right">
+              <div className="student-kpi-card student-kpi-card--primary">
+                <div className="student-kpi-card__icon">
+                  <BookOpen size={18} />
+                </div>
+                <div className="student-kpi-card__body">
+                  <div className="student-kpi-card__label">Cours terminés</div>
+                  <div className="student-kpi-card__value">
+                    {dashboard.cours_termines}/{dashboard.total_cours}
+                  </div>
+                  <div className="student-kpi-card__meta">
+                    Progression moyenne : {dashboard.cours_score}%
+                  </div>
+                </div>
               </div>
 
-              <div className="student-legend-item">
-                <span
-                  className="student-legend-color"
-                  style={{ background: "#27ae60" }}
-                />
-                <span>Quiz ({dashboard.quiz_score}%)</span>
+              <div className="student-kpi-card student-kpi-card--success">
+                <div className="student-kpi-card__icon">
+                  <CircleCheckBig size={18} />
+                </div>
+                <div className="student-kpi-card__body">
+                  <div className="student-kpi-card__label">Quiz réussis</div>
+                  <div className="student-kpi-card__value">
+                    {dashboard.quiz_reussis}/{dashboard.quiz_passes}
+                  </div>
+                  <div className="student-kpi-card__meta">
+                    Validation quiz : {dashboard.quiz_score}%
+                  </div>
+                </div>
               </div>
 
-              <div className="student-legend-item">
-                <span
-                  className="student-legend-color"
-                  style={{ background: "#f39c12" }}
-                />
-                <span>Temps ({dashboard.temps_score}%)</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="student-hero-right">
-            <div className="student-kpi-card hover-lift">
-              <div className="student-kpi-card__top">
-                <BookOpen size={18} />
-                <div className="student-kpi-card__title">Cours terminés</div>
-              </div>
-              <div className="student-kpi-card__value">
-                {dashboard.cours_termines}/{dashboard.total_cours}
-              </div>
-              <div className="student-kpi-card__meta">
-                Progression moyenne : {dashboard.cours_score}%
-              </div>
-            </div>
-
-            <div className="student-kpi-card hover-lift">
-              <div className="student-kpi-card__top">
-                <CircleCheckBig size={18} />
-                <div className="student-kpi-card__title">Quiz réussis</div>
-              </div>
-              <div className="student-kpi-card__value">
-                {dashboard.quiz_reussis}/{dashboard.quiz_passes}
-              </div>
-              <div className="student-kpi-card__meta">
-                Validation quiz : {dashboard.quiz_score}%
-              </div>
-            </div>
-
-            <div className="student-kpi-card hover-lift">
-              <div className="student-kpi-card__top">
-                <Clock3 size={18} />
-                <div className="student-kpi-card__title">Temps d'étude</div>
-              </div>
-              <div className="student-kpi-card__value">
-                {dashboard.temps_reel_minutes} min
-              </div>
-              <div className="student-kpi-card__meta">
-                Temps estimé : {dashboard.temps_estime_total_minutes} min
+              <div className="student-kpi-card student-kpi-card--warning">
+                <div className="student-kpi-card__icon">
+                  <Clock3 size={18} />
+                </div>
+                <div className="student-kpi-card__body">
+                  <div className="student-kpi-card__label">Temps d'étude</div>
+                  <div className="student-kpi-card__value">
+                    {dashboard.temps_reel_minutes} min
+                  </div>
+                  <div className="student-kpi-card__meta">
+                    Temps estimé : {dashboard.temps_estime_total_minutes} min
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="card card--pad fade-in-up">
-          <h2 className="card__title section-title-with-icon">
-            <BookOpen size={18} />
-            <span>Progression par cours</span>
-          </h2>
-
-          <div className="student-list">
-            {coursesProgress.length === 0 ? (
-              <p className="teacher-subtitle" style={{ marginTop: 12 }}>
-                Aucun cours inscrit pour le moment.
+        <div className="student-panel">
+          <div className="student-panel__head">
+            <div>
+              <h2 className="student-panel__title">Progression par cours</h2>
+              <p className="student-panel__subtitle">
+                Suivi détaillé de vos cours inscrits.
               </p>
+            </div>
+          </div>
+
+          <div className="student-course-list">
+            {coursesProgress.length === 0 ? (
+              <div className="student-empty-box">
+                Aucun cours inscrit pour le moment.
+              </div>
             ) : (
               coursesProgress.map((course) => (
-                <div key={course.id} className="student-list-item hover-lift">
-                  <div className="student-list-item__top">
-                    <span className="student-list-item__title">{course.title}</span>
-                    <span className="student-list-item__value">
+                <div key={course.id} className="student-course-item">
+                  <div className="student-course-item__top">
+                    <div>
+                      <div className="student-course-item__title">{course.title}</div>
+                      <div className="student-course-item__meta">
+                        {course.completed ? "Cours terminé" : "Cours en cours"}
+                      </div>
+                    </div>
+
+                    <div className="student-course-item__percent">
                       {course.progress}%
-                    </span>
+                    </div>
                   </div>
 
                   <div className="student-progress-bar">
@@ -256,68 +320,78 @@ export default function StudentDashboard() {
                       style={{ width: `${course.progress}%` }}
                     />
                   </div>
-
-                  <div className="student-list-item__meta">
-                    {course.completed ? "✅ Terminé" : "📘 En cours"}
-                  </div>
                 </div>
               ))
             )}
           </div>
         </div>
 
-        <div className="card card--pad fade-in-up">
-          <h2 className="card__title section-title-with-icon">
-            <Trophy size={18} />
-            <span>Meilleurs scores de quiz</span>
-          </h2>
-
-          <div className="student-list">
-            {bestQuizScores.length === 0 ? (
-              <p className="teacher-subtitle" style={{ marginTop: 12 }}>
-                Aucun quiz passé pour le moment.
+        <div className="student-panel">
+          <div className="student-panel__head">
+            <div>
+              <h2 className="student-panel__title">Meilleurs scores de quiz</h2>
+              <p className="student-panel__subtitle">
+                Vos quiz les plus performants récemment.
               </p>
+            </div>
+          </div>
+
+          <div className="student-score-list">
+            {bestQuizScores.length === 0 ? (
+              <div className="student-empty-box">
+                Aucun quiz passé pour le moment.
+              </div>
             ) : (
               bestQuizScores.map((quiz) => (
-                <div key={quiz.id} className="student-score-item hover-lift">
-                  <div className="student-score-badge">{quiz.code}</div>
+                <div key={quiz.id} className="student-score-item">
+                  <div className="student-score-item__badge">{quiz.code}</div>
 
-                  <div className="student-score-content">
-                    <div className="student-score-content__title">{quiz.title}</div>
-                    <div className="student-score-content__meta">{quiz.date_label}</div>
+                  <div className="student-score-item__body">
+                    <div className="student-score-item__title">{quiz.title}</div>
+                    <div className="student-score-item__meta">
+                      {quiz.date_label}
+                    </div>
                   </div>
 
-                  <div className="student-score-value">{quiz.score}</div>
+                  <div className="student-score-item__value">
+                    {quiz.score}
+                    <ArrowUpRight size={14} />
+                  </div>
                 </div>
               ))
             )}
           </div>
         </div>
 
-        <div className="card card--pad student-activity-card fade-in-up">
-          <h2 className="card__title section-title-with-icon">
-            <Activity size={18} />
-            <span>Activité récente</span>
-          </h2>
-
-          <div className="student-list">
-            {recentActivity.length === 0 ? (
-              <p className="teacher-subtitle" style={{ marginTop: 12 }}>
-                Aucune activité récente.
+        <div className="student-panel student-panel--wide">
+          <div className="student-panel__head">
+            <div>
+              <h2 className="student-panel__title">Activité récente</h2>
+              <p className="student-panel__subtitle">
+                Les dernières actions enregistrées sur votre espace.
               </p>
+            </div>
+          </div>
+
+          <div className="student-activity-list">
+            {recentActivity.length === 0 ? (
+              <div className="student-empty-box">
+                Aucune activité récente.
+              </div>
             ) : (
               recentActivity.map((item, index) => (
-                <div key={`${item.title}-${index}`} className="student-activity-item hover-lift">
+                <div key={`${item.title}-${index}`} className="student-activity-item">
                   <div
-                    className="student-activity-icon"
-                    style={{ color: getActivityColor(item.type) }}
+                    className={`student-activity-item__icon ${getActivityColor(
+                      item.type
+                    )}`}
                   >
                     {getActivityIcon(item.type)}
                   </div>
 
-                  <div className="student-activity-content">
-                    <div className="student-activity-content__title">{item.title}</div>
-                    <div className="student-activity-content__meta">
+                  <div className="student-activity-item__body">
+                    <div className="student-activity-item__title">{item.title}</div>
+                    <div className="student-activity-item__meta">
                       {item.meta} • {item.date_label}
                     </div>
                   </div>

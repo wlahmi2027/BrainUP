@@ -1,88 +1,187 @@
 import { NavLink } from "react-router-dom";
+import {
+  Brain,
+  LayoutDashboard,
+  BookOpen,
+  ClipboardCheck,
+  Sparkles,
+  UserRound,
+  MessageCircleMore,
+  LogOut,
+  GraduationCap,
+  Users,
+  FileQuestion,
+  X,
+} from "lucide-react";
 
-export default function Sidebar({ role = "student" }) {
+export default function Sidebar({
+  role = "student",
+  mobileMenuOpen = false,
+  onCloseMobileMenu = () => {},
+}) {
   const linkClass = ({ isActive }) =>
-    "nav__item" + (isActive ? " active" : "");
+    `app-sidebar__link ${isActive ? "is-active" : ""}`;
+
+  function handleNavClick() {
+    onCloseMobileMenu();
+  }
 
   return (
-    <aside className="sidebar">
-      <div className="brand">
-        <div className="brand__logo">🧠</div>
-        <div className="brand__name">
+    <aside
+      className={`app-sidebar ${mobileMenuOpen ? "is-mobile-open" : ""}`}
+    >
+      <div className="app-sidebar__mobile-top">
+        <button
+          type="button"
+          className="app-sidebar__mobile-close"
+          onClick={onCloseMobileMenu}
+          aria-label="Fermer le menu"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      <div className="app-sidebar__brand">
+        <div className="app-sidebar__logo">
+          <Brain size={22} />
+        </div>
+        <div className="app-sidebar__brand-text">
           Brain<span>UP</span>
         </div>
       </div>
 
-      <nav className="nav">
+      <div className="app-sidebar__section-label">
+        {role === "student" ? "Espace étudiant" : "Navigation"}
+      </div>
+
+      <nav className="app-sidebar__nav">
         {role === "student" && (
           <>
-            <NavLink className={linkClass} to="/student/accueil">
-              🏠 Accueil
+            <NavLink
+              className={linkClass}
+              to="/student/dashboard"
+              onClick={handleNavClick}
+            >
+              <LayoutDashboard size={18} />
+              <span>Tableau de bord</span>
             </NavLink>
 
-            <NavLink className={linkClass} to="/student/dashboard">
-              📊 Tableau de bord
+            <NavLink
+              className={linkClass}
+              to="/student/courses"
+              onClick={handleNavClick}
+            >
+              <BookOpen size={18} />
+              <span>Cours</span>
             </NavLink>
 
-            <NavLink className={linkClass} to="/student/courses">
-              📘 Cours
+            <NavLink
+              className={linkClass}
+              to="/student/quiz"
+              onClick={handleNavClick}
+            >
+              <ClipboardCheck size={18} />
+              <span>Quiz</span>
             </NavLink>
 
-            <NavLink className={linkClass} to="/student/quiz">
-              ✅ Quiz
+            <NavLink
+              className={linkClass}
+              to="/student/recommendations"
+              onClick={handleNavClick}
+            >
+              <Sparkles size={18} />
+              <span>Recommandations</span>
             </NavLink>
 
-            <NavLink className={linkClass} to="/student/recommendations">
-              ⭐ Recommandations
+            <NavLink
+              className={linkClass}
+              to="/student/profile"
+              onClick={handleNavClick}
+            >
+              <UserRound size={18} />
+              <span>Profil</span>
             </NavLink>
 
-            <NavLink className={linkClass} to="/student/profile">
-              👤 Profil
-            </NavLink>
-
-            <NavLink className={linkClass} to="/student/chatbot">
-              💬 Chatbot
+            <NavLink
+              className={linkClass}
+              to="/student/chatbot"
+              onClick={handleNavClick}
+            >
+              <MessageCircleMore size={18} />
+              <span>Chatbot</span>
             </NavLink>
           </>
         )}
 
         {role === "teacher" && (
           <>
-            <NavLink className={linkClass} to="/teacher/dashboard">
-              📊 Dashboard
+            <NavLink
+              className={linkClass}
+              to="/teacher/dashboard"
+              onClick={handleNavClick}
+            >
+              <LayoutDashboard size={18} />
+              <span>Dashboard</span>
             </NavLink>
 
-            <NavLink className={linkClass} to="/teacher/courses">
-              📘 Mes cours
+            <NavLink
+              className={linkClass}
+              to="/teacher/courses"
+              onClick={handleNavClick}
+            >
+              <GraduationCap size={18} />
+              <span>Mes cours</span>
             </NavLink>
 
-            <NavLink className={linkClass} to="/teacher/quiz">
-              📝 Quiz
+            <NavLink
+              className={linkClass}
+              to="/teacher/quiz"
+              onClick={handleNavClick}
+            >
+              <FileQuestion size={18} />
+              <span>Quiz</span>
             </NavLink>
 
-
-            <NavLink className={linkClass} to="/teacher/students">
-              👨‍🎓 Étudiants
+            <NavLink
+              className={linkClass}
+              to="/teacher/students"
+              onClick={handleNavClick}
+            >
+              <Users size={18} />
+              <span>Étudiants</span>
             </NavLink>
 
-            <NavLink className={linkClass} to="/teacher/students-results">
-              📋 Suivi étudiants
+            <NavLink
+              className={linkClass}
+              to="/teacher/profile"
+              onClick={handleNavClick}
+            >
+              <UserRound size={18} />
+              <span>Profil</span>
             </NavLink>
 
-            <NavLink className={linkClass} to="/teacher/profile">
-              👨‍🏫 Profil
-            </NavLink>
-
-            <NavLink className={linkClass} to="/teacher/chatbot">
-              💬 Chatbot
+            <NavLink
+              className={linkClass}
+              to="/teacher/chatbot"
+              onClick={handleNavClick}
+            >
+              <MessageCircleMore size={18} />
+              <span>Chatbot</span>
             </NavLink>
           </>
         )}
-
-        <NavLink className={linkClass} to="/deconnexion">
-          🚪 Déconnexion
-        </NavLink>
       </nav>
+
+      <div className="app-sidebar__footer">
+        <NavLink
+          className={linkClass}
+          to="/deconnexion"
+          onClick={handleNavClick}
+        >
+          <LogOut size={18} />
+          <span>Déconnexion</span>
+        </NavLink>
+      </div>
     </aside>
   );
 }

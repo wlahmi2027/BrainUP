@@ -1,13 +1,23 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { api } from "../../api/client"; // adjust path if needed
+import { useNavigate, Link } from "react-router-dom";
+import {
+  FaUser,
+  FaEnvelope,
+  FaLock,
+  FaUserTag,
+  FaArrowRight,
+  FaBrain,
+} from "react-icons/fa";
+import { api } from "../../api/client";
+import "../../styles/auth/inscription.css";
 
 export default function Inscription() {
   const [nom, setNom] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("etudiant"); // default role
+  const [role, setRole] = useState("etudiant");
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSignUp = async (e) => {
@@ -15,89 +25,129 @@ export default function Inscription() {
     setLoading(true);
 
     try {
-    // Send data to backend
-    const response = await api.post("register/", {
+      const response = await api.post("register/", {
         nom,
         email,
         mot_de_passe: password,
-        role, // either "etudiant" or "enseignant"
-    });
+        role,
+      });
 
-    const data = response.data;
+      const data = response.data;
 
-    if (data.success) {
+      if (data.success) {
         alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
-        navigate("/login"); // redirect to login page
-    } else {
+        navigate("/login");
+      } else {
         alert(data.message || "Erreur lors de l'inscription");
-    }
+      }
     } catch (err) {
-    console.error(err);
+      console.error(err);
 
-    // Check if backend returned a response
-    if (err.response && err.response.data) {
+      if (err.response && err.response.data) {
         const backendMsg = err.response.data.message;
         alert(backendMsg || "Erreur lors de l'inscription");
-    } else {
+      } else {
         alert("Erreur serveur, veuillez réessayer");
-    }
+      }
     } finally {
-    setLoading(false);
-    } 
-};
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="bg">
-      <div
-        className="shell"
-        style={{ maxWidth: "400px", gridTemplateColumns: "1fr" }}
-      >
-        <div className="main" style={{ padding: "40px 24px" }}>
-          <div className="card card--pad login-card">
-            <h2
-              style={{ marginBottom: "20px", fontWeight: 900, fontSize: "24px" }}
-            >
-              Inscription
-            </h2>
+    <div className="signup-page">
+      <div className="signup-page__orb signup-page__orb--one" />
+      <div className="signup-page__orb signup-page__orb--two" />
 
-            <form onSubmit={handleSignUp} className="formGrid">
-              <div className="field">
-                <label className="label">Nom</label>
+      <div className="signup-layout">
+        <div className="signup-side">
+          <Link to="/" className="signup-brand">
+            <div className="signup-brand__logo">
+              <FaBrain />
+            </div>
+            <span>
+              Brain<span className="signup-brand__accent">UP</span>
+            </span>
+          </Link>
+
+          <span className="signup-side__badge">Inscription</span>
+
+          <h1 className="signup-side__title">
+            Rejoignez <span>BrainUP</span>
+          </h1>
+
+          <p className="signup-side__text">
+            Créez votre compte pour commencer à apprendre, enseigner ou
+            administrer dans une plateforme moderne, cohérente et agréable.
+          </p>
+
+          <div className="signup-side__card">
+            <strong>Une seule plateforme</strong>
+            <p>
+              Étudiants, enseignants et administrateurs profitent d’une
+              expérience claire et alignée avec la page d’accueil.
+            </p>
+          </div>
+        </div>
+
+        <div className="signup-card">
+          <div className="signup-card__head">
+            <h2>Inscription</h2>
+            <p>Créez votre compte en quelques secondes.</p>
+          </div>
+
+          <form onSubmit={handleSignUp} className="signup-form">
+            <div className="signup-field">
+              <label>Nom</label>
+              <div className="signup-input-wrap">
+                <FaUser className="signup-input-wrap__icon" />
                 <input
-                  className="input"
+                  className="signup-input"
                   type="text"
                   value={nom}
                   onChange={(e) => setNom(e.target.value)}
                   required
+                  placeholder="Votre nom"
                 />
               </div>
+            </div>
 
-              <div className="field">
-                <label className="label">Email</label>
+            <div className="signup-field">
+              <label>Email</label>
+              <div className="signup-input-wrap">
+                <FaEnvelope className="signup-input-wrap__icon" />
                 <input
-                  className="input"
+                  className="signup-input"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  placeholder="vous@email.com"
                 />
               </div>
+            </div>
 
-              <div className="field">
-                <label className="label">Mot de passe</label>
+            <div className="signup-field">
+              <label>Mot de passe</label>
+              <div className="signup-input-wrap">
+                <FaLock className="signup-input-wrap__icon" />
                 <input
-                  className="input"
+                  className="signup-input"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  placeholder="••••••••"
                 />
               </div>
+            </div>
 
-              <div className="field">
-                <label className="label">Rôle</label>
+            <div className="signup-field">
+              <label>Rôle</label>
+              <div className="signup-input-wrap">
+                <FaUserTag className="signup-input-wrap__icon" />
                 <select
-                  className="input"
+                  className="signup-input signup-select"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   required
@@ -106,23 +156,17 @@ export default function Inscription() {
                   <option value="enseignant">Enseignant</option>
                 </select>
               </div>
-
-              <button
-                type="submit"
-                className="btn btn--primary btn--wide"
-                style={{ marginTop: "20px" }}
-                disabled={loading}
-              >
-                {loading ? "Inscription..." : "S'inscrire"}
-              </button>
-            </form>
-
-            <div style={{ marginTop: "20px", textAlign: "center" }}>
-              <span>Déjà un compte ? </span>
-              <a href="/login" className="btn btn--secondary">
-                Se connecter
-              </a>
             </div>
+
+            <button type="submit" className="signup-submit" disabled={loading}>
+              <span>{loading ? "Inscription..." : "Créer mon compte"}</span>
+              {!loading && <FaArrowRight />}
+            </button>
+          </form>
+
+          <div className="signup-card__footer">
+            <span>Déjà un compte ?</span>
+            <Link to="/login">Se connecter</Link>
           </div>
         </div>
       </div>
