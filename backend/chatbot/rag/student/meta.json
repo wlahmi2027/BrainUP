@@ -1,0 +1,110 @@
+[
+  {
+    "title": "Information",
+    "text": "",
+    "route": "/",
+    "source_file": "navigation.json"
+  },
+  {
+    "title": "Information",
+    "text": "",
+    "route": "/cours",
+    "source_file": "navigation.json"
+  },
+  {
+    "title": "Information",
+    "text": "",
+    "route": "/tableau-de-bord",
+    "source_file": "navigation.json"
+  },
+  {
+    "title": "Information",
+    "text": "",
+    "route": "/recommandations",
+    "source_file": "navigation.json"
+  },
+  {
+    "title": "Information",
+    "text": "",
+    "route": "/quiz",
+    "source_file": "navigation.json"
+  },
+  {
+    "title": "Information",
+    "text": "",
+    "route": "/profil",
+    "source_file": "navigation.json"
+  },
+  {
+    "title": "Information",
+    "text": "",
+    "route": "/chatbot",
+    "source_file": "navigation.json"
+  },
+  {
+    "title": "Information",
+    "text": "",
+    "route": "/deconnexion",
+    "source_file": "navigation.json"
+  },
+  {
+    "title": "Introduction à Python",
+    "text": "Découvrir les bases de Python : variables, conditions, boucles et fonctions.",
+    "route": "/cours",
+    "source_file": "courses.json"
+  },
+  {
+    "title": "Machine Learning Avancé",
+    "text": "Approfondir les techniques de ML : entraînement, évaluation, tuning et pipelines.",
+    "route": "/cours",
+    "source_file": "courses.json"
+  },
+  {
+    "title": "Design Web Moderne",
+    "text": "Construire des interfaces modernes, claires et responsives.",
+    "route": "/cours",
+    "source_file": "courses.json"
+  },
+  {
+    "title": "Analyse de Données",
+    "text": "Explorer et analyser des données pour en tirer des insights.",
+    "route": "/cours",
+    "source_file": "courses.json"
+  },
+  {
+    "title": "IA et Chatbots",
+    "text": "Comprendre les chatbots modernes et les bases du NLP.",
+    "route": "/cours",
+    "source_file": "courses.json"
+  },
+  {
+    "title": "Comment s'inscrire sur BrainUP ?",
+    "text": "Va sur la page Inscription, remplis le formulaire, puis valide. Ensuite connecte-toi avec ton email et mot de passe.",
+    "route": "",
+    "source_file": "faq.json"
+  },
+  {
+    "title": "J'ai oublié mon mot de passe, que faire ?",
+    "text": "Clique sur 'Mot de passe oublié' sur la page Connexion. Tu recevras un email pour réinitialiser ton mot de passe.",
+    "route": "",
+    "source_file": "faq.json"
+  },
+  {
+    "title": "Comment m'inscrire à un cours ?",
+    "text": "Va sur la page Cours, choisis un cours, puis clique sur 'Voir Cours' ou 'S’inscrire' selon l’interface.",
+    "route": "",
+    "source_file": "faq.json"
+  },
+  {
+    "title": "Comment accéder aux recommandations ?",
+    "text": "Va sur la page Recommandations. BrainUP te suggère des cours selon ton profil et tes performances.",
+    "route": "",
+    "source_file": "faq.json"
+  },
+  {
+    "title": "Comment passer un quiz ?",
+    "text": "Ouvre la page Quiz, sélectionne le quiz voulu, choisis une réponse puis clique sur 'Valider'.",
+    "route": "",
+    "source_file": "faq.json"
+  }
+]

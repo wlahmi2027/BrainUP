@@ -1,0 +1,17 @@
+[
+  {
+    "id": "teacher_nav_1",
+    "title": "Accéder à mes cours",
+    "content": "Depuis le tableau de bord enseignant, ouvrez la section des cours pour voir, modifier ou créer vos contenus."
+  },
+  {
+    "id": "teacher_nav_2",
+    "title": "Accéder au tableau de bord",
+    "content": "Le tableau de bord enseignant permet de consulter un résumé de l'activité liée à vos cours et contenus."
+  },
+  {
+    "id": "teacher_nav_3",
+    "title": "Accéder aux quiz",
+    "content": "Les quiz sont accessibles depuis chaque cours ou via la section dédiée selon l'interface disponible."
+  }
+]

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function Courses() {
   const navigate = useNavigate();
+
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [courses, setCourses] = useState([]);
@@ -11,8 +12,14 @@ export default function Courses() {
   const [showStudentsModal, setShowStudentsModal] = useState(false);
   const [studentsData, setStudentsData] = useState(null);
   const [selectedCourseId, setSelectedCourseId] = useState(null);
+<<<<<<< HEAD
 
   const FILTERS = ["all", "publie", "brouillon", "archive"];
+=======
+
+  const FILTERS = ["all", "publie", "brouillon", "archive"];
+
+>>>>>>> origin/wissam
   async function updateStatus(courseId, newStatus) {
     const token = localStorage.getItem("token");
 
@@ -25,6 +32,7 @@ export default function Courses() {
     if (!window.confirm(confirmMsg)) return;
 
     try {
+<<<<<<< HEAD
       const res = await fetch(
         `http://localhost:8001/api/courses/${courseId}/`,
         {
@@ -40,6 +48,21 @@ export default function Courses() {
       if (!res.ok) throw new Error("Erreur lors de la mise à jour.");
 
       // update local state
+=======
+      const res = await fetch(`http://127.0.0.1:8001/api/courses/${courseId}/`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Erreur lors de la mise à jour.");
+      }
+
+>>>>>>> origin/wissam
       setCourses((prev) =>
         prev.map((c) =>
           c.id === courseId ? { ...c, status: newStatus } : c
@@ -50,6 +73,7 @@ export default function Courses() {
       alert("Erreur lors de la mise à jour du statut.");
     }
   }
+<<<<<<< HEAD
   async function openStudents(courseId) {
     const token = localStorage.getItem("token");
 
@@ -61,14 +85,46 @@ export default function Courses() {
         }
       );
 
+=======
+
+  async function openStudents(courseId) {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8001/api/courses/${courseId}/etudiants/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Erreur lors du chargement des étudiants.");
+      }
+
+>>>>>>> origin/wissam
       const data = await res.json();
       setStudentsData(data);
       setSelectedCourseId(courseId);
       setShowStudentsModal(true);
     } catch (err) {
       console.error(err);
+<<<<<<< HEAD
     }
   }
+=======
+      alert("Impossible de charger les étudiants.");
+    }
+  }
+
+>>>>>>> origin/wissam
   useEffect(() => {
     const fetchCourses = async () => {
       const token = localStorage.getItem("token");
@@ -79,7 +135,7 @@ export default function Courses() {
       }
 
       try {
-        const res = await fetch("http://localhost:8001/api/courses/", {
+        const res = await fetch("http://127.0.0.1:8001/api/courses/?mine=true", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -91,24 +147,33 @@ export default function Courses() {
           return;
         }
 
-        if (!res.ok) throw new Error("Erreur lors du chargement des cours.");
+        if (!res.ok) {
+          throw new Error("Erreur lors du chargement des cours.");
+        }
 
         const data = await res.json();
 
-        // normalize to match student structure
         const normalized = data.map((c) => ({
           id: c.id,
           title: c.title,
+<<<<<<< HEAD
           author: c.enseignant?.nom || "—",
           banner: c.banniere,
           status: c.status,
           students: c.etudiants_count ?? 0,
           lessons: c.lecons_count ?? 0,
+=======
+          author: c.author || c.enseignant?.nom || "—",
+          banner: c.banniere || null,
+          status: c.status || "brouillon",
+          students: c.etudiants_count ?? c.students ?? 0,
+          lessons: c.lecons_count ?? c.lessons ?? 0,
+>>>>>>> origin/wissam
         }));
 
         setCourses(normalized);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || "Erreur lors du chargement.");
       } finally {
         setLoading(false);
       }
@@ -132,12 +197,25 @@ export default function Courses() {
     });
   }, [courses, query, statusFilter]);
 
+  const getStatusLabel = (status) => {
+    return {
+      publie: "Publié",
+      brouillon: "Brouillon",
+      archive: "Archivé",
+    }[status] || status;
+  };
+
+  const getStatusClass = (status) => {
+    if (status === "publie") return "teacher-badge--success";
+    if (status === "brouillon") return "teacher-badge--warn";
+    return "teacher-badge--muted";
+  };
+
   if (loading) return <p>Chargement...</p>;
   if (error) return <p>{error}</p>;
 
   return (
     <section className="courses-page">
-      {/* HEADER */}
       <div className="courses-header">
         <h1>Gestion des Cours</h1>
 
@@ -157,7 +235,6 @@ export default function Courses() {
         </div>
       </div>
 
-      {/* STATUS FILTER */}
       <div className="courses-tabs">
         {FILTERS.map((s) => (
           <button
@@ -175,23 +252,21 @@ export default function Courses() {
         ))}
       </div>
 
-      {/* GRID */}
       <div className="courses-grid">
         {filteredCourses.length === 0 ? (
           <p>Aucun cours trouvé.</p>
         ) : (
           filteredCourses.map((c) => (
             <div key={c.id} className="course-card">
-              {/* BANNER */}
               <div
                 className="course-banner"
                 style={
                   c.banner
                     ? {
-                      backgroundImage: `url(${c.banner})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }
+                        backgroundImage: `url(${c.banner})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
                     : undefined
                 }
               >
@@ -199,21 +274,14 @@ export default function Courses() {
                   <h3>{c.title}</h3>
                 </div>
 
-                {/* STATUS BADGE */}
                 <span
-                  className={`teacher-badge ${c.status === "Publié"
-                    ? "teacher-badge--success"
-                    : c.status === "Brouillon"
-                      ? "teacher-badge--warn"
-                      : "teacher-badge--muted"
-                    }`}
+                  className={`teacher-badge ${getStatusClass(c.status)}`}
                   style={{ position: "absolute", top: 8, right: 8 }}
                 >
-                  {c.status}
+                  {getStatusLabel(c.status)}
                 </span>
               </div>
 
-              {/* CONTENT */}
               <div className="course-content">
                 <p className="course-author">{c.author}</p>
 
@@ -240,6 +308,7 @@ export default function Courses() {
                   >
                     Voir
                   </button>
+
                   <div>
                     <button
                       className="btn btn--soft"
@@ -264,6 +333,10 @@ export default function Courses() {
           ))
         )}
       </div>
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/wissam
       {showStudentsModal && studentsData && (
         <div
           className="modal-overlay"
@@ -297,7 +370,11 @@ export default function Courses() {
           </div>
         </div>
       )}
+<<<<<<< HEAD
     </section >
 
+=======
+    </section>
+>>>>>>> origin/wissam
   );
 }

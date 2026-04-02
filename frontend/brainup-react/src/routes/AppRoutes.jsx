@@ -15,6 +15,7 @@ import StudentCourseDetail from "../pages/student/CourseDetail";
 import StudentQuiz from "../pages/student/Quiz";
 import StudentRecommendations from "../pages/student/Recommendations";
 import StudentProfile from "../pages/student/Profile";
+import StudentQuizDetails from "../pages/student/StudentQuizDetails";
 
 /* Teacher */
 import TeacherLayout from "../pages/teacher/Layout";
@@ -27,9 +28,11 @@ import CreateCourse from "../pages/teacher/CreateCourse";
 import EditCourse from "../pages/teacher/EditCourse";
 import CreateQuiz from "../pages/teacher/CreateQuiz";
 import EditQuiz from "../pages/teacher/EditQuiz";
-import Results from "../pages/teacher/Results";
 import Students from "../pages/teacher/Students";
-import StudentsResults from "../pages/teacher/StudentsResults";
+import StudentDetail from "../pages/teacher/StudentDetail";
+import QuizDetails from "../pages/teacher/QuizDetails";
+import QuizResults from "../pages/teacher/QuizResults";
+import TeacherQuizResultDetails from "../pages/teacher/TeacherQuizResultDetails";
 
 /* Admin */
 import AdminLayout from "../pages/admin/Layout";
@@ -64,10 +67,10 @@ export default function AppRoutes() {
           <Route path="quiz" element={<StudentQuiz />} />
           <Route path="recommendations" element={<StudentRecommendations />} />
           <Route path="profile" element={<StudentProfile />} />
-          <Route path="chatbot" element={<Chatbot />} />
+          <Route path="chatbot" element={<Chatbot role="student" />} />
+          <Route path="quiz/:id" element={<StudentQuizDetails />} />
         </Route>
       </Route>
-
       {/* Teacher routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/teacher" element={<TeacherLayout />}>
@@ -79,14 +82,21 @@ export default function AppRoutes() {
           <Route path="courses/:id/edit" element={<EditCourse />} />
           <Route path="quiz" element={<TeacherQuiz />} />
           <Route path="quiz/create" element={<CreateQuiz />} />
+          <Route path="quiz/:id" element={<QuizDetails />} />
           <Route path="quiz/:id/edit" element={<EditQuiz />} />
-          <Route path="results" element={<Results />} />
+          <Route path="quiz/:id/results" element={<QuizResults />} />
           <Route path="students" element={<Students />} />
-          <Route path="students-results" element={<StudentsResults />} />
+          <Route path="/teacher/students" element={<Students />} />
+          <Route path="students/:studentId" element={<StudentDetail />} />
           <Route path="profile" element={<TeacherProfile />} />
-          <Route path="chatbot" element={<Chatbot />} />
+          <Route path="chatbot" element={<Chatbot role="teacher" />} />
+          <Route
+            path="quiz/:quizId/results"
+            element={<TeacherQuizResultDetails />}
+          />
         </Route>
       </Route>
+<<<<<<< HEAD
 
       {/* Admin routes */}
       <Route element={<ProtectedRoute />}>
@@ -103,6 +113,8 @@ export default function AppRoutes() {
         </Route>
       </Route>
 
+=======
+>>>>>>> origin/wissam
       {/* Catch-all fallback */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

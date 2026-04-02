@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function createEmptyQuestion() {
   return {
@@ -10,23 +10,86 @@ function createEmptyQuestion() {
   };
 }
 
-export default function CreateQuiz() {
-  const [quiz, setQuiz] = useState({
+function createInitialQuiz() {
+  return {
     title: "",
     courseId: "",
     level: "Débutant",
     duration: 10,
     status: "Brouillon",
     description: "",
-  });
+  };
+}
 
+function mapLevelToBackend(level) {
+  if (level === "Débutant") return "debutant";
+  if (level === "Intermédiaire") return "intermediaire";
+  if (level === "Avancé") return "avance";
+  return "debutant";
+}
+
+function mapStatusToBackend(status) {
+  if (status === "Brouillon") return "brouillon";
+  if (status === "Publié") return "publie";
+  return "brouillon";
+}
+
+export default function CreateQuiz() {
+  const [quiz, setQuiz] = useState(createInitialQuiz());
   const [questions, setQuestions] = useState([createEmptyQuestion()]);
+  const [courses, setCourses] = useState([]);
 
-  const courses = [
-    { id: 1, title: "Python avancé" },
-    { id: 2, title: "React moderne" },
-    { id: 3, title: "Bases de données" },
-  ];
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    async function fetchCourses() {
+      try {
+        setIsLoadingCourses(true);
+        setErrorMessage("");
+
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          throw new Error("Utilisateur non connecté.");
+        }
+
+        const response = await fetch(
+          "http://127.0.0.1:8001/api/courses/?mine=true",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Impossible de charger les cours.");
+        }
+
+        const data = await response.json();
+
+        const publishedCourses = Array.isArray(data)
+          ? data.filter(
+              (course) =>
+                course.status === "publie" || course.is_published === true
+            )
+          : [];
+
+        setCourses(publishedCourses);
+      } catch (error) {
+        console.error("Erreur chargement cours :", error);
+        setCourses([]);
+        setErrorMessage(error.message || "Erreur lors du chargement des cours.");
+      } finally {
+        setIsLoadingCourses(false);
+      }
+    }
+
+    fetchCourses();
+  }, []);
 
   function handleQuizChange(event) {
     const { name, value } = event.target;
@@ -72,24 +135,187 @@ export default function CreateQuiz() {
     );
   }
 
-  function handleSubmit(event) {
+  function resetForm() {
+    setQuiz(createInitialQuiz());
+    setQuestions([createEmptyQuestion()]);
+    setSaveSuccess(false);
+    setErrorMessage("");
+  }
+
+  function validateForm() {
+    if (!quiz.title.trim()) {
+      return "Le titre du quiz est obligatoire.";
+    }
+
+    if (!quiz.courseId) {
+      return "Veuillez sélectionner un cours publié.";
+    }
+
+    if (!quiz.duration || Number(quiz.duration) < 1) {
+      return "La durée doit être supérieure à 0.";
+    }
+
+    for (let i = 0; i < questions.length; i += 1) {
+      const question = questions[i];
+
+      if (!question.statement.trim()) {
+        return `L'énoncé de la question ${i + 1} est obligatoire.`;
+      }
+
+      if (!question.points || Number(question.points) < 1) {
+        return `Les points de la question ${i + 1} doivent être supérieurs à 0.`;
+      }
+
+      for (let j = 0; j < question.options.length; j += 1) {
+        if (!question.options[j].trim()) {
+          return `L'option ${j + 1} de la question ${i + 1} est obligatoire.`;
+        }
+      }
+    }
+
+    return "";
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    const payload = {
-      ...quiz,
-      duration: Number(quiz.duration),
-      questions: questions.map((question) => ({
-        statement: question.statement,
-        options: question.options,
-        correctIndex: Number(question.correctIndex),
-        points: Number(question.points),
-      })),
-    };
+    const validationError = validateForm();
 
-    console.log("Quiz à créer :", payload);
+    if (validationError) {
+      setErrorMessage(validationError);
+      setSaveSuccess(false);
+      return;
+    }
 
-    // Plus tard :
-    // await api.post("/teacher/quizzes/", payload)
+    try {
+      setIsSaving(true);
+      setSaveSuccess(false);
+      setErrorMessage("");
+
+      const token = localStorage.getItem("token");
+      const userRaw = localStorage.getItem("user");
+      const userId =
+        localStorage.getItem("user_id") ||
+        (userRaw ? JSON.parse(userRaw)?.id : null);
+
+      if (!token || !userId) {
+        throw new Error("Session invalide. Veuillez vous reconnecter.");
+      }
+
+      const quizPayload = {
+        titre: quiz.title.trim(),
+        description: quiz.description.trim(),
+        cours: Number(quiz.courseId),
+        enseignant: Number(userId),
+        niveau: mapLevelToBackend(quiz.level),
+        temps_limite_minutes: Number(quiz.duration),
+        tentatives_autorisees: 1,
+        score_reussite: 10,
+        statut: mapStatusToBackend(quiz.status),
+        melanger_questions: false,
+        afficher_feedback: true,
+      };
+
+      const quizResponse = await fetch("http://127.0.0.1:8001/api/quiz/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(quizPayload),
+      });
+
+      const quizData = await quizResponse.json();
+
+      if (!quizResponse.ok) {
+        throw new Error(
+          quizData?.detail ||
+            quizData?.message ||
+            JSON.stringify(quizData) ||
+            "Erreur lors de la création du quiz."
+        );
+      }
+
+      const createdQuiz = quizData;
+
+      for (let i = 0; i < questions.length; i += 1) {
+        const question = questions[i];
+
+        const questionPayload = {
+          quiz: createdQuiz.id,
+          enonce: question.statement.trim(),
+          type_question: "choix_unique",
+          points: Number(question.points),
+          ordre: i + 1,
+          explication: "",
+        };
+
+        const questionResponse = await fetch(
+          "http://127.0.0.1:8001/api/questions/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(questionPayload),
+          }
+        );
+
+        const questionData = await questionResponse.json();
+
+        if (!questionResponse.ok) {
+          throw new Error(
+            questionData?.detail ||
+              questionData?.message ||
+              JSON.stringify(questionData) ||
+              "Erreur lors de la création d'une question."
+          );
+        }
+
+        const createdQuestion = questionData;
+
+        for (let j = 0; j < question.options.length; j += 1) {
+          const optionPayload = {
+            question: createdQuestion.id,
+            texte: question.options[j].trim(),
+            est_correct: j === Number(question.correctIndex),
+            ordre: j + 1,
+          };
+
+          const optionResponse = await fetch(
+            "http://127.0.0.1:8001/api/choix/",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(optionPayload),
+            }
+          );
+
+          const optionData = await optionResponse.json();
+
+          if (!optionResponse.ok) {
+            throw new Error(
+              optionData?.detail ||
+                optionData?.message ||
+                JSON.stringify(optionData) ||
+                "Erreur lors de la création d'une option."
+            );
+          }
+        }
+      }
+
+      setSaveSuccess(true);
+    } catch (error) {
+      console.error("Erreur enregistrement quiz :", error);
+      setErrorMessage(String(error.message || error));
+      setSaveSuccess(false);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -102,6 +328,18 @@ export default function CreateQuiz() {
           </p>
         </div>
       </div>
+
+      {errorMessage && (
+        <div style={{ marginBottom: "16px", color: "#c0392b", fontWeight: 600 }}>
+          {errorMessage}
+        </div>
+      )}
+
+      {saveSuccess && (
+        <div style={{ marginBottom: "16px", color: "#1e8449", fontWeight: 600 }}>
+          Quiz enregistré avec succès.
+        </div>
+      )}
 
       <form className="teacher-form-card" onSubmit={handleSubmit}>
         <div className="teacher-form-grid">
@@ -123,8 +361,16 @@ export default function CreateQuiz() {
               name="courseId"
               value={quiz.courseId}
               onChange={handleQuizChange}
+              disabled={isLoadingCourses}
             >
-              <option value="">Sélectionner un cours</option>
+              <option value="">
+                {isLoadingCourses
+                  ? "Chargement des cours..."
+                  : courses.length === 0
+                  ? "Aucun cours publié disponible"
+                  : "Sélectionner un cours"}
+              </option>
+
               {courses.map((course) => (
                 <option key={course.id} value={course.id}>
                   {course.title}
@@ -290,11 +536,25 @@ export default function CreateQuiz() {
         </div>
 
         <div className="teacher-form-actions">
-          <button type="button" className="btn btn--ghost">
+          <button type="button" className="btn btn--ghost" onClick={resetForm}>
             Annuler
           </button>
-          <button type="submit" className="btn btn--primary">
-            Enregistrer le quiz
+
+          <button
+            type="submit"
+            className="btn btn--primary"
+            disabled={isSaving}
+            style={
+              saveSuccess
+                ? { backgroundColor: "#1e8449", borderColor: "#1e8449" }
+                : {}
+            }
+          >
+            {isSaving
+              ? "Enregistrement..."
+              : saveSuccess
+              ? "Quiz enregistré"
+              : "Enregistrer le quiz"}
           </button>
         </div>
       </form>

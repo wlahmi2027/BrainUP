@@ -1,31 +1,78 @@
 import json
-import os
 import pickle
+from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-BASE_DIR = os.path.dirname(__file__)
-KB_PATH = os.path.join(BASE_DIR, "kb.json")
-
-VECTORIZER_PATH = os.path.join(BASE_DIR, "vectorizer.pkl")
-MATRIX_PATH = os.path.join(BASE_DIR, "matrix.pkl")
-META_PATH = os.path.join(BASE_DIR, "meta.json")
+BASE_DIR = Path(__file__).resolve().parent
+KB_DIR = BASE_DIR.parent / "knowledge_base"
+ROLES = ["student", "teacher"]
 
 
-with open(KB_PATH, "r", encoding="utf-8") as f:
-    docs = json.load(f)
+def build_docs_for_role(role: str):
+    role_dir = KB_DIR / role
+    docs = []
 
-texts = [doc["title"] + " " + doc["text"] for doc in docs]
+    if not role_dir.exists():
+        return docs
 
-vectorizer = TfidfVectorizer()
-matrix = vectorizer.fit_transform(texts)
+    for json_file in role_dir.glob("*.json"):
+        with open(json_file, "r", encoding="utf-8") as f:
+            items = json.load(f)
 
-with open(VECTORIZER_PATH, "wb") as f:
-    pickle.dump(vectorizer, f)
+        if not isinstance(items, list):
+            continue
 
-with open(MATRIX_PATH, "wb") as f:
-    pickle.dump(matrix, f)
+        for item in items:
+            if not isinstance(item, dict):
+                continue
 
-with open(META_PATH, "w", encoding="utf-8") as f:
-    json.dump(docs, f, ensure_ascii=False, indent=2)
+            title = item.get("title") or item.get("name") or item.get("question") or "Information"
+            text = (
+                item.get("text")
+                or item.get("answer")
+                or item.get("description")
+                or item.get("content")
+                or ""
+            )
+            route = item.get("route", "")
 
-print("Index TF-IDF créé avec succès")
+            docs.append({
+                "title": title,
+                "text": text,
+                "route": route,
+                "source_file": json_file.name
+            })
+
+    return docs
+
+
+def build_index_for_role(role: str):
+    docs = build_docs_for_role(role)
+
+    if not docs:
+        print(f"Aucun document trouvé pour {role}")
+        return
+
+    texts = [f"{doc['title']} {doc['text']}" for doc in docs]
+
+    vectorizer = TfidfVectorizer()
+    matrix = vectorizer.fit_transform(texts)
+
+    role_output_dir = BASE_DIR / role
+    role_output_dir.mkdir(parents=True, exist_ok=True)
+
+    with open(role_output_dir / "vectorizer.pkl", "wb") as f:
+        pickle.dump(vectorizer, f)
+
+    with open(role_output_dir / "matrix.pkl", "wb") as f:
+        pickle.dump(matrix, f)
+
+    with open(role_output_dir / "meta.json", "w", encoding="utf-8") as f:
+        json.dump(docs, f, ensure_ascii=False, indent=2)
+
+    print(f"Index TF-IDF créé avec succès pour {role}")
+
+
+if __name__ == "__main__":
+    for role in ROLES:
+        build_index_for_role(role)

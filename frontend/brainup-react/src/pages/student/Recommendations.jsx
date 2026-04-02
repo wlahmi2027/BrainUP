@@ -2,78 +2,37 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getRecommendations } from "../../api/recommendations";
 
-const FALLBACK_RECOMMENDATIONS = {
-  recommended_for_you: [
-    {
-      course_id: 1,
-      title: "React pour débutants",
-      score_label: "Très pertinent",
-      description: "Un cours idéal pour renforcer vos bases en composants et hooks.",
-      reason: "Basé sur vos derniers cours suivis en développement web.",
-      route: "/student/courses/1",
-    },
-    {
-      course_id: 2,
-      title: "API REST avec Django",
-      score_label: "Recommandé",
-      description: "Apprenez à construire une API propre et sécurisée.",
-      reason: "Correspond à votre intérêt pour le backend.",
-      route: "/student/courses/2",
-    },
-  ],
-  continue_learning: {
-    title: "Introduction à Python",
-    progress_label: "72% terminé",
-    description: "Vous êtes proche de terminer ce module. Continuez pour valider vos acquis.",
-    progress: 72,
-    route: "/student/courses/3",
-  },
-  improve_results: [
-    {
-      course_id: 4,
-      title: "Structures de données",
-      score_label: "À renforcer",
-      reason: "Vos derniers résultats sur les quiz d’algorithmique sont faibles.",
-      action_label: "Revoir le cours",
-      route: "/student/courses/4",
-    },
-  ],
-  popular_courses: [
-    {
-      course_id: 5,
-      title: "UX/UI Design Moderne",
-      badge: "Populaire",
-      description: "Un cours très consulté par les autres étudiants ce mois-ci.",
-      popularity_count: 124,
-      route: "/student/courses/5",
-    },
-    {
-      course_id: 6,
-      title: "Bases de données SQL",
-      badge: "Tendance",
-      description: "Très demandé pour renforcer les projets full-stack.",
-      popularity_count: 98,
-      route: "/student/courses/6",
-    },
-  ],
-};
-
 export default function Recommendations() {
   const navigate = useNavigate();
 
-  const [data, setData] = useState(FALLBACK_RECOMMENDATIONS);
+  const [data, setData] = useState({
+    recommended_for_you: [],
+    continue_learning: null,
+    improve_results: [],
+    popular_courses: [],
+  });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [apiDown, setApiDown] = useState(false);
 
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true);
         setError("");
-        setApiDown(false);
 
-        const userId = 1;
+        const token = localStorage.getItem("token");
+        const userId = localStorage.getItem("user_id");
+        const role = localStorage.getItem("role");
+
+        if (!token || !userId) {
+          throw new Error("Utilisateur non connecté.");
+        }
+
+        if (role !== "etudiant") {
+          throw new Error("Accès réservé aux étudiants.");
+        }
+
         const payload = await getRecommendations(userId);
 
         setData({
@@ -84,9 +43,11 @@ export default function Recommendations() {
         });
       } catch (err) {
         console.error("Erreur recommandations :", err);
-        setApiDown(true);
-        setError("Impossible de charger les recommandations depuis le serveur.");
-        setData(FALLBACK_RECOMMENDATIONS);
+        setError(
+          err?.response?.data?.error ||
+            err.message ||
+            "Impossible de charger les recommandations."
+        );
       } finally {
         setLoading(false);
       }
@@ -106,6 +67,17 @@ export default function Recommendations() {
     );
   }
 
+  if (error) {
+    return (
+      <section className="recommendations-page">
+        <div className="recommendations-header">
+          <h1>Recommandations</h1>
+          <p style={{ color: "crimson" }}>{error}</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="recommendations-page">
       <div className="recommendations-header">
@@ -114,18 +86,6 @@ export default function Recommendations() {
           Découvrez des cours suggérés selon votre profil, vos résultats et votre
           progression.
         </p>
-
-        {apiDown && (
-          <p className="muted" style={{ marginTop: "10px" }}>
-            Mode local activé : affichage des recommandations temporaires.
-          </p>
-        )}
-
-        {error && !apiDown && (
-          <p className="muted" style={{ marginTop: "10px" }}>
-            {error}
-          </p>
-        )}
       </div>
 
       <section className="recommendations-section">
@@ -141,10 +101,7 @@ export default function Recommendations() {
                   </span>
                 </div>
 
-                <p className="recommendation-description">
-                  {item.description}
-                </p>
-
+                <p className="recommendation-description">{item.description}</p>
                 <p className="recommendation-reason">{item.reason}</p>
 
                 <button onClick={() => navigate(item.route)}>
@@ -176,7 +133,7 @@ export default function Recommendations() {
               <div
                 className="progress-bar-fill"
                 style={{
-                  width: `${Math.min(data.continue_learning.progress, 100)}%`,
+                  width: `${Math.min(data.continue_learning.progress || 0, 100)}%`,
                 }}
               />
             </div>
@@ -186,7 +143,7 @@ export default function Recommendations() {
             </button>
           </div>
         ) : (
-          <p>Vous n'avez pas encore commencé de parcours.</p>
+          <p>Vous n'avez pas encore de progression à reprendre.</p>
         )}
       </section>
 

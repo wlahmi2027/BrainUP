@@ -1,0 +1,12 @@
+[
+  {
+    "id": "teacher_dashboard_1",
+    "title": "Lecture du tableau de bord",
+    "content": "Le tableau de bord enseignant affiche un résumé des cours, des activités et éventuellement des inscriptions ou de l'engagement selon les données exposées par l'application."
+  },
+  {
+    "id": "teacher_dashboard_2",
+    "title": "Interpréter les statistiques",
+    "content": "Les statistiques du tableau de bord doivent être interprétées comme des indicateurs d'activité et de suivi. Si une statistique n'est pas visible dans l'interface, elle ne doit pas être inventée."
+  }
+]

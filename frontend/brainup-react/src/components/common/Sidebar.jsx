@@ -60,9 +60,6 @@ export default function Sidebar({ role = "student" }) {
               📝 Quiz
             </NavLink>
 
-            <NavLink className={linkClass} to="/teacher/results">
-              📈 Résultats
-            </NavLink>
 
             <NavLink className={linkClass} to="/teacher/students">
               👨‍🎓 Étudiants

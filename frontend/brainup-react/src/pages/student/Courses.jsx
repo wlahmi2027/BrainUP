@@ -9,7 +9,11 @@ export default function StudentCourses() {
   const [tab, setTab] = useState("all"); // all | favorites
   const [sortBy, setSortBy] = useState("title");
 
+<<<<<<< HEAD
   async function loadCourses() {
+=======
+  /*async function loadCourses() {
+>>>>>>> origin/wissam
     const token = localStorage.getItem("token");
     try {
       const res = await fetch("http://localhost:8001/api/student/courses/", {
@@ -22,7 +26,11 @@ export default function StudentCourses() {
         id: c.id,
         title: c.title,
         author: c.enseignant.nom,
+<<<<<<< HEAD
         progression: c.inscription?.progression ?? 0,
+=======
+        progression: c.inscription?.progression_percent ?? 0,
+>>>>>>> origin/wissam
         isFavorite: c.inscription?.favoris ?? false,
         banner: c.banniere,
         inscription: c.inscription,
@@ -35,7 +43,43 @@ export default function StudentCourses() {
       setLoading(false);
     }
   }
+<<<<<<< HEAD
 
+=======
+*/
+async function loadCourses() {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch("http://localhost:8001/api/student/courses/", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log("student courses status =", res.status);
+    console.log("student courses ok =", res.ok);
+
+    const data = await res.json();
+
+    console.log("student courses data =", data);
+    console.log("is array =", Array.isArray(data));
+
+    const normalized = data.map((c) => ({
+      id: c.id,
+      title: c.title,
+      author: c.enseignant?.nom || "",
+      progression: c.inscription?.progression_percent ?? 0,
+      isFavorite: c.inscription?.favoris ?? false,
+      banner: c.banniere,
+      inscription: c.inscription,
+    }));
+
+    setCourses(normalized);
+  } catch (err) {
+    console.error("loadCourses error =", err);
+  } finally {
+    setLoading(false);
+  }
+}
+>>>>>>> origin/wissam
   async function handleEnroll(courseId) {
     const token = localStorage.getItem("token");
 

@@ -1,109 +1,220 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Search, Bell, ChevronDown, User, LogOut } from "lucide-react";
+import { fetchTopbarData } from "../../api/topbar";
+import { logoutUser } from "../../api/auth";
 
 export default function Topbar() {
   const navigate = useNavigate();
   const menuRef = useRef(null);
+  const notifRef = useRef(null);
 
   const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
-  const [user, setUser] = useState({ name: "Utilisateur", role: "student", email: "" });
+  const [topbarData, setTopbarData] = useState({
+    user: null,
+    notifications: [],
+    notifications_count: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifMenu, setShowNotifMenu] = useState(false);
 
-  // Load user from localStorage on mount and whenever it changes
   useEffect(() => {
-    function loadUser() {
-      const raw = localStorage.getItem("user");
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          setUser({
-            name: parsed?.name?.trim() || "Utilisateur",
-            role: parsed?.role || "student",
-            email: parsed?.email || ""
-          });
-        } catch {
-          setUser({ name: "Utilisateur", role: "student", email: "" });
-        }
-      } else {
-        setUser({ name: "Utilisateur", role: "student", email: "" });
+    async function loadTopbar() {
+      try {
+        setLoading(true);
+        const data = await fetchTopbarData();
+        setTopbarData({
+          user: data?.user || null,
+          notifications: data?.notifications || [],
+          notifications_count: data?.notifications_count || 0,
+        });
+      } catch (error) {
+        console.error("Erreur topbar :", error);
+      } finally {
+        setLoading(false);
       }
     }
 
-    loadUser();
-
-    // Listen for changes to localStorage (e.g., another tab)
-    function handleStorageChange(e) {
-      if (e.key === "user") loadUser();
-    }
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    loadTopbar();
   }, []);
 
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setOpen(false);
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotifMenu(false);
       }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
-  function handleSearchKeyDown(e) {
-    if (e.key === "Enter") {
-      navigate("/student/courses");
+  useEffect(() => {
+    const root = document.querySelector(".page-search-scope");
+    if (!root) return;
+
+    const marks = root.querySelectorAll("mark[data-search-highlight='true']");
+    marks.forEach((mark) => {
+      const parent = mark.parentNode;
+      if (!parent) return;
+      parent.replaceChild(document.createTextNode(mark.textContent), mark);
+      parent.normalize();
+    });
+
+    if (!query.trim()) return;
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        const parentTag = node.parentElement?.tagName;
+        if (["SCRIPT", "STYLE", "MARK", "INPUT", "TEXTAREA", "BUTTON"].includes(parentTag)) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
+
+    const textNodes = [];
+    while (walker.nextNode()) {
+      textNodes.push(walker.currentNode);
+    }
+
+    const search = query.toLowerCase();
+
+    textNodes.forEach((node) => {
+      const text = node.nodeValue;
+      const lower = text.toLowerCase();
+      const index = lower.indexOf(search);
+
+      if (index === -1) return;
+
+      const before = text.slice(0, index);
+      const match = text.slice(index, index + query.length);
+      const after = text.slice(index + query.length);
+
+      const fragment = document.createDocumentFragment();
+
+      if (before) fragment.appendChild(document.createTextNode(before));
+
+      const mark = document.createElement("mark");
+      mark.setAttribute("data-search-highlight", "true");
+      mark.style.background = "#fff3a3";
+      mark.style.padding = "0 2px";
+      mark.style.borderRadius = "4px";
+      mark.textContent = match;
+      fragment.appendChild(mark);
+
+      if (after) fragment.appendChild(document.createTextNode(after));
+
+      if (node.parentNode) {
+        node.parentNode.replaceChild(fragment, node);
+      }
+    });
+  }, [query]);
+
+  async function handleLogout() {
+    try {
+      await logoutUser();
+    } catch (error) {
+      console.error("Erreur logout :", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("user_id");
+      localStorage.removeItem("role");
+      localStorage.removeItem("nom");
+      localStorage.removeItem("email");
+      navigate("/login");
     }
   }
 
+  const userName = topbarData?.user?.nom || "Utilisateur";
+  const firstLetter = userName?.charAt(0)?.toUpperCase() || "U";
+
   return (
-    <header className="topbar">
-      <div className="search">
-        <span className="search__icon">🔎</span>
+    <header className="topbar topbar-modern">
+      <div className="topbar-modern__search">
+        <Search size={20} />
         <input
-          className="search__input"
+          type="text"
           placeholder="Rechercher un cours, quiz ou contenu"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={handleSearchKeyDown}
         />
       </div>
 
-      <div className="topbar__actions">
-        <button className="iconbtn" title="Notifications">
-          🔔
-          <span className="notif-badge">3</span>
-        </button>
-
-        <div className="userpill" ref={menuRef}>
+      <div className="topbar-modern__right">
+        <div className="topbar-modern__notif" ref={notifRef}>
           <button
+            className="topbar-modern__iconbtn"
+            onClick={() => setShowNotifMenu((prev) => !prev)}
             type="button"
-            className="userpill__btn"
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
           >
-            <div className="userpill__avatar">
-              {user.name?.charAt(0)?.toUpperCase() || "U"}
-            </div>
-            <div className="userpill__text">
-              Hi, <b>{user.name}</b>
-            </div>
-            <div className="userpill__chev">▾</div>
+            <Bell size={20} />
+            {topbarData.notifications_count > 0 && (
+              <span className="topbar-modern__badge">
+                {topbarData.notifications_count}
+              </span>
+            )}
           </button>
 
-          {open && (
-            <div className="userpill__menu">
-              <Link
-                className="userpill__item"
-                to="/student/profile"
-                onClick={() => setOpen(false)}
-              >
-                👤 Profil
-              </Link>
+          {showNotifMenu && (
+            <div className="topbar-modern__dropdown topbar-modern__dropdown--notif">
+              <div className="topbar-modern__dropdown-title">Notifications</div>
 
-              <button className="userpill__item danger" onClick={logout}>
-                🚪 Déconnexion
+              {topbarData.notifications.length > 0 ? (
+                topbarData.notifications.map((notif, index) => (
+                  <div key={index} className="topbar-modern__notif-item">
+                    <span className="topbar-modern__notif-dot" />
+                    <span>{notif.message}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="topbar-modern__empty">
+                  Aucune notification
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="topbar-modern__user" ref={menuRef}>
+          <button
+            className="topbar-modern__userbtn"
+            onClick={() => setShowUserMenu((prev) => !prev)}
+            type="button"
+          >
+            <div className="topbar-modern__avatar">{firstLetter}</div>
+            <span className="topbar-modern__username">
+              {loading ? "Chargement..." : `Hi, ${userName}`}
+            </span>
+            <ChevronDown size={18} />
+          </button>
+
+          {showUserMenu && (
+            <div className="topbar-modern__dropdown">
+              <button
+                className="topbar-modern__menuitem"
+                onClick={() => navigate("/teacher/profile")}
+                type="button"
+              >
+                <User size={16} />
+                <span>Mon profil</span>
+              </button>
+
+              <button
+                className="topbar-modern__menuitem topbar-modern__menuitem--danger"
+                onClick={handleLogout}
+                type="button"
+              >
+                <LogOut size={16} />
+                <span>Déconnexion</span>
               </button>
             </div>
           )}

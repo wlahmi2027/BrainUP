@@ -1,0 +1,80 @@
+[
+  {
+    "title": "Structurer un cours",
+    "text": "Un bon cours commence par un objectif clair, puis une progression simple allant des notions de base vers les notions plus avancées.",
+    "route": "",
+    "source_file": "pedagogy.json"
+  },
+  {
+    "title": "Créer un bon quiz",
+    "text": "Un bon quiz doit contenir des questions claires, non ambiguës, alignées avec le contenu du cours et réparties entre vérification des bases et compréhension.",
+    "route": "",
+    "source_file": "pedagogy.json"
+  },
+  {
+    "title": "Découper une leçon",
+    "text": "Il est recommandé de découper une leçon en petites sections, avec un objectif, une explication, un exemple et une mini validation.",
+    "route": "",
+    "source_file": "pedagogy.json"
+  },
+  {
+    "title": "Lecture du tableau de bord",
+    "text": "Le tableau de bord enseignant affiche un résumé des cours, des activités et éventuellement des inscriptions ou de l'engagement selon les données exposées par l'application.",
+    "route": "",
+    "source_file": "dashboard.json"
+  },
+  {
+    "title": "Interpréter les statistiques",
+    "text": "Les statistiques du tableau de bord doivent être interprétées comme des indicateurs d'activité et de suivi. Si une statistique n'est pas visible dans l'interface, elle ne doit pas être inventée.",
+    "route": "",
+    "source_file": "dashboard.json"
+  },
+  {
+    "title": "Accéder à mes cours",
+    "text": "Depuis le tableau de bord enseignant, ouvrez la section des cours pour voir, modifier ou créer vos contenus.",
+    "route": "",
+    "source_file": "navigation.json"
+  },
+  {
+    "title": "Accéder au tableau de bord",
+    "text": "Le tableau de bord enseignant permet de consulter un résumé de l'activité liée à vos cours et contenus.",
+    "route": "",
+    "source_file": "navigation.json"
+  },
+  {
+    "title": "Accéder aux quiz",
+    "text": "Les quiz sont accessibles depuis chaque cours ou via la section dédiée selon l'interface disponible.",
+    "route": "",
+    "source_file": "navigation.json"
+  },
+  {
+    "title": "Comment créer un nouveau cours ?",
+    "text": "Depuis l'espace enseignant, accédez à la section des cours puis cliquez sur le bouton de création. Renseignez le titre, la description, le niveau et la bannière si nécessaire, puis enregistrez.",
+    "route": "",
+    "source_file": "faq.json"
+  },
+  {
+    "title": "Comment ajouter une leçon à un cours ?",
+    "text": "Ouvrez le cours concerné, allez dans la gestion des leçons, puis cliquez sur ajouter une leçon. Saisissez le titre, le contenu et l'ordre d'affichage avant d'enregistrer.",
+    "route": "",
+    "source_file": "faq.json"
+  },
+  {
+    "title": "Comment modifier un cours existant ?",
+    "text": "Depuis votre liste de cours, sélectionnez le cours voulu puis ouvrez l'option de modification. Vous pourrez mettre à jour les informations du cours avant de sauvegarder.",
+    "route": "",
+    "source_file": "faq.json"
+  },
+  {
+    "title": "Comment créer un quiz ?",
+    "text": "Accédez au cours concerné, puis à la section quiz. Cliquez sur créer un quiz, ajoutez les questions et réponses, puis enregistrez avant publication.",
+    "route": "",
+    "source_file": "faq.json"
+  },
+  {
+    "title": "Que faire si un cours n'apparaît pas ?",
+    "text": "Vérifiez que le cours a bien été enregistré et que son statut permet son affichage. Vérifiez aussi que vous êtes connecté avec le bon compte enseignant.",
+    "route": "",
+    "source_file": "faq.json"
+  }
+]

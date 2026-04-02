@@ -2,25 +2,44 @@ import json
 from pathlib import Path
 from typing import List, Dict, Tuple
 
+import re
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 KB_DIR = BASE_DIR / "knowledge_base"
 
 
-def _read_json(filename: str):
-    with open(KB_DIR / filename, "r", encoding="utf-8") as f:
+def _read_json(role: str, filename: str):
+    file_path = KB_DIR / role / filename
+    if not file_path.exists():
+        return []
+
+    with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def load_faq():
-    return _read_json("faq.json")
+def load_role_files(role: str):
+    role = (role or "student").lower()
+
+    files = []
+    role_dir = KB_DIR / role
+
+    if not role_dir.exists():
+        return files
+
+    for file_path in role_dir.glob("*.json"):
+        files.append((file_path.stem.capitalize(), _read_json(role, file_path.name)))
+
+    return files
 
 
-def load_navigation():
-    return _read_json("navigation.json")
+def load_system_prompt(role: str) -> str:
+    prompt_path = KB_DIR / role / "system_prompt.txt"
+    if not prompt_path.exists():
+        return "Tu es un assistant utile."
 
-
-def load_courses():
-    return _read_json("courses.json")
+    with open(prompt_path, "r", encoding="utf-8") as f:
+        return f.read().strip()
 
 
 def _normalize_text(value):
@@ -33,8 +52,14 @@ def _normalize_text(value):
     return str(value)
 
 
+def _tokenize(text: str):
+    if not text:
+        return []
+    return re.findall(r"\b[\wàâçéèêëîïôûùüÿñæœ'-]+\b", text.lower())
+
+
 def _score_item(question: str, item: dict) -> int:
-    question_words = set(question.lower().split())
+    question_words = set(_tokenize(question))
 
     searchable_parts = [
         _normalize_text(item.get("title")),
@@ -53,7 +78,17 @@ def _score_item(question: str, item: dict) -> int:
 
     for word in question_words:
         if len(word) >= 3 and word in searchable_text:
-            score += 1
+            score += 2
+
+    title_or_question = " ".join([
+        _normalize_text(item.get("title")),
+        _normalize_text(item.get("question")),
+        _normalize_text(item.get("name")),
+    ]).lower()
+
+    for word in question_words:
+        if len(word) >= 3 and word in title_or_question:
+            score += 3
 
     return score
 
@@ -88,13 +123,8 @@ def _source_from_item(item: dict, fallback_title: str = "Ressource") -> dict:
     }
 
 
-def search_knowledge(question: str, max_results: int = 5) -> Tuple[str, List[Dict], List[Dict]]:
-    datasets = [
-        ("FAQ", load_faq()),
-        ("Navigation", load_navigation()),
-        ("Cours", load_courses()),
-    ]
-
+def search_knowledge(question: str, role: str = "student", max_results: int = 5) -> Tuple[str, List[Dict], List[Dict]]:
+    datasets = load_role_files(role)
     matches = []
 
     for category, items in datasets:
@@ -114,12 +144,9 @@ def search_knowledge(question: str, max_results: int = 5) -> Tuple[str, List[Dic
 
     if not top_matches:
         return (
-            "Aucune information pertinente trouvée dans la base BrainUP.",
+            "Aucune information pertinente trouvée dans la base de connaissances.",
             [],
-            [
-                {"label": "Voir l'accueil", "route": "/"},
-                {"label": "Ouvrir le chatbot", "route": "/chatbot"},
-            ],
+            []
         )
 
     context_blocks = []
