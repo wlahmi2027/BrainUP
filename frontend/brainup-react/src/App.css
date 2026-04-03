@@ -4164,8 +4164,7 @@ a { color: inherit; text-decoration: none; }
   outline: none;
 }
 
-<<<<<<< HEAD
-=======
+
 @media (max-width: 900px) {
   .player__layout {
     grid-template-columns: 1fr;
@@ -5917,8 +5916,6 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
-
->>>>>>> origin/wissam
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -5961,8 +5958,6 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   gap: 6px;
 }
-<<<<<<< HEAD
-
 
 /* admin's user table */
 
@@ -6050,5 +6045,3 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* end of admin's user table */
-=======
->>>>>>> origin/wissam

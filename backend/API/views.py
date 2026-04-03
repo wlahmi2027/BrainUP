@@ -212,7 +212,7 @@ class CoursViewSet(viewsets.ModelViewSet):
                 "id": insc.etudiant.id,
                 "username": insc.etudiant.utilisateur_ptr.nom,
                 "email": insc.etudiant.utilisateur_ptr.email,
-                "progression": insc.progression,
+                "progression": insc.progression_percent,
             }
             for insc in inscriptions
         ]
@@ -548,15 +548,15 @@ class LeconViewSet(viewsets.ModelViewSet):
         instance.delete()
 
 class StudentCourseViewSet(viewsets.ViewSet):
-    def list(self, request):
-        user = get_user_from_token(request)
 
+    def list(self, request):
+
+        user = get_user_from_token(request)
         if not user or user.role != "etudiant":
             return Response(
                 {"detail": "Unauthorized"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-
         try:
             student = Etudiant.objects.get(id=user.id)
         except Etudiant.DoesNotExist:
@@ -566,7 +566,7 @@ class StudentCourseViewSet(viewsets.ViewSet):
             )
 
         courses = (
-            Cours.objects.filter(is_published=True)
+            Cours.objects.filter(status="publie")
             .select_related("enseignant")
             .prefetch_related("lecons")
         )
@@ -613,7 +613,7 @@ class StudentCourseViewSet(viewsets.ViewSet):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-        
+ 
     # Study session tracking
     @action(detail=True, methods=["post"], url_path="study-session")
     def study_session(self, request, pk=None):
@@ -1004,9 +1004,9 @@ def student_quizzes_view(request):
             {"error": "Accès réservé aux étudiants"},
             status=status.HTTP_403_FORBIDDEN
         )
-
+    
     quizzes = (
-        Quiz.objects.filter(statut="publie")
+        Quiz.objects.filter(status="publie")
         .select_related("cours")
         .prefetch_related("questions")
         .distinct()
@@ -1260,20 +1260,26 @@ def register_view(request):
     mot_de_passe_hash = make_password(mot_de_passe)
 
     if role == "etudiant":
-        Etudiant.objects.create(
+        student = Etudiant.objects.create(
             nom=nom,
             email=email,
             mot_de_passe=mot_de_passe_hash,
             progression=0.0,
             score_moyen=0.0
         )
+        # Update parent Utilisateur role
+        Utilisateur.objects.filter(pk=student.pk).update(role="etudiant")
+
     elif role == "enseignant":
-        Enseignant.objects.create(
+        teacher = Enseignant.objects.create(
             nom=nom,
             email=email,
             mot_de_passe=mot_de_passe_hash,
             specialite=""
         )
+        # Update parent Utilisateur role
+        Utilisateur.objects.filter(pk=teacher.pk).update(role="enseignant")
+
     else:
         return Response(
             {"success": False, "message": "Rôle invalide"},

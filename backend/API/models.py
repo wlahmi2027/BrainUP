@@ -58,7 +58,6 @@ class Cours(models.Model):
     description = models.TextField()
     enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, related_name="cours")
     temps_apprentissage = models.IntegerField(default=0)
-    is_published = models.BooleanField(default=True)
     date_creation = models.DateTimeField(auto_now_add=True)
 
     # Ajouts conservateurs

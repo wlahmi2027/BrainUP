@@ -96,7 +96,6 @@ export default function AppRoutes() {
           />
         </Route>
       </Route>
-<<<<<<< HEAD
 
       {/* Admin routes */}
       <Route element={<ProtectedRoute />}>
@@ -112,9 +111,6 @@ export default function AppRoutes() {
           <Route path="users" element={<AdminUsers />} />
         </Route>
       </Route>
-
-=======
->>>>>>> origin/wissam
       {/* Catch-all fallback */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

@@ -74,7 +74,7 @@ export default function CreateQuiz() {
         const publishedCourses = Array.isArray(data)
           ? data.filter(
               (course) =>
-                course.status === "publie" || course.is_published === true
+                course.status === "publie"
             )
           : [];
 

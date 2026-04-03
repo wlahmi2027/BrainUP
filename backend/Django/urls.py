@@ -14,7 +14,7 @@ from API.views import (
     EtudiantViewSet,
     CoursViewSet,
     AdminCoursViewSet,
-    UserAdminViewSet
+    UserAdminViewSet,
     QuizViewSet,
     QuestionViewSet,
     ChoixQuestionViewSet,

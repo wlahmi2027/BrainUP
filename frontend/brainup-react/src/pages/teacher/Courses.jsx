@@ -12,14 +12,9 @@ export default function Courses() {
   const [showStudentsModal, setShowStudentsModal] = useState(false);
   const [studentsData, setStudentsData] = useState(null);
   const [selectedCourseId, setSelectedCourseId] = useState(null);
-<<<<<<< HEAD
-
-  const FILTERS = ["all", "publie", "brouillon", "archive"];
-=======
 
   const FILTERS = ["all", "publie", "brouillon", "archive"];
 
->>>>>>> origin/wissam
   async function updateStatus(courseId, newStatus) {
     const token = localStorage.getItem("token");
 
@@ -32,7 +27,6 @@ export default function Courses() {
     if (!window.confirm(confirmMsg)) return;
 
     try {
-<<<<<<< HEAD
       const res = await fetch(
         `http://localhost:8001/api/courses/${courseId}/`,
         {
@@ -48,21 +42,6 @@ export default function Courses() {
       if (!res.ok) throw new Error("Erreur lors de la mise à jour.");
 
       // update local state
-=======
-      const res = await fetch(`http://127.0.0.1:8001/api/courses/${courseId}/`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Erreur lors de la mise à jour.");
-      }
-
->>>>>>> origin/wissam
       setCourses((prev) =>
         prev.map((c) =>
           c.id === courseId ? { ...c, status: newStatus } : c
@@ -73,19 +52,6 @@ export default function Courses() {
       alert("Erreur lors de la mise à jour du statut.");
     }
   }
-<<<<<<< HEAD
-  async function openStudents(courseId) {
-    const token = localStorage.getItem("token");
-
-    try {
-      const res = await fetch(
-        `http://localhost:8001/api/courses/${courseId}/etudiants/`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-=======
 
   async function openStudents(courseId) {
     const token = localStorage.getItem("token");
@@ -97,7 +63,7 @@ export default function Courses() {
 
     try {
       const res = await fetch(
-        `http://127.0.0.1:8001/api/courses/${courseId}/etudiants/`,
+        `http://localhost:8001/api/courses/${courseId}/etudiants/`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -108,23 +74,16 @@ export default function Courses() {
       if (!res.ok) {
         throw new Error("Erreur lors du chargement des étudiants.");
       }
-
->>>>>>> origin/wissam
       const data = await res.json();
       setStudentsData(data);
       setSelectedCourseId(courseId);
       setShowStudentsModal(true);
     } catch (err) {
       console.error(err);
-<<<<<<< HEAD
-    }
-  }
-=======
       alert("Impossible de charger les étudiants.");
     }
   }
 
->>>>>>> origin/wissam
   useEffect(() => {
     const fetchCourses = async () => {
       const token = localStorage.getItem("token");
@@ -156,19 +115,11 @@ export default function Courses() {
         const normalized = data.map((c) => ({
           id: c.id,
           title: c.title,
-<<<<<<< HEAD
-          author: c.enseignant?.nom || "—",
-          banner: c.banniere,
-          status: c.status,
-          students: c.etudiants_count ?? 0,
-          lessons: c.lecons_count ?? 0,
-=======
           author: c.author || c.enseignant?.nom || "—",
           banner: c.banniere || null,
           status: c.status || "brouillon",
           students: c.etudiants_count ?? c.students ?? 0,
           lessons: c.lecons_count ?? c.lessons ?? 0,
->>>>>>> origin/wissam
         }));
 
         setCourses(normalized);
@@ -333,10 +284,6 @@ export default function Courses() {
           ))
         )}
       </div>
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/wissam
       {showStudentsModal && studentsData && (
         <div
           className="modal-overlay"
@@ -370,11 +317,6 @@ export default function Courses() {
           </div>
         </div>
       )}
-<<<<<<< HEAD
     </section >
-
-=======
-    </section>
->>>>>>> origin/wissam
   );
 }

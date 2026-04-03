@@ -15,8 +15,6 @@ from API.models import (
     ReponseTentative,
     Utilisateur
 )
->>>>>>> origin/wissam
-
 
 class EtudiantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -187,21 +185,7 @@ class CoursSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cours
-        fields = [
-        "id", 
-        "title", 
-        "temps_apprentissage", 
-        "niveau", 
-        "description", 
-        "status", 
-        "banniere", 
-        "lecons", 
-        "lecons_count", 
-        "etudiants_count",
-        "category",
-        "enseignant_nom"
-        ]
-"""
+
     lecons = LeconSerializer(many=True, read_only=True)
     lecons_count = serializers.SerializerMethodField()
     etudiants_count = serializers.SerializerMethodField()
@@ -223,12 +207,12 @@ class CoursSerializer(serializers.ModelSerializer):
             "niveau",
             "status",
             "banniere",
-            "is_published",
             "date_creation",
             "lecons",
             "lecons_count",
             "etudiants_count",
             "category",
+            "enseignant_nom"
         ]
         read_only_fields = [
             "id",
@@ -242,7 +226,8 @@ class CoursSerializer(serializers.ModelSerializer):
             "date_creation",
             "lecons_count",
             "etudiants_count",
-"""
+            ]
+
 
     def get_subtitle(self, obj):
         return "Cours & exercices"
@@ -299,10 +284,10 @@ class CoursSerializer(serializers.ModelSerializer):
             representation["banniere"] = None
 
         return representation
-
+    """
     def get_lecons_count(self, obj):
         return obj.lecon_set.count()
-
+    """
     def get_etudiants_count(self, obj):
         return obj.etudiants.count()
 
@@ -330,7 +315,6 @@ class StudentCourseSerializer(serializers.ModelSerializer):
             "banniere",
             "temps_apprentissage",
             "status",
-            "is_published",
             "category",
         ]
 
@@ -367,6 +351,27 @@ class StudentCourseSerializer(serializers.ModelSerializer):
         if obj.banniere:
             return request.build_absolute_uri(obj.banniere.url) if request else obj.banniere.url
         return None
+
+class StudentQuizSerializer(serializers.ModelSerializer):
+    cours_title = serializers.CharField(source="cours.title", read_only=True)
+    questions_count = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Quiz
+        fields = [
+            "id",
+            "titre",
+            "description",
+            "cours",
+            "cours_title",
+            "niveau",
+            "temps_limite_minutes",
+            "statut",
+            "questions_count",
+        ]
+
+    def get_questions_count(self, obj):
+        return obj.questions.count()
 
 
 class TeacherQuizResultSerializer(serializers.ModelSerializer):
