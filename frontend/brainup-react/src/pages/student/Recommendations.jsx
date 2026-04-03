@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getRecommendations } from "../../api/recommendations";
+import {
+  Sparkles,
+  ArrowRight,
+  TrendingUp,
+  Target,
+  Flame,
+  BookOpen,
+  PlayCircle,
+} from "lucide-react";
+import "../../styles/student/recommendations.css";
 
 export default function Recommendations() {
   const navigate = useNavigate();
@@ -58,10 +68,22 @@ export default function Recommendations() {
 
   if (loading) {
     return (
-      <section className="recommendations-page">
-        <div className="recommendations-header">
-          <h1>Recommandations</h1>
-          <p>Chargement des suggestions personnalisées...</p>
+      <section className="student-reco-page">
+        <div className="student-reco-head">
+          <div>
+            <span className="student-reco-eyebrow">Recommandations</span>
+            <h1 className="student-reco-title">Suggestions personnalisées</h1>
+            <p className="student-reco-subtitle">
+              Chargement de vos recommandations...
+            </p>
+          </div>
+        </div>
+
+        <div className="student-reco-grid">
+          <div className="student-reco-skeleton student-reco-skeleton--wide" />
+          <div className="student-reco-skeleton" />
+          <div className="student-reco-skeleton" />
+          <div className="student-reco-skeleton" />
         </div>
       </section>
     );
@@ -69,133 +91,223 @@ export default function Recommendations() {
 
   if (error) {
     return (
-      <section className="recommendations-page">
-        <div className="recommendations-header">
-          <h1>Recommandations</h1>
-          <p style={{ color: "crimson" }}>{error}</p>
+      <section className="student-reco-page">
+        <div className="student-reco-head">
+          <div>
+            <span className="student-reco-eyebrow">Recommandations</span>
+            <h1 className="student-reco-title">Suggestions personnalisées</h1>
+            <p className="student-reco-subtitle student-reco-error">{error}</p>
+          </div>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="recommendations-page">
-      <div className="recommendations-header">
-        <h1>Recommandations</h1>
-        <p>
-          Découvrez des cours suggérés selon votre profil, vos résultats et votre
-          progression.
-        </p>
+    <section className="student-reco-page">
+      <div className="student-reco-head">
+        <div>
+          <span className="student-reco-eyebrow">Recommandations</span>
+          <h1 className="student-reco-title">Suggestions personnalisées</h1>
+          <p className="student-reco-subtitle">
+            Découvrez des cours suggérés selon votre profil, vos résultats et
+            votre progression.
+          </p>
+        </div>
+
+        <div className="student-reco-live-badge">
+          <Sparkles size={16} />
+          Personnalisé pour vous
+        </div>
       </div>
 
-      <section className="recommendations-section">
-        <h2>⭐ Recommandé pour vous</h2>
-        <div className="recommendations-grid">
-          {data.recommended_for_you.length > 0 ? (
-            data.recommended_for_you.map((item) => (
-              <div key={item.course_id} className="recommendation-card">
-                <div className="recommendation-card-top">
+      <section className="student-reco-section">
+        <div className="student-reco-section__head">
+          <div className="student-reco-section__titlewrap">
+            <div className="student-reco-section__icon student-reco-section__icon--blue">
+              <Sparkles size={18} />
+            </div>
+            <div>
+              <h2>Recommandé pour vous</h2>
+              <p>Des cours alignés sur votre profil et votre activité.</p>
+            </div>
+          </div>
+        </div>
+
+        {data.recommended_for_you.length > 0 ? (
+          <div className="student-reco-cards">
+            {data.recommended_for_you.map((item) => (
+              <article key={item.course_id} className="student-reco-card">
+                <div className="student-reco-card__top">
                   <h3>{item.title}</h3>
-                  <span className="recommendation-score">
+                  <span className="student-reco-chip student-reco-chip--blue">
                     {item.score_label}
                   </span>
                 </div>
 
-                <p className="recommendation-description">{item.description}</p>
-                <p className="recommendation-reason">{item.reason}</p>
+                <p className="student-reco-card__desc">{item.description}</p>
+                <p className="student-reco-card__reason">{item.reason}</p>
 
-                <button onClick={() => navigate(item.route)}>
-                  Voir le cours
+                <button
+                  className="student-reco-card__btn"
+                  onClick={() => navigate(item.route)}
+                >
+                  <span>Voir le cours</span>
+                  <ArrowRight size={16} />
                 </button>
-              </div>
-            ))
-          ) : (
-            <p>Aucune recommandation personnalisée pour le moment.</p>
-          )}
-        </div>
-      </section>
-
-      <section className="recommendations-section">
-        <h2>📈 Continuez votre progression</h2>
-
-        {data.continue_learning ? (
-          <div className="recommendation-large-card">
-            <div className="recommendation-card-top">
-              <h3>{data.continue_learning.title}</h3>
-              <span className="recommendation-score">
-                {data.continue_learning.progress_label}
-              </span>
-            </div>
-
-            <p>{data.continue_learning.description}</p>
-
-            <div className="progress-bar">
-              <div
-                className="progress-bar-fill"
-                style={{
-                  width: `${Math.min(data.continue_learning.progress || 0, 100)}%`,
-                }}
-              />
-            </div>
-
-            <button onClick={() => navigate(data.continue_learning.route)}>
-              Continuer
-            </button>
+              </article>
+            ))}
           </div>
         ) : (
-          <p>Vous n'avez pas encore de progression à reprendre.</p>
+          <div className="student-reco-empty">
+            Aucune recommandation personnalisée pour le moment.
+          </div>
         )}
       </section>
 
-      <section className="recommendations-section">
-        <h2>🎯 Améliorer vos résultats</h2>
-        <div className="recommendations-grid">
-          {data.improve_results.length > 0 ? (
-            data.improve_results.map((item) => (
-              <div key={item.course_id} className="recommendation-card">
-                <div className="recommendation-card-top">
+      <section className="student-reco-section">
+        <div className="student-reco-section__head">
+          <div className="student-reco-section__titlewrap">
+            <div className="student-reco-section__icon student-reco-section__icon--green">
+              <TrendingUp size={18} />
+            </div>
+            <div>
+              <h2>Continuez votre progression</h2>
+              <p>Reprenez là où vous vous êtes arrêté.</p>
+            </div>
+          </div>
+        </div>
+
+        {data.continue_learning ? (
+          <div className="student-reco-continue">
+            <div className="student-reco-continue__content">
+              <span className="student-reco-continue__pill">En cours</span>
+              <h3>{data.continue_learning.title}</h3>
+              <p>{data.continue_learning.description}</p>
+
+              <div className="student-reco-progress">
+                <div className="student-reco-progress__top">
+                  <span>Progression</span>
+                  <span>{data.continue_learning.progress_label}</span>
+                </div>
+                <div className="student-reco-progress__bar">
+                  <div
+                    className="student-reco-progress__fill"
+                    style={{
+                      width: `${Math.min(
+                        data.continue_learning.progress || 0,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              className="student-reco-continue__btn"
+              onClick={() => navigate(data.continue_learning.route)}
+            >
+              <PlayCircle size={16} />
+              <span>Continuer</span>
+            </button>
+          </div>
+        ) : (
+          <div className="student-reco-empty">
+            Vous n'avez pas encore de progression à reprendre.
+          </div>
+        )}
+      </section>
+
+      <section className="student-reco-section">
+        <div className="student-reco-section__head">
+          <div className="student-reco-section__titlewrap">
+            <div className="student-reco-section__icon student-reco-section__icon--orange">
+              <Target size={18} />
+            </div>
+            <div>
+              <h2>Améliorer vos résultats</h2>
+              <p>Des pistes utiles pour renforcer vos points faibles.</p>
+            </div>
+          </div>
+        </div>
+
+        {data.improve_results.length > 0 ? (
+          <div className="student-reco-cards">
+            {data.improve_results.map((item) => (
+              <article key={item.course_id} className="student-reco-card">
+                <div className="student-reco-card__top">
                   <h3>{item.title}</h3>
-                  <span className="recommendation-score weak-score">
+                  <span className="student-reco-chip student-reco-chip--orange">
                     {item.score_label}
                   </span>
                 </div>
 
-                <p>{item.reason}</p>
+                <p className="student-reco-card__reason">{item.reason}</p>
 
-                <button onClick={() => navigate(item.route)}>
-                  {item.action_label || "Voir le cours"}
+                <button
+                  className="student-reco-card__btn"
+                  onClick={() => navigate(item.route)}
+                >
+                  <span>{item.action_label || "Voir le cours"}</span>
+                  <ArrowRight size={16} />
                 </button>
-              </div>
-            ))
-          ) : (
-            <p>Aucun point faible détecté récemment.</p>
-          )}
-        </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="student-reco-empty">
+            Aucun point faible détecté récemment.
+          </div>
+        )}
       </section>
 
-      <section className="recommendations-section">
-        <h2>🔥 Cours populaires</h2>
-        <div className="recommendations-grid">
-          {data.popular_courses.length > 0 ? (
-            data.popular_courses.map((item) => (
-              <div key={item.course_id} className="recommendation-card">
-                <div className="recommendation-card-top">
+      <section className="student-reco-section">
+        <div className="student-reco-section__head">
+          <div className="student-reco-section__titlewrap">
+            <div className="student-reco-section__icon student-reco-section__icon--red">
+              <Flame size={18} />
+            </div>
+            <div>
+              <h2>Cours populaires</h2>
+              <p>Les contenus les plus consultés du moment.</p>
+            </div>
+          </div>
+        </div>
+
+        {data.popular_courses.length > 0 ? (
+          <div className="student-reco-cards">
+            {data.popular_courses.map((item) => (
+              <article key={item.course_id} className="student-reco-card">
+                <div className="student-reco-card__top">
                   <h3>{item.title}</h3>
-                  <span className="recommendation-badge">{item.badge}</span>
+                  <span className="student-reco-chip student-reco-chip--neutral">
+                    {item.badge}
+                  </span>
                 </div>
 
-                <p>{item.description}</p>
-                <small>{item.popularity_count} interactions liées</small>
+                <p className="student-reco-card__desc">{item.description}</p>
 
-                <button onClick={() => navigate(item.route)}>
-                  Voir le cours
+                <div className="student-reco-card__meta">
+                  <BookOpen size={14} />
+                  <span>{item.popularity_count} interactions liées</span>
+                </div>
+
+                <button
+                  className="student-reco-card__btn"
+                  onClick={() => navigate(item.route)}
+                >
+                  <span>Voir le cours</span>
+                  <ArrowRight size={16} />
                 </button>
-              </div>
-            ))
-          ) : (
-            <p>Aucun cours populaire disponible.</p>
-          )}
-        </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="student-reco-empty">
+            Aucun cours populaire disponible.
+          </div>
+        )}
       </section>
     </section>
   );
