@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { getStudentQuizzes } from "../../api/quizzes";
 import { useNavigate } from "react-router-dom";
+import {
+  FileQuestion,
+  Clock3,
+  BookOpen,
+  PlayCircle,
+  Sparkles,
+} from "lucide-react";
+import "../../styles/student/quiz.css";
 
 export default function StudentQuiz() {
   const [quizzes, setQuizzes] = useState([]);
@@ -29,60 +37,84 @@ export default function StudentQuiz() {
   }, []);
 
   return (
-    <section className="page student-page">
-      <div className="teacher-head">
+    <section className="student-quiz-page">
+      <div className="student-quiz-head">
         <div>
-          <h1 className="page__title">Quiz disponibles</h1>
-          <p className="teacher-subtitle">
+          <span className="student-quiz-eyebrow">Quiz</span>
+          <h1 className="student-quiz-title">Quiz disponibles</h1>
+          <p className="student-quiz-subtitle">
             Retrouvez ici les quiz publiés par vos enseignants.
           </p>
+        </div>
+
+        <div className="student-quiz-live-badge">
+          <Sparkles size={16} />
+          Prêt à s'entraîner
         </div>
       </div>
 
       {isLoading && (
-        <div className="card card--pad">
-          <p>Chargement des quiz...</p>
+        <div className="student-quiz-grid">
+          <div className="student-quiz-skeleton" />
+          <div className="student-quiz-skeleton" />
+          <div className="student-quiz-skeleton" />
         </div>
       )}
 
       {!isLoading && errorMessage && (
-        <div className="card card--pad">
-          <p style={{ color: "#c0392b" }}>{errorMessage}</p>
+        <div className="student-quiz-empty student-quiz-empty--error">
+          {errorMessage}
         </div>
       )}
 
       {!isLoading && !errorMessage && quizzes.length === 0 && (
-        <div className="card card--pad">
-          <h2 className="card__title">Aucun quiz disponible</h2>
-          <p className="teacher-subtitle" style={{ marginTop: 10 }}>
-            Aucun quiz publié n’est disponible pour le moment.
-          </p>
+        <div className="student-quiz-empty">
+          Aucun quiz publié n’est disponible pour le moment.
         </div>
       )}
 
       {!isLoading && !errorMessage && quizzes.length > 0 && (
-        <div className="teacher-list teacher-list--space">
+        <div className="student-quiz-grid">
           {quizzes.map((quiz) => (
-            <div key={quiz.id} className="teacher-row teacher-row--card">
-              <div>
-                <div className="teacher-row__title">{quiz.titre}</div>
-                <div className="teacher-row__meta">
-                  {quiz.cours_title || `Cours #${quiz.cours}`} •{" "}
-                  {quiz.questions_count || 0} question
-                  {(quiz.questions_count || 0) > 1 ? "s" : ""} •{" "}
-                  {quiz.temps_limite_minutes || 0} min
+            <article key={quiz.id} className="student-quiz-card">
+              <div className="student-quiz-card__top">
+                <div className="student-quiz-card__icon">
+                  <FileQuestion size={22} />
+                </div>
+
+                <span className="student-quiz-card__tag">Disponible</span>
+              </div>
+
+              <h2 className="student-quiz-card__title">{quiz.titre}</h2>
+
+              <p className="student-quiz-card__course">
+                <BookOpen size={15} />
+                <span>{quiz.cours_title || `Cours #${quiz.cours}`}</span>
+              </p>
+
+              <div className="student-quiz-card__meta">
+                <div className="student-quiz-card__meta-item">
+                  <FileQuestion size={15} />
+                  <span>
+                    {quiz.questions_count || 0} question
+                    {(quiz.questions_count || 0) > 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                <div className="student-quiz-card__meta-item">
+                  <Clock3 size={15} />
+                  <span>{quiz.temps_limite_minutes || 0} min</span>
                 </div>
               </div>
 
-              <div className="teacher-row__right">
-                <button
-                  className="btn btn--primary"
-                  onClick={() => navigate(`/student/quiz/${quiz.id}`)}
-                >
-                  Commencer
-                </button>
-              </div>
-            </div>
+              <button
+                className="student-quiz-card__action"
+                onClick={() => navigate(`/student/quiz/${quiz.id}`)}
+              >
+                <PlayCircle size={17} />
+                <span>Commencer</span>
+              </button>
+            </article>
           ))}
         </div>
       )}

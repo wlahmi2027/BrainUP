@@ -1,6 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { submitStudentQuiz } from "../../api/quizzes";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Circle,
+  Clock3,
+  FileQuestion,
+  Trophy,
+  AlertCircle,
+} from "lucide-react";
+import "../../styles/student/quiz.css";
 
 export default function StudentQuizDetails() {
   const { id } = useParams();
@@ -15,6 +26,7 @@ export default function StudentQuizDetails() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   useEffect(() => {
     async function fetchQuizDetails() {
@@ -113,142 +125,269 @@ export default function StudentQuizDetails() {
     }
   }
 
+  function goNext() {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    }
+  }
+
+  function goPrev() {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((prev) => prev - 1);
+    }
+  }
+
+  const currentQuestion = questions[currentQuestionIndex];
+  const currentQuestionNumber = currentQuestionIndex + 1;
+  const totalQuestions = questions.length;
+
+  const progressPercent = useMemo(() => {
+    if (!totalQuestions) return 0;
+    return Math.round((currentQuestionNumber / totalQuestions) * 100);
+  }, [currentQuestionNumber, totalQuestions]);
+
+  const answeredCount = useMemo(() => {
+    return Object.values(selectedAnswers).filter(Boolean).length;
+  }, [selectedAnswers]);
+
+  const currentAnswered = currentQuestion
+    ? Boolean(selectedAnswers[currentQuestion.id])
+    : false;
+
+  const allAnswered = useMemo(() => {
+    return questions.length > 0 && questions.every((q) => selectedAnswers[q.id]);
+  }, [questions, selectedAnswers]);
+
   if (isLoading) {
     return (
-      <section className="page student-page">
-        <p>Chargement du quiz...</p>
+      <section className="student-quiz-detail-page">
+        <div className="student-quiz-empty">Chargement du quiz...</div>
       </section>
     );
   }
 
-  if (errorMessage) {
+  if (errorMessage && !quiz) {
     return (
-      <section className="page student-page">
-        <p style={{ color: "#c0392b" }}>{errorMessage}</p>
+      <section className="student-quiz-detail-page">
+        <div className="student-quiz-empty student-quiz-empty--error">
+          {errorMessage}
+        </div>
       </section>
     );
   }
 
   if (!quiz) {
     return (
-      <section className="page student-page">
-        <p>Quiz introuvable.</p>
+      <section className="student-quiz-detail-page">
+        <div className="student-quiz-empty">Quiz introuvable.</div>
       </section>
     );
   }
 
   return (
-    <section className="page student-page">
-      <div className="teacher-head">
+    <section className="student-quiz-detail-page">
+      <div className="student-quiz-detail-head">
         <div>
-          <h1 className="page__title">Quiz : {quiz.titre}</h1>
-          <p className="teacher-subtitle">
+          <button
+            type="button"
+            className="student-quiz-back"
+            onClick={() => navigate("/student/quiz")}
+          >
+            <ArrowLeft size={16} />
+            <span>Retour aux quiz</span>
+          </button>
+
+          <span className="student-quiz-eyebrow">Quiz étudiant</span>
+          <h1 className="student-quiz-title">{quiz.titre}</h1>
+          <p className="student-quiz-subtitle">
             {quiz.cours_title || `Cours #${quiz.cours}`} • {questions.length} question
             {questions.length > 1 ? "s" : ""}
           </p>
         </div>
+
+        <div className="student-quiz-summary-card">
+          <div className="student-quiz-summary-card__item">
+            <FileQuestion size={16} />
+            <span>
+              {answeredCount}/{questions.length} répondues
+            </span>
+          </div>
+
+          <div className="student-quiz-summary-card__item">
+            <Clock3 size={16} />
+            <span>
+              {quiz.temps_limite_minutes
+                ? `${quiz.temps_limite_minutes} min`
+                : "Temps libre"}
+            </span>
+          </div>
+        </div>
       </div>
 
-      {submissionResult && (
-        <div style={{ marginBottom: "16px", color: "#1e8449", fontWeight: 700 }}>
-          Score enregistré : {submissionResult.score}/{submissionResult.score_max} ({submissionResult.pourcentage}%)
+      {errorMessage && quiz && (
+        <div className="student-quiz-alert student-quiz-alert--error">
+          <AlertCircle size={18} />
+          <span>{errorMessage}</span>
         </div>
       )}
 
-      <div className="teacher-list teacher-list--space">
-        {questions.map((question, index) => (
+      {submissionResult && (
+        <div className="student-quiz-alert student-quiz-alert--success">
+          <Trophy size={18} />
+          <span>
+            Score enregistré : {submissionResult.score}/{submissionResult.score_max} (
+            {submissionResult.pourcentage}%)
+          </span>
+        </div>
+      )}
+
+      <div className="student-quiz-progress">
+        <div className="student-quiz-progress__top">
+          <span>
+            Question {currentQuestionNumber} sur {totalQuestions}
+          </span>
+          <span>{progressPercent}%</span>
+        </div>
+
+        <div className="student-quiz-progress__bar">
           <div
-            key={question.id}
-            className="teacher-row teacher-row--card"
-            style={{ display: "block" }}
-          >
-            <div className="teacher-row__title">
-              Question {index + 1} : {question.enonce}
-            </div>
-
-            <div style={{ marginTop: 16 }}>
-              {question.choix?.map((choice, choiceIndex) => {
-                const isSelected = selectedAnswers[question.id] === choice.id;
-                const isCorrectChoice = choice.est_correct;
-                const isCorrectSelected = hasSubmitted && isSelected && isCorrectChoice;
-                const isWrongSelected = hasSubmitted && isSelected && !isCorrectChoice;
-                const showCorrectAnswer = hasSubmitted && isCorrectChoice;
-
-                return (
-                  <button
-                    key={choice.id}
-                    type="button"
-                    onClick={() => handleSelectAnswer(question.id, choice.id)}
-                    className="input"
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      textAlign: "left",
-                      marginBottom: 12,
-                      cursor: hasSubmitted ? "default" : "pointer",
-                      border: isCorrectSelected
-                        ? "2px solid #16a34a"
-                        : isWrongSelected
-                        ? "2px solid #dc2626"
-                        : showCorrectAnswer
-                        ? "2px solid #16a34a"
-                        : isSelected
-                        ? "2px solid #1d4ed8"
-                        : "",
-                      backgroundColor: isCorrectSelected
-                        ? "#dcfce7"
-                        : isWrongSelected
-                        ? "#fee2e2"
-                        : showCorrectAnswer
-                        ? "#f0fdf4"
-                        : "",
-                      fontWeight: isSelected || showCorrectAnswer ? "700" : "500",
-                    }}
-                  >
-                    {choiceIndex + 1}. {choice.texte}
-                  </button>
-                );
-              })}
-            </div>
-
-            {hasSubmitted && results[question.id] && (
-              <div
-                style={{
-                  marginTop: 10,
-                  fontWeight: 700,
-                  color: results[question.id].isCorrect ? "#16a34a" : "#dc2626",
-                }}
-              >
-                {results[question.id].isCorrect
-                  ? "Bonne réponse ✅"
-                  : "Mauvaise réponse ❌"}
-              </div>
-            )}
-          </div>
-        ))}
+            className="student-quiz-progress__fill"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
       </div>
 
-      <div className="teacher-form-actions">
+      {currentQuestion && (
+        <article className="student-question-card student-question-card--single">
+          <div className="student-question-card__head student-question-card__head--clean">
+            <div className="student-question-card__number">
+              {currentQuestionNumber}
+            </div>
+
+            <div className="student-question-card__head-text">
+              <h2>Question {currentQuestionNumber}</h2>
+              <p>{currentQuestion.enonce}</p>
+            </div>
+          </div>
+
+          <div className="student-question-card__choices student-question-card__choices--clean">
+            {currentQuestion.choix?.map((choice, choiceIndex) => {
+              const isSelected = selectedAnswers[currentQuestion.id] === choice.id;
+              const isCorrectChoice = choice.est_correct;
+              const questionResult = results[currentQuestion.id];
+              const isCorrectSelected =
+                hasSubmitted && isSelected && isCorrectChoice;
+              const isWrongSelected =
+                hasSubmitted && isSelected && !isCorrectChoice;
+              const showCorrectAnswer = hasSubmitted && isCorrectChoice;
+
+              let choiceClass = "student-choice-card student-choice-card--clean";
+              if (isSelected) choiceClass += " is-selected";
+              if (isCorrectSelected) choiceClass += " is-correct";
+              if (isWrongSelected) choiceClass += " is-wrong";
+              if (showCorrectAnswer && !isSelected) choiceClass += " is-correct-soft";
+
+              return (
+                <button
+                  key={choice.id}
+                  type="button"
+                  onClick={() =>
+                    handleSelectAnswer(currentQuestion.id, choice.id)
+                  }
+                  className={choiceClass}
+                  disabled={hasSubmitted}
+                >
+                  <div className="student-choice-card__left">
+                    <div className="student-choice-card__marker">
+                      {isCorrectSelected || showCorrectAnswer ? (
+                        <CheckCircle2 size={18} />
+                      ) : isWrongSelected ? (
+                        <AlertCircle size={18} />
+                      ) : (
+                        <Circle size={18} />
+                      )}
+                    </div>
+
+                    <div className="student-choice-card__content">
+                      <span className="student-choice-card__index">
+                        Réponse {choiceIndex + 1}
+                      </span>
+                      <strong>{choice.texte}</strong>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {hasSubmitted && results[currentQuestion.id] && (
+            <div
+              className={`student-question-card__feedback ${
+                results[currentQuestion.id].isCorrect ? "is-correct" : "is-wrong"
+              }`}
+            >
+              {results[currentQuestion.id].isCorrect
+                ? "Bonne réponse ✅"
+                : "Mauvaise réponse ❌"}
+            </div>
+          )}
+        </article>
+      )}
+
+      <div className="student-quiz-step-actions">
         <button
           type="button"
-          className="btn btn--ghost"
-          onClick={() => navigate("/student/quiz")}
+          className="student-quiz-btn student-quiz-btn--ghost"
+          onClick={goPrev}
+          disabled={currentQuestionIndex === 0}
         >
-          Retour
+          <ArrowLeft size={16} />
+          <span>Précédent</span>
         </button>
 
-        <button
-          type="button"
-          className="btn btn--primary"
-          onClick={handleValidate}
-          disabled={hasSubmitted || isSubmitting}
-        >
-          {isSubmitting
-            ? "Enregistrement..."
-            : hasSubmitted
-            ? "Réponse validée"
-            : "Valider la réponse"}
-        </button>
+        {!hasSubmitted && currentQuestionIndex < totalQuestions - 1 && (
+          <button
+            type="button"
+            className="student-quiz-btn student-quiz-btn--primary"
+            onClick={goNext}
+            disabled={!currentAnswered}
+          >
+            <span>Suivant</span>
+            <ArrowRight size={16} />
+          </button>
+        )}
+
+        {!hasSubmitted && currentQuestionIndex === totalQuestions - 1 && (
+          <button
+            type="button"
+            className="student-quiz-btn student-quiz-btn--primary"
+            onClick={handleValidate}
+            disabled={isSubmitting || !allAnswered}
+          >
+            {isSubmitting ? "Enregistrement..." : "Valider le quiz"}
+          </button>
+        )}
+
+        {hasSubmitted && currentQuestionIndex < totalQuestions - 1 && (
+          <button
+            type="button"
+            className="student-quiz-btn student-quiz-btn--primary"
+            onClick={goNext}
+          >
+            <span>Question suivante</span>
+            <ArrowRight size={16} />
+          </button>
+        )}
+
+        {hasSubmitted && currentQuestionIndex === totalQuestions - 1 && (
+          <button
+            type="button"
+            className="student-quiz-btn student-quiz-btn--primary"
+            onClick={() => navigate("/student/quiz")}
+          >
+            Retour à la liste
+          </button>
+        )}
       </div>
     </section>
   );
