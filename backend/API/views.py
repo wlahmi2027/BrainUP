@@ -318,6 +318,7 @@ class AdminCoursViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         user = get_user_from_token(request)
+
         if not user:
             return Response({"message": "Unauthorized"}, status=401)
 
@@ -453,6 +454,10 @@ class UserAdminViewSet(viewsets.ViewSet):
             return Response({"message": "Cannot modify another admin"}, status=status.HTTP_403_FORBIDDEN)
 
         data = request.data.copy()
+        # Prevent assigning admin role
+        if data.get("role") == "admin":
+            data["role"] = target.role
+
         serializer = AdminUserSerializer(target, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()

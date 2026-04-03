@@ -232,6 +232,16 @@ export default function Users() {
             <label>
               Email: <input value={editData.email} onChange={(e) => setEditData({ ...editData, email: e.target.value })} />
             </label>
+            <label>
+              Rôle:
+              <select
+                value={editData.role}
+                onChange={(e) => setEditData({ ...editData, role: e.target.value })}
+              >
+                <option value="etudiant">Étudiant</option>
+                <option value="enseignant">Enseignant</option>
+              </select>
+            </label>
             <div className="modal-actions">
               <button className="btn btn--ghost" onClick={() => setEditingUser(null)}>Annuler</button>
               <button className="btn btn--soft" onClick={submitEdit}>Enregistrer</button>

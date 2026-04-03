@@ -55,7 +55,7 @@ export default function Courses() {
 
     try {
       const res = await fetch(
-        `http://localhost:8001/api/admin/courses/${courseId}/etudiants/`,
+        `http://localhost:8001/api/courses/${courseId}/etudiants/`, /* modify !! */
         {
           headers: { Authorization: `Bearer ${token}` },
         }
