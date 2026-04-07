@@ -8,7 +8,11 @@ import {
   TriangleAlert,
   Award,
   ChevronRight,
+  Sparkles,
+  BookOpen,
+  Activity,
 } from "lucide-react";
+import "../../styles/teacher/students.css";
 
 export default function Students() {
   const navigate = useNavigate();
@@ -55,19 +59,41 @@ export default function Students() {
   const coursesFilter = data?.courses_filter || [];
 
   const getStatusClass = (status) => {
-    if (status === "Excellent") return "teacher-pill teacher-pill--success";
-    if (status === "À relancer") return "teacher-pill teacher-pill--warn";
-    return "teacher-pill teacher-pill--neutral";
+    if (status === "Excellent") {
+      return "teacher-students-pill teacher-students-pill--success";
+    }
+    if (status === "À relancer") {
+      return "teacher-students-pill teacher-students-pill--warn";
+    }
+    return "teacher-students-pill teacher-students-pill--neutral";
   };
 
   if (loading) {
     return (
-      <section className="page teacher-page">
-        <div className="teacher-head">
+      <section className="teacher-students-page">
+        <div className="teacher-students-hero">
           <div>
-            <h1 className="page__title">Étudiants</h1>
-            <p className="teacher-subtitle">Chargement des étudiants...</p>
+            <div className="teacher-students-eyebrow">
+              <Sparkles size={14} />
+              <span>Suivi des apprenants</span>
+            </div>
+            <h1 className="teacher-students-title">Étudiants</h1>
+            <p className="teacher-students-subtitle">
+              Chargement des étudiants...
+            </p>
           </div>
+        </div>
+
+        <div className="teacher-students-stats">
+          {[1, 2, 3, 4].map((item) => (
+            <article key={item} className="teacher-students-stat-card teacher-students-skeleton-card">
+              <div className="teacher-students-skeleton teacher-students-skeleton--icon" />
+              <div className="teacher-students-skeleton-wrap">
+                <div className="teacher-students-skeleton teacher-students-skeleton--value" />
+                <div className="teacher-students-skeleton teacher-students-skeleton--label" />
+              </div>
+            </article>
+          ))}
         </div>
       </section>
     );
@@ -75,11 +101,15 @@ export default function Students() {
 
   if (error) {
     return (
-      <section className="page teacher-page">
-        <div className="teacher-head">
+      <section className="teacher-students-page">
+        <div className="teacher-students-hero">
           <div>
-            <h1 className="page__title">Étudiants</h1>
-            <p className="teacher-subtitle" style={{ color: "red" }}>
+            <div className="teacher-students-eyebrow">
+              <Sparkles size={14} />
+              <span>Suivi des apprenants</span>
+            </div>
+            <h1 className="teacher-students-title">Étudiants</h1>
+            <p className="teacher-students-subtitle teacher-students-subtitle--error">
               {error}
             </p>
           </div>
@@ -89,54 +119,70 @@ export default function Students() {
   }
 
   return (
-    <section className="page teacher-page">
-      <div className="teacher-head">
+    <section className="teacher-students-page">
+      <div className="teacher-students-hero">
         <div>
-          <h1 className="page__title">Étudiants</h1>
-          <p className="teacher-subtitle">
-            Suivez vos apprenants et accédez à leur progression en détail.
+          <div className="teacher-students-eyebrow">
+            <Sparkles size={14} />
+            <span>Suivi des apprenants</span>
+          </div>
+
+          <h1 className="teacher-students-title">Étudiants</h1>
+          <p className="teacher-students-subtitle">
+            Suivez vos apprenants, identifiez les profils excellents et repérez
+            ceux à relancer.
           </p>
         </div>
       </div>
 
-      <div className="teacher-stats">
-        <article className="teacher-stat-card">
-          <div className="teacher-stat-card__icon">
+      <div className="teacher-students-stats">
+        <article className="teacher-students-stat-card">
+          <div className="teacher-students-stat-card__icon teacher-students-stat-card__icon--blue">
             <Users size={22} />
           </div>
           <div>
-            <div className="teacher-stat-card__value">{summary.total_students}</div>
-            <div className="teacher-stat-card__label">Étudiants au total</div>
+            <div className="teacher-students-stat-card__value">
+              {summary.total_students}
+            </div>
+            <div className="teacher-students-stat-card__label">
+              Étudiants au total
+            </div>
           </div>
         </article>
 
-        <article className="teacher-stat-card">
-          <div className="teacher-stat-card__icon">
+        <article className="teacher-students-stat-card">
+          <div className="teacher-students-stat-card__icon teacher-students-stat-card__icon--green">
             <UserCheck size={22} />
           </div>
           <div>
-            <div className="teacher-stat-card__value">{summary.active_students}</div>
-            <div className="teacher-stat-card__label">Actifs</div>
+            <div className="teacher-students-stat-card__value">
+              {summary.active_students}
+            </div>
+            <div className="teacher-students-stat-card__label">Actifs</div>
           </div>
         </article>
 
-        <article className="teacher-stat-card">
-          <div className="teacher-stat-card__icon">
+        <article className="teacher-students-stat-card">
+          <div className="teacher-students-stat-card__icon teacher-students-stat-card__icon--purple">
             <Award size={22} />
           </div>
           <div>
-            <div className="teacher-stat-card__value">{summary.excellent_students}</div>
-            <div className="teacher-stat-card__label">Excellents</div>
+            <div className="teacher-students-stat-card__value">
+              {summary.excellent_students}
+            </div>
+            <div className="teacher-students-stat-card__label">Excellents</div>
           </div>
         </article>
 
-        <article className="teacher-stat-card">
-          <div className="teacher-stat-card__icon">
+        <article className="teacher-students-stat-card">
+          <div className="teacher-students-stat-card__icon teacher-students-stat-card__icon--orange">
             <TriangleAlert size={22} />
           </div>
           <div>
-            <div className="teacher-stat-card__value">{summary.to_follow_students}</div>
-            <div className="teacher-stat-card__label">À relancer</div>
+            <div className="teacher-students-stat-card__value">
+              {summary.to_follow_students}
+            </div>
+            <div className="teacher-students-stat-card__label">À relancer</div>
           </div>
         </article>
       </div>
@@ -180,16 +226,16 @@ export default function Students() {
       <div className="teacher-students-grid">
         {students.length > 0 ? (
           students.map((student) => (
-            <article key={student.id} className="teacher-student-card">
-              <div className="teacher-student-card__top">
-                <div className="teacher-student-card__identity">
-                  <div className="teacher-student-card__avatar">
+            <article key={student.id} className="teacher-students-card">
+              <div className="teacher-students-card__top">
+                <div className="teacher-students-card__identity">
+                  <div className="teacher-students-card__avatar">
                     {student.initial}
                   </div>
 
                   <div>
-                    <h3 className="teacher-student-card__name">{student.nom}</h3>
-                    <p className="teacher-student-card__email">{student.email}</p>
+                    <h3 className="teacher-students-card__name">{student.nom}</h3>
+                    <p className="teacher-students-card__email">{student.email}</p>
                   </div>
                 </div>
 
@@ -198,50 +244,63 @@ export default function Students() {
                 </span>
               </div>
 
-              <div className="teacher-student-card__metrics">
-                <div className="teacher-student-card__metric">
-                  <span>Cours suivis</span>
+              <div className="teacher-students-card__metrics">
+                <div className="teacher-students-card__metric">
+                  <span>
+                    <BookOpen size={14} />
+                    Cours suivis
+                  </span>
                   <strong>{student.courses.length}</strong>
                 </div>
 
-                <div className="teacher-student-card__metric">
-                  <span>Moyenne quiz</span>
+                <div className="teacher-students-card__metric">
+                  <span>
+                    <Award size={14} />
+                    Moyenne quiz
+                  </span>
                   <strong>{student.moyenne_quiz}%</strong>
                 </div>
               </div>
 
-              <div className="teacher-student-card__progress">
-                <div className="teacher-student-card__progress-top">
-                  <span>Progression moyenne</span>
+              <div className="teacher-students-card__progress">
+                <div className="teacher-students-card__progress-top">
+                  <span>
+                    <Activity size={14} />
+                    Progression moyenne
+                  </span>
                   <strong>{student.progression_moyenne}%</strong>
                 </div>
 
-                <div className="teacher-progress-bar teacher-progress-bar--large">
+                <div className="teacher-students-progress-bar teacher-students-progress-bar--large">
                   <div
-                    className="teacher-progress-bar__fill"
-                    style={{ width: `${Math.min(student.progression_moyenne, 100)}%` }}
+                    className="teacher-students-progress-bar__fill"
+                    style={{
+                      width: `${Math.min(student.progression_moyenne, 100)}%`,
+                    }}
                   />
                 </div>
               </div>
 
-              <div className="teacher-student-card__activity">
+              <div className="teacher-students-card__activity">
                 <span>Dernière activité</span>
                 <p>{student.derniere_activite}</p>
               </div>
 
-              <div className="teacher-student-card__actions">
+              <div className="teacher-students-card__actions">
                 <button
-                  className="btn btn--primary"
+                  className="teacher-students-follow-btn"
                   onClick={() => navigate(`/teacher/students/${student.id}`)}
+                  type="button"
                 >
-                  Voir le suivi
+                  <span>Voir le suivi</span>
                   <ChevronRight size={16} />
                 </button>
               </div>
             </article>
           ))
         ) : (
-          <div className="teacher-empty-box">
+          <div className="teacher-students-empty-box">
+            <Users size={22} />
             <p>Aucun étudiant trouvé.</p>
           </div>
         )}
