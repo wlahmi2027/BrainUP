@@ -34,6 +34,18 @@ import QuizDetails from "../pages/teacher/QuizDetails";
 import QuizResults from "../pages/teacher/QuizResults";
 import TeacherQuizResultDetails from "../pages/teacher/TeacherQuizResultDetails";
 
+/* Admin */
+import AdminLayout from "../pages/admin/Layout";
+import AdminDashboard from "../pages/admin/Dashboard";
+import AdminCourses from "../pages/admin/Courses";
+import AdminCourseDetail from "../pages/admin/CourseDetail";
+import AdminEditCourse from "../pages/admin/EditCourse";
+import AdminQuiz from "../pages/admin/Quiz";
+import AdminEditQuiz from "../pages/admin/EditQuiz";
+import AdminResults from "../pages/admin/Results";
+import AdminStudentsResults from "../pages/admin/StudentsResults";
+import AdminUsers from "../pages/admin/Users";
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -80,6 +92,21 @@ export default function AppRoutes() {
             path="quiz/:quizId/results"
             element={<TeacherQuizResultDetails />}
           />
+        </Route>
+      </Route>
+
+      {/* Admin routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="courses" element={<AdminCourses />} />
+          <Route path="courses/:id" element={<AdminCourseDetail />} />
+          <Route path="courses/:id/edit" element={<AdminEditCourse />} />
+          <Route path="quiz" element={<AdminQuiz />} />
+          <Route path="quiz/:id/edit" element={<AdminEditQuiz />} />
+          <Route path="results" element={<AdminResults />} />
+          <Route path="students-results" element={<AdminStudentsResults />} />
+          <Route path="users" element={<AdminUsers />} />
         </Route>
       </Route>
 

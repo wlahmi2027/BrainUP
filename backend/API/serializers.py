@@ -3,6 +3,7 @@ from PIL import Image
 
 from API.models import (
     Etudiant,
+    Utilisateur,
     Cours,
     Quiz,
     Inscription,
@@ -127,7 +128,6 @@ class StudentQuizSerializer(serializers.ModelSerializer):
         return obj.questions.count()
 
 class LeconSerializer(serializers.ModelSerializer):
-    fichier_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Lecon
@@ -137,7 +137,6 @@ class LeconSerializer(serializers.ModelSerializer):
             "ordre",
             "contenu",
             "fichier",
-            "fichier_url",
             "duree_estimee_minutes",
             "cours",
         ]
@@ -377,3 +376,29 @@ class ReponseTentativeSerializer(serializers.ModelSerializer):
             "points_obtenus",
         ]
         read_only_fields = ["id"]
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    courses = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Utilisateur
+        fields = [
+            "id",
+            "nom",
+            "email",
+            "role",
+            "courses",
+            "last_online",
+            "date_registered",
+        ]
+        read_only_fields = ["id", "role", "last_online", "date_registered", "courses"]
+
+    def get_courses(self, obj):
+        # Include course title and progress if the user is a student
+        inscriptions = getattr(obj, "inscription_set", None)
+        if inscriptions:
+            return [
+                {"id": insc.cours.id, "title": insc.cours.title, "progress": insc.progression}
+                for insc in inscriptions.all()
+            ]
+        return []

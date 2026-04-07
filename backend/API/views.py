@@ -10,9 +10,12 @@ from rest_framework.decorators import action, api_view
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
+from API.utils import get_user_from_token, is_admin
+
 from API.serializers import (
     EtudiantSerializer,
     CoursSerializer,
+    AdminUserSerializer,
     QuizSerializer,
     QuestionSerializer,
     ChoixQuestionSerializer,
@@ -39,6 +42,7 @@ from .models import (
     ProgressionLecon,
 )
 from .recommendation_service import build_recommendations_payload
+
 
 import secrets
 
@@ -273,6 +277,9 @@ class LeconViewSet(viewsets.ModelViewSet):
         if not user:
             return Lecon.objects.none()
 
+        if is_admin(user):
+            return Lecon.objects.all().select_related("cours").order_by("ordre")
+
         return Lecon.objects.filter(cours__enseignant_id=user.id).select_related("cours").order_by("ordre")
 
     def get_serializer_context(self):
@@ -291,7 +298,7 @@ class LeconViewSet(viewsets.ModelViewSet):
         except Cours.DoesNotExist:
             raise serializers.ValidationError("Cours introuvable")
 
-        if cours.enseignant_id != user.id:
+        if cours.enseignant_id != user.id and not is_admin(user):
             raise PermissionDenied("Not your course")
 
         serializer.save(cours=cours)
@@ -302,7 +309,7 @@ class LeconViewSet(viewsets.ModelViewSet):
         if not user:
             raise PermissionDenied("Unauthorized")
 
-        if serializer.instance.cours.enseignant_id != user.id:
+        if serializer.instance.cours.enseignant_id != user.id and not is_admin(user):
             raise PermissionDenied("Not your course")
 
         serializer.save()
@@ -313,7 +320,7 @@ class LeconViewSet(viewsets.ModelViewSet):
         if not user:
             raise PermissionDenied("Unauthorized")
 
-        if instance.cours.enseignant_id != user.id:
+        if instance.cours.enseignant_id != user.id and not is_admin(user):
             raise PermissionDenied("Not your course")
 
         instance.delete()
@@ -920,20 +927,24 @@ def register_view(request):
     mot_de_passe_hash = make_password(mot_de_passe)
 
     if role == "etudiant":
-        Etudiant.objects.create(
+        student = Etudiant.objects.create(
             nom=nom,
             email=email,
             mot_de_passe=mot_de_passe_hash,
             progression=0.0,
             score_moyen=0.0
         )
+        Utilisateur.objects.filter(pk=student.pk).update(role="etudiant")
+
     elif role == "enseignant":
-        Enseignant.objects.create(
+        teacher = Enseignant.objects.create(
             nom=nom,
             email=email,
             mot_de_passe=mot_de_passe_hash,
             specialite=""
         )
+        Utilisateur.objects.filter(pk=teacher.pk).update(role="enseignant")
+        
     else:
         return Response(
             {"success": False, "message": "Rôle invalide"},
@@ -1609,3 +1620,192 @@ def topbar_view(request):
     }
 
     return Response(payload, status=status.HTTP_200_OK)
+
+
+
+class AdminCoursViewSet(viewsets.ModelViewSet):
+    serializer_class = CoursSerializer
+
+    def get_queryset(self):
+        user = get_user_from_token(self.request)
+
+        if not user:
+            return Cours.objects.none()
+
+        if is_admin(user):
+            return Cours.objects.all()
+
+        return Cours.objects.none()
+
+
+    def list(self, request, *args, **kwargs):
+        user = get_user_from_token(request)
+
+        if not user:
+            return Response(
+                {"success": False, "message": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        return super().list(request, *args, **kwargs)
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        return {
+            **context,
+            "request": self.request,
+        }
+
+    def update(self, request, *args, **kwargs):
+        user = get_user_from_token(request)
+        if not user:
+            return Response({"message": "Unauthorized"}, status=401)
+
+        if not is_admin(user):
+            return Response({"message": "Forbidden"}, status=403)
+
+        course = self.get_object()
+
+        data = request.data.copy()
+        if "banniere" not in request.FILES:
+            data.pop("banniere", None)
+
+        serializer = self.get_serializer(course, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=200)
+
+    def retrieve(self, request, *args, **kwargs):
+        user = get_user_from_token(request)
+
+        if not user:
+            return Response(
+                {"success": False, "message": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        return super().retrieve(request, *args, **kwargs)
+
+
+    @action(detail=True, methods=["get"], url_path="etudiants")
+    def etudiants(self, request, pk=None):
+        course = self.get_object()
+
+        inscriptions = Inscription.objects.filter(cours=course).select_related("etudiant")
+
+        data = [
+            {
+                "id": insc.etudiant.id,
+                "username": insc.etudiant.utilisateur_ptr.nom,
+                "email": insc.etudiant.utilisateur_ptr.email,
+                "progression": insc.progression_percent,
+            }
+            for insc in inscriptions
+        ]
+
+        return Response({
+            "count": inscriptions.count(),
+            "students": data
+        })
+    
+
+    @action(detail=False, methods=["get"], url_path="all-users")
+    def all_users(self, request):
+        user = get_user_from_token(request)
+
+        if not user or not is_admin(user):
+            return Response({"message": "Forbidden"}, status=403)
+
+        users = Utilisateur.objects.all().select_related()
+
+        data = []
+
+        for u in users:
+            user_data = {
+                "id": u.id,
+                "nom": u.nom,
+                "email": u.email,
+                "role": u.role,
+                "last_online": u.last_online,
+                "date_registered": u.date_registered
+            }
+
+            # If teacher, include courses they teach
+            if u.role == "enseignant":
+                courses = Cours.objects.filter(enseignant__utilisateur_ptr=u)
+                user_data["courses"] = [{"id": c.id, "title": c.title} for c in courses]
+
+            # If student, include enrolled courses and progression
+            elif u.role == "etudiant":
+                inscriptions = Inscription.objects.filter(etudiant=u).select_related("cours")
+                user_data["courses"] = [
+                    {
+                        "id": insc.cours.id,
+                        "title": insc.cours.title,
+                        "progress": insc.progression_percent,
+                        "last_online": u.last_online,
+                        "date_registered": u.date_registered
+                    }
+                    for insc in inscriptions
+                ]
+
+            data.append(user_data)
+
+        return Response({
+            "count": len(data),
+            "users": data
+        })
+
+    def destroy(self, request, *args, **kwargs):
+        user = get_user_from_token(request)
+
+        if not user:
+            return Response({"message": "Unauthorized"}, status=401)
+
+        if not is_admin(user):
+            return Response({"message": "Forbidden"}, status=403)
+
+        course = self.get_object()
+        course.delete()
+
+        return Response({"message": "Cours supprimé"}, status=204)
+
+
+class UserAdminViewSet(viewsets.ViewSet):
+
+    def list(self, request):
+        user = get_user_from_token(request)
+        if not user or not is_admin(user):
+            return Response({"message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        users = Utilisateur.objects.all()
+        serializer = AdminUserSerializer(users, many=True)
+        return Response({"users": serializer.data})
+
+    def partial_update(self, request, pk=None):
+        user = get_user_from_token(request)
+        if not user or not is_admin(user):
+            return Response({"message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        target = get_object_or_404(Utilisateur, pk=pk)
+        if target.role == "admin":
+            return Response({"message": "Cannot modify another admin"}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+        serializer = AdminUserSerializer(target, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def destroy(self, request, pk=None):
+        user = get_user_from_token(request)
+        if not user or not is_admin(user):
+            return Response({"message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        target = get_object_or_404(Utilisateur, pk=pk)
+        if target.role == "admin":
+            return Response({"message": "Cannot delete another admin"}, status=status.HTTP_403_FORBIDDEN)
+
+        target.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

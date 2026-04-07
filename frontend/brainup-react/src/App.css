@@ -6476,3 +6476,93 @@ a { color: inherit; text-decoration: none; }
     padding: 28px 20px;
   }
 }
+
+
+
+
+/* admin's user table */
+
+.admin-students-table {
+  background: #fff;
+  border: 1px solid #e6efff;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(18, 40, 76, 0.06);
+  overflow: hidden;
+}
+
+.admin-students-table__head,
+.admin-students-table__row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr 1fr 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0px;
+}
+
+.admin-students-table__head {
+  background: #f7faff;
+  border-bottom: 1px solid #e6efff;
+  font-size: 12px;
+  font-weight: 900;
+  color: #000000;
+}
+
+.admin-students-table__row {
+  border-bottom: 1px solid #eef4ff;
+}
+
+.admin-students-table__row:last-child {
+  border-bottom: none;
+}
+
+.admin-student-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-student-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #eaf2ff;
+  color: #0b3a7a;
+  font-weight: 900;
+}
+
+.admin-student-course {
+  color: #17365f;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.admin-student-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-progress-bar {
+  width: 100%;
+  max-width: 120px;
+  height: 10px;
+  background: #e8edf6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.admin-progress-bar__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2f80ed, #56ccf2);
+  border-radius: 999px;
+}
+
+.admin-student-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* end of admin's user table */

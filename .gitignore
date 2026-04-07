@@ -149,3 +149,8 @@ media/
 .env
 
 __pycache__/
+*.pyc
+migrations/*.py
+*.pdf
+*.png
+*.jpg

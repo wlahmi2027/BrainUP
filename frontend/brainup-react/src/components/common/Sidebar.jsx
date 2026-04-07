@@ -12,12 +12,14 @@ import {
   Users,
   FileQuestion,
   X,
+  FileText,
+  BarChart2,
 } from "lucide-react";
 
 export default function Sidebar({
   role = "student",
   mobileMenuOpen = false,
-  onCloseMobileMenu = () => {},
+  onCloseMobileMenu = () => { },
 }) {
   const linkClass = ({ isActive }) =>
     `app-sidebar__link ${isActive ? "is-active" : ""}`;
@@ -170,6 +172,54 @@ export default function Sidebar({
             </NavLink>
           </>
         )}
+
+        {role === "admin" && (
+          <>
+            <NavLink className={linkClass} 
+            to="/admin/dashboard" 
+            onClick={handleNavClick}>
+              <LayoutDashboard size={18} />
+              <span>Tableau de bord</span>
+            </NavLink>
+
+            <NavLink className={linkClass} 
+            to="/admin/users" 
+            onClick={handleNavClick}>
+              <Users size={18} />
+              <span>Utilisateurs</span>
+            </NavLink>
+
+            <NavLink className={linkClass} 
+            to="/admin/courses" 
+            onClick={handleNavClick}>
+              <FileText size={18} />
+              <span>Cours</span>
+            </NavLink>
+
+            <NavLink className={linkClass} 
+            to="/admin/quiz" 
+            onClick={handleNavClick}>
+              <FileQuestion size={18} />
+              <span>Quiz</span>
+            </NavLink>
+
+            <NavLink className={linkClass} 
+            to="/admin/results" 
+            onClick={handleNavClick}>
+              <BarChart2 size={18} />
+              <span>Résultats</span>
+            </NavLink>
+
+            <NavLink className={linkClass} 
+            to="/admin/students-results" 
+            onClick={handleNavClick}>
+              <UserRound size={18} />
+              <span>Suivi étudiants</span>
+            </NavLink>
+          </>
+        )}
+
+
       </nav>
 
       <div className="app-sidebar__footer">

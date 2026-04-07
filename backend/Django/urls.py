@@ -8,6 +8,8 @@ from django.conf.urls.static import static
 
 from API.views import (
     EtudiantViewSet,
+    AdminCoursViewSet,
+    UserAdminViewSet,
     CoursViewSet,
     QuizViewSet,
     QuestionViewSet,
@@ -36,6 +38,8 @@ router.register(r"quiz", QuizViewSet, basename="quiz")
 router.register(r"questions", QuestionViewSet, basename="questions")
 router.register(r"choix", ChoixQuestionViewSet, basename="choix")
 router.register(r'lecons', LeconViewSet, basename='lecons')
+router.register(r'admin/courses', AdminCoursViewSet, basename='admin-courses')
+router.register(r'admin/users', UserAdminViewSet, basename='admin-users')
 
 
 student_courses = StudentCourseViewSet.as_view({
