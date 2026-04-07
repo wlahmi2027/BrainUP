@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import {
+  BookOpen,
+  Plus,
+  Pencil,
+  Trash2,
+  FileText,
+  Download,
+} from "lucide-react";
 
 export default function TeacherCourseDetail() {
   const { id } = useParams();
@@ -9,89 +17,6 @@ export default function TeacherCourseDetail() {
   const [showModal, setShowModal] = useState(false);
   const [newLessonTitle, setNewLessonTitle] = useState("");
   const [newLessonFile, setNewLessonFile] = useState(null);
-
-  async function handleCreateLesson(e) {
-  e.preventDefault();
-
-  if (!course) return;
-
-  const token = localStorage.getItem("token");
-  if (!token) {
-    alert("Utilisateur non authentifié.");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("titre", newLessonTitle);
-  formData.append("ordre", (course.lecons?.length || 0) + 1);
-  formData.append("cours", course.id);
-
-  // IMPORTANT : le backend exige un contenu non vide
-  formData.append("contenu", newLessonTitle.trim() || "Contenu de la leçon");
-
-  if (newLessonFile) {
-    formData.append("fichier", newLessonFile);
-  }
-
-  const response = await fetch("http://localhost:8001/api/lecons/", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    console.error("Erreur création leçon :", errorData);
-    alert(
-      errorData?.detail ||
-        errorData?.message ||
-        JSON.stringify(errorData) ||
-        "Erreur lors de la création de la leçon."
-    );
-    return;
-  }
-
-  setShowModal(false);
-  setNewLessonTitle("");
-  setNewLessonFile(null);
-
-  await fetchCourse();
-}
-
-  async function editLesson(lesson) {
-    const titre = prompt("Nouveau titre:", lesson.titre);
-    if (!titre) return;
-
-    const token = localStorage.getItem("token");
-
-    await fetch(`http://localhost:8001/api/lecons/${lesson.id}/`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ titre }),
-    });
-
-    await fetchCourse();
-  }
-
-  async function deleteLesson(lessonId) {
-    if (!window.confirm("Supprimer cette leçon ?")) return;
-
-    const token = localStorage.getItem("token");
-
-    await fetch(`http://localhost:8001/api/lecons/${lessonId}/`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    await fetchCourse();
-  }
 
   async function fetchCourse() {
     const token = localStorage.getItem("token");
@@ -116,143 +41,188 @@ export default function TeacherCourseDetail() {
     fetchCourse();
   }, [id]);
 
+  async function handleCreateLesson(e) {
+    e.preventDefault();
+
+    const token = localStorage.getItem("token");
+
+    const formData = new FormData();
+    formData.append("titre", newLessonTitle);
+    formData.append("ordre", (course.lecons?.length || 0) + 1);
+    formData.append("cours", course.id);
+    formData.append("contenu", newLessonTitle || "Contenu");
+
+    if (newLessonFile) {
+      formData.append("fichier", newLessonFile);
+    }
+
+    await fetch("http://localhost:8001/api/lecons/", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+
+    setShowModal(false);
+    setNewLessonTitle("");
+    setNewLessonFile(null);
+
+    fetchCourse();
+  }
+
+  async function deleteLesson(id) {
+    if (!window.confirm("Supprimer ?")) return;
+
+    const token = localStorage.getItem("token");
+
+    await fetch(`http://localhost:8001/api/lecons/${id}/`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    fetchCourse();
+  }
+
+  async function editLesson(lesson) {
+    const titre = prompt("Nouveau titre:", lesson.titre);
+    if (!titre) return;
+
+    const token = localStorage.getItem("token");
+
+    await fetch(`http://localhost:8001/api/lecons/${lesson.id}/`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ titre }),
+    });
+
+    fetchCourse();
+  }
+
   if (loading) return <p>Chargement...</p>;
-  if (!course) return <p>Cours introuvable.</p>;
+  if (!course) return <p>Cours introuvable</p>;
 
   return (
-    <section className="player">
-      {/* ===== HEADER ===== */}
-      <div className="player__header">
+    <section className="course-detail">
+      {/* HEADER */}
+      <div className="course-detail__header">
         <div>
           <h1>{course.title}</h1>
-          <p>
-            {course.enseignant?.nom} • {course.niveau}
-          </p>
+          <p>{course.enseignant?.nom} • {course.niveau}</p>
         </div>
       </div>
 
-      {/* ===== MAIN LAYOUT ===== */}
-      <div className="player__layout">
-        {/* ===== SIDEBAR ===== */}
-        <aside className="player__sidebar">
-          <div>
+      {/* LAYOUT */}
+      <div className="course-detail__layout">
+
+        {/* SIDEBAR */}
+        <aside className="course-detail__sidebar">
+          <div className="sidebar__head">
+            <BookOpen size={18} />
             <h3>Leçons</h3>
           </div>
 
-          {course.lecons?.length === 0 && (
-            <p className="muted">Aucune leçon disponible</p>
-          )}
+          <div className="sidebar__list">
+            {course.lecons?.length === 0 && (
+              <p className="muted">Aucune leçon</p>
+            )}
 
-          {course.lecons?.map((lesson) => (
-            <div
-              key={lesson.id}
-              className={`lesson ${
-                selectedLesson?.id === lesson.id ? "is-active" : ""
-              }`}
-              onClick={() => setSelectedLesson(lesson)}
-            >
-              <span className="lesson__title">{lesson.titre}</span>
+            {course.lecons?.map((lesson) => (
+              <div
+                key={lesson.id}
+                className={`lesson-item ${
+                  selectedLesson?.id === lesson.id ? "active" : ""
+                }`}
+                onClick={() => setSelectedLesson(lesson)}
+              >
+                <span>{lesson.titre}</span>
 
-              <div className="lesson-actions">
-                <button
-                  onClick={(e) => {
+                <div className="lesson-item__actions">
+                  <button onClick={(e) => {
                     e.stopPropagation();
                     editLesson(lesson);
-                  }}
-                >
-                  ✏️
-                </button>
-                <button
-                  onClick={(e) => {
+                  }}>
+                    <Pencil size={14} />
+                  </button>
+
+                  <button onClick={(e) => {
                     e.stopPropagation();
                     deleteLesson(lesson.id);
-                  }}
-                >
-                  🗑️
-                </button>
+                  }}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-
-          <div>
-            <button
-              className="btn btn--primary"
-              onClick={() => setShowModal(true)}
-              disabled={!course}
-            >
-              + Ajouter une leçon
-            </button>
+            ))}
           </div>
+
+          <button
+            className="add-lesson-btn"
+            onClick={() => setShowModal(true)}
+          >
+            <Plus size={16} />
+            Ajouter une leçon
+          </button>
         </aside>
 
-        {/* ===== CONTENT ===== */}
-        <main className="player__content">
+        {/* CONTENT */}
+        <main className="course-detail__content">
           {!selectedLesson ? (
-            <div className="card card--pad">Sélectionnez une leçon</div>
+            <div className="empty-state">
+              <FileText size={30} />
+              <p>Sélectionnez une leçon</p>
+            </div>
           ) : (
-            <div className="card">
-              <div className="card__head">
-                <h2>{selectedLesson.titre}</h2>
-              </div>
+            <div className="lesson-view">
+              <h2>{selectedLesson.titre}</h2>
 
-              <div className="lesson__content">
-                {selectedLesson.fichier ? (
-                  <>
-                    <div style={{ marginBottom: "10px" }}>
-                      <a
-                        href={selectedLesson.fichier}
-                        download
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn--primary"
-                      >
-                        Télécharger le PDF
-                      </a>
-                    </div>
+              {selectedLesson.fichier ? (
+                <>
+                  <a
+                    href={selectedLesson.fichier}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="download-btn"
+                  >
+                    <Download size={16} />
+                    Télécharger
+                  </a>
 
-                    <iframe
-                      src={selectedLesson.fichier}
-                      width="100%"
-                      height="600px"
-                      title={selectedLesson.titre}
-                    />
-                  </>
-                ) : selectedLesson.contenu ? (
-                  <p>{selectedLesson.contenu}</p>
-                ) : (
-                  <p className="muted">Contenu non disponible</p>
-                )}
-              </div>
+                  <iframe
+                    src={selectedLesson.fichier}
+                    title="pdf"
+                    width="100%"
+                    height="600px"
+                  />
+                </>
+              ) : (
+                <p>{selectedLesson.contenu}</p>
+              )}
             </div>
           )}
         </main>
       </div>
 
-      {/* ===== MODAL ===== */}
+      {/* MODAL */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>Créer une leçon</h3>
 
             <form onSubmit={handleCreateLesson}>
-              <div>
-                <label>Titre</label>
-                <input
-                  type="text"
-                  value={newLessonTitle}
-                  onChange={(e) => setNewLessonTitle(e.target.value)}
-                  required
-                />
-              </div>
+              <input
+                placeholder="Titre"
+                value={newLessonTitle}
+                onChange={(e) => setNewLessonTitle(e.target.value)}
+                required
+              />
 
-              <div>
-                <label>PDF (optionnel)</label>
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={(e) => setNewLessonFile(e.target.files[0])}
-                />
-              </div>
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={(e) => setNewLessonFile(e.target.files[0])}
+              />
 
               <div className="modal-actions">
                 <button type="button" onClick={() => setShowModal(false)}>

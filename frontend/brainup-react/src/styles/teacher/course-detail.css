@@ -1,0 +1,99 @@
+.course-detail__layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 18px;
+}
+
+/* SIDEBAR */
+.course-detail__sidebar {
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid #e6efff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 900;
+  margin-bottom: 12px;
+}
+
+.sidebar__list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lesson-item {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fbff;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.lesson-item.active {
+  background: #eaf2ff;
+  font-weight: 900;
+}
+
+.lesson-item__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.lesson-item__actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* ADD BTN */
+.add-lesson-btn {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: none;
+  background: #2b77ff;
+  color: white;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+/* CONTENT */
+.course-detail__content {
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.lesson-view h2 {
+  margin-bottom: 14px;
+}
+
+.download-btn {
+  display: inline-flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+/* EMPTY */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #6a7fa5;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .course-detail__layout {
+    grid-template-columns: 1fr;
+  }
+}
