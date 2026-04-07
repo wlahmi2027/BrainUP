@@ -1,5 +1,20 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  Sparkles,
+  FileQuestion,
+  Layers3,
+  Clock3,
+  Eye,
+  FileText,
+  CheckCircle2,
+  Save,
+  ArrowLeft,
+  ListChecks,
+  Award,
+  PencilLine,
+} from "lucide-react";
+import "../../styles/teacher/edit-quiz.css";
 
 function mapLevelFromBackend(level) {
   if (level === "debutant") return "Débutant";
@@ -179,7 +194,6 @@ export default function EditQuiz() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    console.log("UPDATE QUIZ CLICK OK");
 
     const validationError = validateForm();
     if (validationError) {
@@ -201,8 +215,6 @@ export default function EditQuiz() {
         statut: mapStatusToBackend(quiz.status),
       };
 
-      console.log("PATCH QUIZ PAYLOAD =", quizPayload);
-
       const quizResponse = await fetch(`http://127.0.0.1:8001/api/quiz/${id}/`, {
         method: "PATCH",
         headers: {
@@ -212,7 +224,6 @@ export default function EditQuiz() {
       });
 
       const quizData = await quizResponse.json();
-      console.log("PATCH QUIZ RESPONSE =", quizData);
 
       if (!quizResponse.ok) {
         throw new Error(
@@ -243,7 +254,6 @@ export default function EditQuiz() {
         );
 
         const questionData = await questionResponse.json();
-        console.log("PATCH QUESTION RESPONSE =", questionData);
 
         if (!questionResponse.ok) {
           throw new Error(
@@ -280,7 +290,6 @@ export default function EditQuiz() {
           );
 
           const choiceData = await choiceResponse.json();
-          console.log("PATCH CHOICE RESPONSE =", choiceData);
 
           if (!choiceResponse.ok) {
             throw new Error(
@@ -304,210 +313,296 @@ export default function EditQuiz() {
 
   if (isLoading) {
     return (
-      <section className="page teacher-page">
-        <p>Chargement du quiz...</p>
+      <section className="edit-quiz-page">
+        <div className="edit-quiz-loading">Chargement du quiz...</div>
       </section>
     );
   }
 
   return (
-    <section className="page teacher-page">
-      <div className="teacher-head">
+    <section className="edit-quiz-page">
+      <div className="edit-quiz-hero">
         <div>
-          <h1 className="page__title">Modifier le quiz</h1>
-          <p className="teacher-subtitle">
-            Mettez à jour le quiz, ses questions et les bonnes réponses.
+          <div className="edit-quiz-eyebrow">
+            <Sparkles size={14} />
+            <span>Modification avancée</span>
+          </div>
+
+          <h1 className="edit-quiz-title">Modifier le quiz</h1>
+          <p className="edit-quiz-subtitle">
+            Mettez à jour les informations, les questions et les bonnes réponses
+            de manière propre et structurée.
           </p>
+        </div>
+
+        <div className="edit-quiz-summary">
+          <div className="edit-quiz-summary__item">
+            <span className="edit-quiz-summary__label">Questions</span>
+            <strong>{questions.length}</strong>
+          </div>
+
+          <div className="edit-quiz-summary__item">
+            <span className="edit-quiz-summary__label">Durée</span>
+            <strong>{quiz.duration} min</strong>
+          </div>
+
+          <div className="edit-quiz-summary__item">
+            <span className="edit-quiz-summary__label">Statut</span>
+            <strong>{quiz.status}</strong>
+          </div>
         </div>
       </div>
 
       {errorMessage && (
-        <div style={{ marginBottom: "16px", color: "#c0392b", fontWeight: 600 }}>
+        <div className="edit-quiz-feedback edit-quiz-feedback--error">
           {errorMessage}
         </div>
       )}
 
       {saveSuccess && (
-        <div style={{ marginBottom: "16px", color: "#1e8449", fontWeight: 600 }}>
+        <div className="edit-quiz-feedback edit-quiz-feedback--success">
           Quiz mis à jour avec succès.
         </div>
       )}
 
-      <form className="teacher-form-card" onSubmit={handleSubmit}>
-        <div className="teacher-form-grid">
-          <div className="field">
-            <label className="label">Titre du quiz</label>
-            <input
-              className="input"
-              name="title"
-              value={quiz.title}
-              onChange={handleQuizChange}
-              placeholder="Ex. Quiz React - Hooks"
-            />
+      <form className="edit-quiz-layout" onSubmit={handleSubmit}>
+        <section className="edit-quiz-card">
+          <div className="edit-quiz-card__head">
+            <PencilLine size={18} />
+            <div>
+              <h2>Informations générales</h2>
+              <p className="edit-quiz-card__sub">
+                Modifiez les paramètres principaux du quiz.
+              </p>
+            </div>
           </div>
 
-          <div className="field">
-            <label className="label">Niveau</label>
-            <select
-              className="input"
-              name="level"
-              value={quiz.level}
-              onChange={handleQuizChange}
-            >
-              <option>Débutant</option>
-              <option>Intermédiaire</option>
-              <option>Avancé</option>
-            </select>
+          <div className="edit-quiz-grid">
+            <div className="edit-quiz-field">
+              <label className="edit-quiz-label">
+                <FileQuestion size={16} />
+                <span>Titre du quiz</span>
+              </label>
+              <input
+                className="edit-quiz-input"
+                name="title"
+                value={quiz.title}
+                onChange={handleQuizChange}
+                placeholder="Ex. Quiz React - Hooks"
+              />
+            </div>
+
+            <div className="edit-quiz-field">
+              <label className="edit-quiz-label">
+                <Layers3 size={16} />
+                <span>Niveau</span>
+              </label>
+              <select
+                className="edit-quiz-input"
+                name="level"
+                value={quiz.level}
+                onChange={handleQuizChange}
+              >
+                <option>Débutant</option>
+                <option>Intermédiaire</option>
+                <option>Avancé</option>
+              </select>
+            </div>
+
+            <div className="edit-quiz-field">
+              <label className="edit-quiz-label">
+                <Clock3 size={16} />
+                <span>Durée (minutes)</span>
+              </label>
+              <input
+                className="edit-quiz-input"
+                type="number"
+                min="1"
+                name="duration"
+                value={quiz.duration}
+                onChange={handleQuizChange}
+              />
+            </div>
+
+            <div className="edit-quiz-field">
+              <label className="edit-quiz-label">
+                <Eye size={16} />
+                <span>Statut</span>
+              </label>
+              <select
+                className="edit-quiz-input"
+                name="status"
+                value={quiz.status}
+                onChange={handleQuizChange}
+              >
+                <option>Brouillon</option>
+                <option>Publié</option>
+              </select>
+            </div>
+
+            <div className="edit-quiz-field edit-quiz-field--full">
+              <label className="edit-quiz-label">
+                <FileText size={16} />
+                <span>Description</span>
+              </label>
+              <textarea
+                className="edit-quiz-textarea"
+                name="description"
+                value={quiz.description}
+                onChange={handleQuizChange}
+                placeholder="Décrivez brièvement le quiz..."
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="edit-quiz-card">
+          <div className="edit-quiz-card__head">
+            <ListChecks size={18} />
+            <div>
+              <h2>Questions du quiz</h2>
+              <p className="edit-quiz-card__sub">
+                Modifiez les énoncés, les options et les bonnes réponses.
+              </p>
+            </div>
           </div>
 
-          <div className="field">
-            <label className="label">Durée (minutes)</label>
-            <input
-              className="input"
-              type="number"
-              min="1"
-              name="duration"
-              value={quiz.duration}
-              onChange={handleQuizChange}
-            />
-          </div>
+          <div className="edit-quiz-questions">
+            {questions.map((question, index) => (
+              <article key={question.id} className="edit-question-card">
+                <div className="edit-question-card__top">
+                  <div className="edit-question-card__titlewrap">
+                    <div className="edit-question-card__badge">
+                      <ListChecks size={16} />
+                    </div>
 
-          <div className="field">
-            <label className="label">Statut</label>
-            <select
-              className="input"
-              name="status"
-              value={quiz.status}
-              onChange={handleQuizChange}
-            >
-              <option>Brouillon</option>
-              <option>Publié</option>
-            </select>
-          </div>
-
-          <div className="field teacher-field--full">
-            <label className="label">Description</label>
-            <textarea
-              className="teacher-textarea"
-              name="description"
-              value={quiz.description}
-              onChange={handleQuizChange}
-              placeholder="Décrivez brièvement le quiz..."
-            />
-          </div>
-        </div>
-
-        <div className="teacher-builder-head">
-          <h2 className="card__title">Questions du quiz</h2>
-        </div>
-
-        <div className="teacher-questions">
-          {questions.map((question, index) => (
-            <div key={question.id} className="teacher-question-card">
-              <div className="teacher-question-card__head">
-                <h3 className="teacher-question-card__title">
-                  Question {index + 1}
-                </h3>
-              </div>
-
-              <div className="teacher-form-grid">
-                <div className="field teacher-field--full">
-                  <label className="label">Énoncé</label>
-                  <input
-                    className="input"
-                    value={question.statement}
-                    onChange={(event) =>
-                      handleQuestionChange(
-                        question.id,
-                        "statement",
-                        event.target.value
-                      )
-                    }
-                  />
+                    <div>
+                      <h3 className="edit-question-card__title">
+                        Question {index + 1}
+                      </h3>
+                      <p className="edit-question-card__meta">
+                        Ajustez le contenu et la correction.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                {question.options.map((option, optionIndex) => (
-                  <div className="field" key={optionIndex}>
-                    <label className="label">Option {optionIndex + 1}</label>
+                <div className="edit-quiz-grid">
+                  <div className="edit-quiz-field edit-quiz-field--full">
+                    <label className="edit-quiz-label">
+                      <FileQuestion size={16} />
+                      <span>Énoncé</span>
+                    </label>
                     <input
-                      className="input"
-                      value={option}
+                      className="edit-quiz-input"
+                      value={question.statement}
                       onChange={(event) =>
-                        handleOptionChange(
+                        handleQuestionChange(
                           question.id,
-                          optionIndex,
+                          "statement",
+                          event.target.value
+                        )
+                      }
+                      placeholder="Ex. Quel hook permet de gérer un état local ?"
+                    />
+                  </div>
+
+                  {question.options.map((option, optionIndex) => (
+                    <div className="edit-quiz-field" key={optionIndex}>
+                      <label className="edit-quiz-label">
+                        <CheckCircle2 size={16} />
+                        <span>Option {optionIndex + 1}</span>
+                      </label>
+                      <input
+                        className="edit-quiz-input"
+                        value={option}
+                        onChange={(event) =>
+                          handleOptionChange(
+                            question.id,
+                            optionIndex,
+                            event.target.value
+                          )
+                        }
+                        placeholder={`Réponse ${optionIndex + 1}`}
+                      />
+                    </div>
+                  ))}
+
+                  <div className="edit-quiz-field">
+                    <label className="edit-quiz-label">
+                      <CheckCircle2 size={16} />
+                      <span>Bonne réponse</span>
+                    </label>
+                    <select
+                      className="edit-quiz-input"
+                      value={question.correctIndex}
+                      onChange={(event) =>
+                        handleQuestionChange(
+                          question.id,
+                          "correctIndex",
+                          Number(event.target.value)
+                        )
+                      }
+                    >
+                      <option value={0}>Option 1</option>
+                      <option value={1}>Option 2</option>
+                      <option value={2}>Option 3</option>
+                      <option value={3}>Option 4</option>
+                    </select>
+                  </div>
+
+                  <div className="edit-quiz-field">
+                    <label className="edit-quiz-label">
+                      <Award size={16} />
+                      <span>Points</span>
+                    </label>
+                    <input
+                      className="edit-quiz-input"
+                      type="number"
+                      min="1"
+                      value={question.points}
+                      onChange={(event) =>
+                        handleQuestionChange(
+                          question.id,
+                          "points",
                           event.target.value
                         )
                       }
                     />
                   </div>
-                ))}
-
-                <div className="field">
-                  <label className="label">Bonne réponse</label>
-                  <select
-                    className="input"
-                    value={question.correctIndex}
-                    onChange={(event) =>
-                      handleQuestionChange(
-                        question.id,
-                        "correctIndex",
-                        Number(event.target.value)
-                      )
-                    }
-                  >
-                    <option value={0}>Option 1</option>
-                    <option value={1}>Option 2</option>
-                    <option value={2}>Option 3</option>
-                    <option value={3}>Option 4</option>
-                  </select>
                 </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
-                <div className="field">
-                  <label className="label">Points</label>
-                  <input
-                    className="input"
-                    type="number"
-                    min="1"
-                    value={question.points}
-                    onChange={(event) =>
-                      handleQuestionChange(
-                        question.id,
-                        "points",
-                        event.target.value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="teacher-form-actions">
+        <div className="edit-quiz-actions">
           <button
             type="button"
-            className="btn btn--ghost"
+            className="edit-quiz-btn edit-quiz-btn--ghost"
             onClick={() => navigate("/teacher/quiz")}
           >
-            Annuler
+            <ArrowLeft size={16} />
+            <span>Annuler</span>
           </button>
 
           <button
             type="submit"
-            className="btn btn--primary"
-            disabled={isSaving}
-            style={
+            className={`edit-quiz-btn ${
               saveSuccess
-                ? { backgroundColor: "#1e8449", borderColor: "#1e8449" }
-                : {}
-            }
+                ? "edit-quiz-btn--success"
+                : "edit-quiz-btn--primary"
+            }`}
+            disabled={isSaving}
           >
-            {isSaving
-              ? "Mise à jour..."
-              : saveSuccess
-              ? "Quiz mis à jour"
-              : "Mettre à jour le quiz"}
+            <Save size={16} />
+            <span>
+              {isSaving
+                ? "Mise à jour..."
+                : saveSuccess
+                ? "Quiz mis à jour"
+                : "Mettre à jour le quiz"}
+            </span>
           </button>
         </div>
       </form>
