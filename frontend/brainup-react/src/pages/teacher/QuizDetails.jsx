@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeft,
+  Pencil,
+  FileQuestion,
+  Clock,
+  Layers,
+  CheckCircle,
+  Circle,
+  Sparkles,
+} from "lucide-react";
+import "../../styles/teacher/quizDetails.css";
 
 export default function QuizDetails() {
   const { id } = useParams();
@@ -14,20 +25,13 @@ export default function QuizDetails() {
     async function fetchQuizDetails() {
       try {
         setIsLoading(true);
-        setErrorMessage("");
 
         const quizResponse = await fetch(`http://127.0.0.1:8001/api/quiz/${id}/`);
-        if (!quizResponse.ok) {
-          throw new Error("Impossible de charger le quiz.");
-        }
         const quizData = await quizResponse.json();
 
         const questionsResponse = await fetch(
           `http://127.0.0.1:8001/api/questions/?quiz=${id}`
         );
-        if (!questionsResponse.ok) {
-          throw new Error("Impossible de charger les questions.");
-        }
         const questionsData = await questionsResponse.json();
 
         const questionsWithChoices = await Promise.all(
@@ -36,18 +40,14 @@ export default function QuizDetails() {
               `http://127.0.0.1:8001/api/choix/?question=${question.id}`
             );
             const choicesData = choicesResponse.ok ? await choicesResponse.json() : [];
-            return {
-              ...question,
-              choix: choicesData,
-            };
+            return { ...question, choix: choicesData };
           })
         );
 
         setQuiz(quizData);
         setQuestions(questionsWithChoices);
       } catch (error) {
-        console.error(error);
-        setErrorMessage("Erreur lors du chargement du détail du quiz.");
+        setErrorMessage("Erreur lors du chargement.");
       } finally {
         setIsLoading(false);
       }
@@ -56,67 +56,96 @@ export default function QuizDetails() {
     fetchQuizDetails();
   }, [id]);
 
-  if (isLoading) {
-    return <section className="page teacher-page"><p>Chargement...</p></section>;
-  }
-
-  if (errorMessage) {
-    return <section className="page teacher-page"><p style={{ color: "red" }}>{errorMessage}</p></section>;
-  }
-
-  if (!quiz) {
-    return <section className="page teacher-page"><p>Quiz introuvable.</p></section>;
-  }
+  if (isLoading) return <p>Chargement...</p>;
+  if (errorMessage) return <p style={{ color: "red" }}>{errorMessage}</p>;
+  if (!quiz) return <p>Quiz introuvable</p>;
 
   return (
-    <section className="page teacher-page">
-      <div className="teacher-head">
+    <section className="teacher-quiz-details">
+      {/* HEADER */}
+      <div className="teacher-quiz-details__header">
         <div>
-          <h1 className="page__title">{quiz.titre}</h1>
-          <p className="teacher-subtitle">
-            {quiz.cours_title || `Cours #${quiz.cours}`} • {quiz.questions_count} question
+          <div className="teacher-quiz-details__eyebrow">
+            <Sparkles size={14} />
+            <span>Détail du quiz</span>
+          </div>
+
+          <h1>{quiz.titre}</h1>
+
+          <p>
+            {quiz.cours_title || `Cours #${quiz.cours}`} •{" "}
+            {quiz.questions_count} question
             {quiz.questions_count > 1 ? "s" : ""}
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "12px" }}>
+        <div className="teacher-quiz-details__actions">
           <button
             className="btn btn--ghost"
-            onClick={() => navigate(`/teacher/quiz/${quiz.id}/edit`)}
-          >
-            Modifier
-          </button>
-          <button
-            className="btn btn--primary"
             onClick={() => navigate("/teacher/quiz")}
           >
+            <ArrowLeft size={16} />
             Retour
+          </button>
+
+          <button
+            className="btn btn--primary"
+            onClick={() => navigate(`/teacher/quiz/${quiz.id}/edit`)}
+          >
+            <Pencil size={16} />
+            Modifier
           </button>
         </div>
       </div>
 
-      <div className="card card--pad" style={{ marginBottom: 20 }}>
-        <h2 className="card__title">Informations générales</h2>
-        <p><strong>Niveau :</strong> {quiz.niveau}</p>
-        <p><strong>Durée :</strong> {quiz.temps_limite_minutes} minutes</p>
-        <p><strong>Statut :</strong> {quiz.statut}</p>
-        <p><strong>Description :</strong> {quiz.description || "Aucune description"}</p>
+      {/* INFOS */}
+      <div className="teacher-quiz-details__grid">
+        <div className="teacher-quiz-details__card">
+          <div className="card-head">
+            <FileQuestion size={18} />
+            <h3>Informations</h3>
+          </div>
+
+          <div className="card-body">
+            <p><strong>Niveau :</strong> {quiz.niveau}</p>
+            <p>
+              <Clock size={14} /> {quiz.temps_limite_minutes} minutes
+            </p>
+            <p>
+              <Layers size={14} /> {quiz.statut}
+            </p>
+            <p>{quiz.description || "Aucune description"}</p>
+          </div>
+        </div>
       </div>
 
-      <div className="teacher-list teacher-list--space">
-        {questions.map((question, index) => (
-          <div key={question.id} className="teacher-row teacher-row--card" style={{ display: "block" }}>
-            <div className="teacher-row__title">
-              Question {index + 1} — {question.enonce}
-            </div>
-            <div className="teacher-row__meta" style={{ marginTop: 8 }}>
-              {question.points} point{question.points > 1 ? "s" : ""}
+      {/* QUESTIONS */}
+      <div className="teacher-quiz-details__questions">
+        {questions.map((q, index) => (
+          <div key={q.id} className="question-card">
+            <div className="question-card__header">
+              <div className="question-number">{index + 1}</div>
+
+              <div>
+                <h3>{q.enonce}</h3>
+                <span>{q.points} point{q.points > 1 ? "s" : ""}</span>
+              </div>
             </div>
 
-            <div style={{ marginTop: 14 }}>
-              {question.choix?.map((choice) => (
-                <div key={choice.id} style={{ marginBottom: 6 }}>
-                  {choice.est_correct ? "✅" : "•"} {choice.texte}
+            <div className="question-choices">
+              {q.choix?.map((choice) => (
+                <div
+                  key={choice.id}
+                  className={`choice ${
+                    choice.est_correct ? "is-correct" : ""
+                  }`}
+                >
+                  {choice.est_correct ? (
+                    <CheckCircle size={16} />
+                  ) : (
+                    <Circle size={16} />
+                  )}
+                  <span>{choice.texte}</span>
                 </div>
               ))}
             </div>

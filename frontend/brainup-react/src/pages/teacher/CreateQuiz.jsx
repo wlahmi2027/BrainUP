@@ -1,4 +1,21 @@
 import { useEffect, useState } from "react";
+import {
+  Sparkles,
+  FileQuestion,
+  BookOpen,
+  Layers3,
+  Clock3,
+  Eye,
+  FileText,
+  Plus,
+  Trash2,
+  CheckCircle2,
+  Save,
+  RotateCcw,
+  ListChecks,
+  Award,
+} from "lucide-react";
+import "../../styles/teacher/create-quiz.css";
 
 function createEmptyQuestion() {
   return {
@@ -319,242 +336,335 @@ export default function CreateQuiz() {
   }
 
   return (
-    <section className="page teacher-page">
-      <div className="teacher-head">
+    <section className="create-quiz-page">
+      <div className="create-quiz-hero">
         <div>
-          <h1 className="page__title">Créer un quiz</h1>
-          <p className="teacher-subtitle">
-            Ajoutez un quiz, ses questions et les bonnes réponses.
+          <div className="create-quiz-eyebrow">
+            <Sparkles size={14} />
+            <span>Création intelligente</span>
+          </div>
+
+          <h1 className="create-quiz-title">Créer un quiz</h1>
+          <p className="create-quiz-subtitle">
+            Ajoutez un quiz, structurez ses questions et définissez clairement
+            les bonnes réponses dans une interface moderne.
           </p>
+        </div>
+
+        <div className="create-quiz-summary">
+          <div className="create-quiz-summary__item">
+            <span className="create-quiz-summary__label">Questions</span>
+            <strong>{questions.length}</strong>
+          </div>
+
+          <div className="create-quiz-summary__item">
+            <span className="create-quiz-summary__label">Durée</span>
+            <strong>{quiz.duration} min</strong>
+          </div>
+
+          <div className="create-quiz-summary__item">
+            <span className="create-quiz-summary__label">Statut</span>
+            <strong>{quiz.status}</strong>
+          </div>
         </div>
       </div>
 
       {errorMessage && (
-        <div style={{ marginBottom: "16px", color: "#c0392b", fontWeight: 600 }}>
+        <div className="quiz-feedback quiz-feedback--error">
           {errorMessage}
         </div>
       )}
 
       {saveSuccess && (
-        <div style={{ marginBottom: "16px", color: "#1e8449", fontWeight: 600 }}>
+        <div className="quiz-feedback quiz-feedback--success">
           Quiz enregistré avec succès.
         </div>
       )}
 
-      <form className="teacher-form-card" onSubmit={handleSubmit}>
-        <div className="teacher-form-grid">
-          <div className="field">
-            <label className="label">Titre du quiz</label>
-            <input
-              className="input"
-              name="title"
-              value={quiz.title}
-              onChange={handleQuizChange}
-              placeholder="Ex. Quiz React - Hooks"
-            />
+      <form className="create-quiz-layout" onSubmit={handleSubmit}>
+        <section className="create-quiz-card">
+          <div className="create-quiz-card__head">
+            <FileQuestion size={18} />
+            <div>
+              <h2>Informations générales</h2>
+              <p className="create-quiz-card__sub">
+                Renseignez les informations principales du quiz.
+              </p>
+            </div>
           </div>
 
-          <div className="field">
-            <label className="label">Cours associé</label>
-            <select
-              className="input"
-              name="courseId"
-              value={quiz.courseId}
-              onChange={handleQuizChange}
-              disabled={isLoadingCourses}
-            >
-              <option value="">
-                {isLoadingCourses
-                  ? "Chargement des cours..."
-                  : courses.length === 0
-                  ? "Aucun cours publié disponible"
-                  : "Sélectionner un cours"}
-              </option>
+          <div className="create-quiz-grid">
+            <div className="create-quiz-field">
+              <label className="create-quiz-label">
+                <FileQuestion size={16} />
+                <span>Titre du quiz</span>
+              </label>
+              <input
+                className="create-quiz-input"
+                name="title"
+                value={quiz.title}
+                onChange={handleQuizChange}
+                placeholder="Ex. Quiz React - Hooks"
+              />
+            </div>
 
-              {courses.map((course) => (
-                <option key={course.id} value={course.id}>
-                  {course.title}
+            <div className="create-quiz-field">
+              <label className="create-quiz-label">
+                <BookOpen size={16} />
+                <span>Cours associé</span>
+              </label>
+              <select
+                className="create-quiz-input"
+                name="courseId"
+                value={quiz.courseId}
+                onChange={handleQuizChange}
+                disabled={isLoadingCourses}
+              >
+                <option value="">
+                  {isLoadingCourses
+                    ? "Chargement des cours..."
+                    : courses.length === 0
+                    ? "Aucun cours publié disponible"
+                    : "Sélectionner un cours"}
                 </option>
-              ))}
-            </select>
-          </div>
 
-          <div className="field">
-            <label className="label">Niveau</label>
-            <select
-              className="input"
-              name="level"
-              value={quiz.level}
-              onChange={handleQuizChange}
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="create-quiz-field">
+              <label className="create-quiz-label">
+                <Layers3 size={16} />
+                <span>Niveau</span>
+              </label>
+              <select
+                className="create-quiz-input"
+                name="level"
+                value={quiz.level}
+                onChange={handleQuizChange}
+              >
+                <option>Débutant</option>
+                <option>Intermédiaire</option>
+                <option>Avancé</option>
+              </select>
+            </div>
+
+            <div className="create-quiz-field">
+              <label className="create-quiz-label">
+                <Clock3 size={16} />
+                <span>Durée (minutes)</span>
+              </label>
+              <input
+                className="create-quiz-input"
+                type="number"
+                min="1"
+                name="duration"
+                value={quiz.duration}
+                onChange={handleQuizChange}
+              />
+            </div>
+
+            <div className="create-quiz-field">
+              <label className="create-quiz-label">
+                <Eye size={16} />
+                <span>Statut</span>
+              </label>
+              <select
+                className="create-quiz-input"
+                name="status"
+                value={quiz.status}
+                onChange={handleQuizChange}
+              >
+                <option>Brouillon</option>
+                <option>Publié</option>
+              </select>
+            </div>
+
+            <div className="create-quiz-field create-quiz-field--full">
+              <label className="create-quiz-label">
+                <FileText size={16} />
+                <span>Description</span>
+              </label>
+              <textarea
+                className="create-quiz-textarea"
+                name="description"
+                value={quiz.description}
+                onChange={handleQuizChange}
+                placeholder="Décrivez brièvement le quiz..."
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="create-quiz-card">
+          <div className="create-quiz-card__head create-quiz-card__head--between">
+            <div>
+              <h2>Questions du quiz</h2>
+              <p className="create-quiz-card__sub">
+                Ajoutez les questions et choisissez la bonne réponse.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="create-quiz-add-btn"
+              onClick={addQuestion}
             >
-              <option>Débutant</option>
-              <option>Intermédiaire</option>
-              <option>Avancé</option>
-            </select>
+              <Plus size={16} />
+              <span>Ajouter une question</span>
+            </button>
           </div>
 
-          <div className="field">
-            <label className="label">Durée (minutes)</label>
-            <input
-              className="input"
-              type="number"
-              min="1"
-              name="duration"
-              value={quiz.duration}
-              onChange={handleQuizChange}
-            />
-          </div>
+          <div className="create-quiz-questions">
+            {questions.map((question, index) => (
+              <article key={question.id} className="question-builder-card">
+                <div className="question-builder-card__top">
+                  <div className="question-builder-card__titlewrap">
+                    <div className="question-builder-card__badge">
+                      <ListChecks size={16} />
+                    </div>
 
-          <div className="field">
-            <label className="label">Statut</label>
-            <select
-              className="input"
-              name="status"
-              value={quiz.status}
-              onChange={handleQuizChange}
-            >
-              <option>Brouillon</option>
-              <option>Publié</option>
-            </select>
-          </div>
+                    <div>
+                      <h3 className="question-builder-card__title">
+                        Question {index + 1}
+                      </h3>
+                      <p className="question-builder-card__meta">
+                        Définissez l’énoncé, les options et la bonne réponse.
+                      </p>
+                    </div>
+                  </div>
 
-          <div className="field teacher-field--full">
-            <label className="label">Description</label>
-            <textarea
-              className="teacher-textarea"
-              name="description"
-              value={quiz.description}
-              onChange={handleQuizChange}
-              placeholder="Décrivez brièvement le quiz..."
-            />
-          </div>
-        </div>
-
-        <div className="teacher-builder-head">
-          <h2 className="card__title">Questions du quiz</h2>
-          <button
-            type="button"
-            className="btn btn--soft"
-            onClick={addQuestion}
-          >
-            + Ajouter une question
-          </button>
-        </div>
-
-        <div className="teacher-questions">
-          {questions.map((question, index) => (
-            <div key={question.id} className="teacher-question-card">
-              <div className="teacher-question-card__head">
-                <h3 className="teacher-question-card__title">
-                  Question {index + 1}
-                </h3>
-
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  onClick={() => removeQuestion(question.id)}
-                  disabled={questions.length === 1}
-                >
-                  Supprimer
-                </button>
-              </div>
-
-              <div className="teacher-form-grid">
-                <div className="field teacher-field--full">
-                  <label className="label">Énoncé</label>
-                  <input
-                    className="input"
-                    value={question.statement}
-                    onChange={(event) =>
-                      handleQuestionChange(
-                        question.id,
-                        "statement",
-                        event.target.value
-                      )
-                    }
-                    placeholder="Ex. Quel hook permet de gérer un état local ?"
-                  />
+                  <button
+                    type="button"
+                    className="question-builder-card__delete"
+                    onClick={() => removeQuestion(question.id)}
+                    disabled={questions.length === 1}
+                  >
+                    <Trash2 size={16} />
+                    <span>Supprimer</span>
+                  </button>
                 </div>
 
-                {question.options.map((option, optionIndex) => (
-                  <div className="field" key={optionIndex}>
-                    <label className="label">Option {optionIndex + 1}</label>
+                <div className="create-quiz-grid">
+                  <div className="create-quiz-field create-quiz-field--full">
+                    <label className="create-quiz-label">
+                      <FileQuestion size={16} />
+                      <span>Énoncé</span>
+                    </label>
                     <input
-                      className="input"
-                      value={option}
+                      className="create-quiz-input"
+                      value={question.statement}
                       onChange={(event) =>
-                        handleOptionChange(
+                        handleQuestionChange(
                           question.id,
-                          optionIndex,
+                          "statement",
                           event.target.value
                         )
                       }
-                      placeholder={`Réponse ${optionIndex + 1}`}
+                      placeholder="Ex. Quel hook permet de gérer un état local ?"
                     />
                   </div>
-                ))}
 
-                <div className="field">
-                  <label className="label">Bonne réponse</label>
-                  <select
-                    className="input"
-                    value={question.correctIndex}
-                    onChange={(event) =>
-                      handleQuestionChange(
-                        question.id,
-                        "correctIndex",
-                        Number(event.target.value)
-                      )
-                    }
-                  >
-                    <option value={0}>Option 1</option>
-                    <option value={1}>Option 2</option>
-                    <option value={2}>Option 3</option>
-                    <option value={3}>Option 4</option>
-                  </select>
+                  {question.options.map((option, optionIndex) => (
+                    <div className="create-quiz-field" key={optionIndex}>
+                      <label className="create-quiz-label">
+                        <CheckCircle2 size={16} />
+                        <span>Option {optionIndex + 1}</span>
+                      </label>
+                      <input
+                        className="create-quiz-input"
+                        value={option}
+                        onChange={(event) =>
+                          handleOptionChange(
+                            question.id,
+                            optionIndex,
+                            event.target.value
+                          )
+                        }
+                        placeholder={`Réponse ${optionIndex + 1}`}
+                      />
+                    </div>
+                  ))}
+
+                  <div className="create-quiz-field">
+                    <label className="create-quiz-label">
+                      <CheckCircle2 size={16} />
+                      <span>Bonne réponse</span>
+                    </label>
+                    <select
+                      className="create-quiz-input"
+                      value={question.correctIndex}
+                      onChange={(event) =>
+                        handleQuestionChange(
+                          question.id,
+                          "correctIndex",
+                          Number(event.target.value)
+                        )
+                      }
+                    >
+                      <option value={0}>Option 1</option>
+                      <option value={1}>Option 2</option>
+                      <option value={2}>Option 3</option>
+                      <option value={3}>Option 4</option>
+                    </select>
+                  </div>
+
+                  <div className="create-quiz-field">
+                    <label className="create-quiz-label">
+                      <Award size={16} />
+                      <span>Points</span>
+                    </label>
+                    <input
+                      className="create-quiz-input"
+                      type="number"
+                      min="1"
+                      value={question.points}
+                      onChange={(event) =>
+                        handleQuestionChange(
+                          question.id,
+                          "points",
+                          event.target.value
+                        )
+                      }
+                    />
+                  </div>
                 </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
-                <div className="field">
-                  <label className="label">Points</label>
-                  <input
-                    className="input"
-                    type="number"
-                    min="1"
-                    value={question.points}
-                    onChange={(event) =>
-                      handleQuestionChange(
-                        question.id,
-                        "points",
-                        event.target.value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="teacher-form-actions">
-          <button type="button" className="btn btn--ghost" onClick={resetForm}>
-            Annuler
+        <div className="create-quiz-actions">
+          <button
+            type="button"
+            className="create-quiz-btn create-quiz-btn--ghost"
+            onClick={resetForm}
+          >
+            <RotateCcw size={16} />
+            <span>Réinitialiser</span>
           </button>
 
           <button
             type="submit"
-            className="btn btn--primary"
-            disabled={isSaving}
-            style={
+            className={`create-quiz-btn ${
               saveSuccess
-                ? { backgroundColor: "#1e8449", borderColor: "#1e8449" }
-                : {}
-            }
+                ? "create-quiz-btn--success"
+                : "create-quiz-btn--primary"
+            }`}
+            disabled={isSaving}
           >
-            {isSaving
-              ? "Enregistrement..."
-              : saveSuccess
-              ? "Quiz enregistré"
-              : "Enregistrer le quiz"}
+            <Save size={16} />
+            <span>
+              {isSaving
+                ? "Enregistrement..."
+                : saveSuccess
+                ? "Quiz enregistré"
+                : "Enregistrer le quiz"}
+            </span>
           </button>
         </div>
       </form>
