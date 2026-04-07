@@ -1,5 +1,20 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  PencilLine,
+  Tag,
+  Layers3,
+  Eye,
+  Clock3,
+  FileText,
+  ImagePlus,
+  ArrowLeft,
+  Save,
+  Trash2,
+  UploadCloud,
+  Sparkles,
+} from "lucide-react";
+import "../../styles/teacher/edit-course.css";
 
 export default function EditCourse() {
   const navigate = useNavigate();
@@ -14,7 +29,9 @@ export default function EditCourse() {
     temps_apprentissage: 0,
     banniere: null,
   });
+
   const [currentBannerUrl, setCurrentBannerUrl] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -47,7 +64,6 @@ export default function EditCourse() {
         throw new Error(data?.message || "Erreur lors de la suppression.");
       }
 
-      // Redirect to course list after deletion
       navigate("/teacher/courses");
     } catch (err) {
       setError(err.message);
@@ -56,7 +72,6 @@ export default function EditCourse() {
     }
   }
 
-  // Fetch course data on mount
   useEffect(() => {
     async function fetchCourse() {
       const token = localStorage.getItem("token");
@@ -87,7 +102,7 @@ export default function EditCourse() {
           description: data.description || "",
           status: data.status || "brouillon",
           temps_apprentissage: data.temps_apprentissage || 0,
-          banniere: null, // never prefill file input
+          banniere: null,
         });
 
         setCurrentBannerUrl(data.banniere || null);
@@ -99,13 +114,39 @@ export default function EditCourse() {
     fetchCourse();
   }, [id, navigate]);
 
+  useEffect(() => {
+    return () => {
+      if (bannerPreview) {
+        URL.revokeObjectURL(bannerPreview);
+      }
+    };
+  }, [bannerPreview]);
+
   function handleChange(event) {
     const { name, value, files } = event.target;
+
     if (name === "banniere") {
-      setForm((prev) => ({ ...prev, banniere: files[0] }));
-    } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
+      const file = files?.[0] || null;
+
+      setForm((prev) => ({
+        ...prev,
+        banniere: file,
+      }));
+
+      if (bannerPreview) {
+        URL.revokeObjectURL(bannerPreview);
+      }
+
+      if (file) {
+        setBannerPreview(URL.createObjectURL(file));
+      } else {
+        setBannerPreview(null);
+      }
+
+      return;
     }
+
+    setForm((prev) => ({ ...prev, [name]: value }));
   }
 
   async function handleSubmit(event) {
@@ -157,22 +198,45 @@ export default function EditCourse() {
   }
 
   return (
-    <section className="page teacher-page">
-      <div className="teacher-head">
+    <section className="teacher-edit-course-page">
+      <div className="teacher-edit-course-hero">
         <div>
-          <h1 className="page__title">Modifier le cours</h1>
-          <p className="teacher-subtitle">Mettez à jour les informations du cours</p>
+          <div className="teacher-edit-course-eyebrow">
+            <Sparkles size={14} />
+            <span>Édition</span>
+          </div>
+
+          <h1 className="teacher-edit-course-title">Modifier le cours</h1>
+          <p className="teacher-edit-course-subtitle">
+            Mettez à jour les informations, la bannière et le statut de votre cours.
+          </p>
         </div>
+
+        <button
+          type="button"
+          className="teacher-edit-course-back"
+          onClick={() => navigate("/teacher/courses")}
+        >
+          <ArrowLeft size={16} />
+          <span>Retour aux cours</span>
+        </button>
       </div>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && (
+        <div className="teacher-edit-course-alert teacher-edit-course-alert--error">
+          {error}
+        </div>
+      )}
 
-      <form className="teacher-form-card" onSubmit={handleSubmit}>
-        <div className="teacher-form-grid">
-          <div className="field">
-            <label className="label">Titre du cours</label>
+      <form className="teacher-edit-course-card" onSubmit={handleSubmit}>
+        <div className="teacher-edit-course-grid">
+          <div className="teacher-edit-course-field teacher-edit-course-field--full">
+            <label className="teacher-edit-course-label">
+              <PencilLine size={16} />
+              <span>Titre du cours</span>
+            </label>
             <input
-              className="input"
+              className="teacher-edit-course-input"
               name="title"
               value={form.title}
               onChange={handleChange}
@@ -181,10 +245,13 @@ export default function EditCourse() {
             />
           </div>
 
-          <div className="field">
-            <label className="label">Catégorie</label>
+          <div className="teacher-edit-course-field">
+            <label className="teacher-edit-course-label">
+              <Tag size={16} />
+              <span>Catégorie</span>
+            </label>
             <input
-              className="input"
+              className="teacher-edit-course-input"
               name="category"
               value={form.category}
               onChange={handleChange}
@@ -192,10 +259,13 @@ export default function EditCourse() {
             />
           </div>
 
-          <div className="field">
-            <label className="label">Niveau</label>
+          <div className="teacher-edit-course-field">
+            <label className="teacher-edit-course-label">
+              <Layers3 size={16} />
+              <span>Niveau</span>
+            </label>
             <select
-              className="input"
+              className="teacher-edit-course-input"
               name="level"
               value={form.level}
               onChange={handleChange}
@@ -206,10 +276,13 @@ export default function EditCourse() {
             </select>
           </div>
 
-          <div className="field">
-            <label className="label">Statut</label>
+          <div className="teacher-edit-course-field">
+            <label className="teacher-edit-course-label">
+              <Eye size={16} />
+              <span>Statut</span>
+            </label>
             <select
-              className="input"
+              className="teacher-edit-course-input"
               name="status"
               value={form.status}
               onChange={handleChange}
@@ -219,10 +292,13 @@ export default function EditCourse() {
             </select>
           </div>
 
-          <div className="field">
-            <label className="label">Temps d’apprentissage (heures)</label>
+          <div className="teacher-edit-course-field">
+            <label className="teacher-edit-course-label">
+              <Clock3 size={16} />
+              <span>Temps d’apprentissage</span>
+            </label>
             <input
-              className="input"
+              className="teacher-edit-course-input"
               type="number"
               name="temps_apprentissage"
               value={form.temps_apprentissage}
@@ -233,10 +309,13 @@ export default function EditCourse() {
             />
           </div>
 
-          <div className="field teacher-field--full">
-            <label className="label">Description</label>
+          <div className="teacher-edit-course-field teacher-edit-course-field--full">
+            <label className="teacher-edit-course-label">
+              <FileText size={16} />
+              <span>Description</span>
+            </label>
             <textarea
-              className="teacher-textarea"
+              className="teacher-edit-course-textarea"
               name="description"
               value={form.description}
               onChange={handleChange}
@@ -244,44 +323,81 @@ export default function EditCourse() {
               required
             />
           </div>
+
+          <div className="teacher-edit-course-field teacher-edit-course-field--full">
+            <label className="teacher-edit-course-label">
+              <ImagePlus size={16} />
+              <span>Bannière</span>
+            </label>
+
+            <div className="teacher-edit-course-upload">
+              {bannerPreview ? (
+                <div className="teacher-edit-course-preview-wrap">
+                  <img
+                    src={bannerPreview}
+                    alt="Nouvelle bannière"
+                    className="teacher-edit-course-preview"
+                  />
+                </div>
+              ) : currentBannerUrl ? (
+                <div className="teacher-edit-course-preview-wrap">
+                  <img
+                    src={currentBannerUrl}
+                    alt="Bannière actuelle"
+                    className="teacher-edit-course-preview"
+                  />
+                </div>
+              ) : (
+                <div className="teacher-edit-course-upload-placeholder">
+                  <UploadCloud size={24} />
+                  <span>Aucune bannière actuelle. Ajoutez-en une.</span>
+                </div>
+              )}
+
+              <input
+                className="teacher-edit-course-file"
+                type="file"
+                name="banniere"
+                accept="image/*"
+                onChange={handleChange}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="field teacher-field--full">
-          <label className="label">Bannière</label>
-          {currentBannerUrl && (
-            <img
-              src={currentBannerUrl}
-              alt="Bannière actuelle"
-              style={{ width: "200px", marginBottom: "10px" }}
-            />
-          )}
-          <input
-            type="file"
-            name="banniere"
-            accept="image/*"
-            onChange={handleChange}
-          />
-        </div>
-        <div className="teacher-form-actions">
+        <div className="teacher-edit-course-actions">
           <button
             type="button"
-            className="btnDanger"
+            className="teacher-edit-course-btn teacher-edit-course-btn--danger"
             onClick={handleDelete}
             disabled={loading}
-            style={{ marginRight: "auto" }}
           >
-            Supprimer le cours
+            <Trash2 size={16} />
+            <span>Supprimer</span>
           </button>
-          <button
-            type="button"
-            className="btn btn--ghost"
-            onClick={() => navigate("/teacher/courses")}
-          >
-            Annuler
-          </button>
-          <button type="submit" className="btn btn--primary" disabled={loading}>
-            {loading ? "Enregistrement..." : "Enregistrer les modifications"}
-          </button>
+
+          <div className="teacher-edit-course-actions__right">
+            <button
+              type="button"
+              className="teacher-edit-course-btn teacher-edit-course-btn--ghost"
+              onClick={() => navigate("/teacher/courses")}
+              disabled={loading}
+            >
+              <ArrowLeft size={16} />
+              <span>Annuler</span>
+            </button>
+
+            <button
+              type="submit"
+              className="teacher-edit-course-btn teacher-edit-course-btn--primary"
+              disabled={loading}
+            >
+              <Save size={16} />
+              <span>
+                {loading ? "Enregistrement..." : "Enregistrer"}
+              </span>
+            </button>
+          </div>
         </div>
       </form>
     </section>

@@ -1,5 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  BookOpen,
+  FileText,
+  Layers3,
+  Eye,
+  Clock3,
+  Tag,
+  ImagePlus,
+  Sparkles,
+  ArrowLeft,
+  Save,
+  UploadCloud,
+} from "lucide-react";
+import "../../styles/teacher/create-course.css";
 
 export default function CreateCourse() {
   const navigate = useNavigate();
@@ -155,25 +169,52 @@ export default function CreateCourse() {
   }
 
   return (
-    <section className="teacher-page">
-      <div className="teacher-page__header">
+    <section className="teacher-create-course-page">
+      <div className="teacher-create-course-hero">
         <div>
-          <h1>Créer un cours</h1>
-          <p>Ajoutez un nouveau cours à votre espace enseignant.</p>
+          <div className="teacher-create-course-eyebrow">
+            <Sparkles size={14} />
+            <span>Nouveau contenu</span>
+          </div>
+
+          <h1 className="teacher-create-course-title">Créer un cours</h1>
+          <p className="teacher-create-course-subtitle">
+            Ajoutez un nouveau cours à votre espace enseignant avec une structure
+            claire, une bannière et des informations bien organisées.
+          </p>
         </div>
+
+        <button
+          type="button"
+          className="teacher-create-course-back"
+          onClick={() => navigate("/teacher/courses")}
+        >
+          <ArrowLeft size={16} />
+          <span>Retour aux cours</span>
+        </button>
       </div>
 
-      {error && <div className="teacher-alert teacher-alert--error">{error}</div>}
-      {success && (
-        <div className="teacher-alert teacher-alert--success">{success}</div>
+      {error && (
+        <div className="teacher-create-course-alert teacher-create-course-alert--error">
+          {error}
+        </div>
       )}
 
-      <form className="teacher-form-card" onSubmit={handleSubmit}>
-        <div className="teacher-form-grid">
-          <div className="teacher-field teacher-field--full">
-            <label className="label">Titre du cours</label>
+      {success && (
+        <div className="teacher-create-course-alert teacher-create-course-alert--success">
+          {success}
+        </div>
+      )}
+
+      <form className="teacher-create-course-card" onSubmit={handleSubmit}>
+        <div className="teacher-create-course-grid">
+          <div className="teacher-create-course-field teacher-create-course-field--full">
+            <label className="teacher-create-course-label">
+              <BookOpen size={16} />
+              <span>Titre du cours</span>
+            </label>
             <input
-              className="input"
+              className="teacher-create-course-input"
               type="text"
               name="title"
               value={form.title}
@@ -182,22 +223,28 @@ export default function CreateCourse() {
             />
           </div>
 
-          <div className="teacher-field teacher-field--full">
-            <label className="label">Description</label>
+          <div className="teacher-create-course-field teacher-create-course-field--full">
+            <label className="teacher-create-course-label">
+              <FileText size={16} />
+              <span>Description</span>
+            </label>
             <textarea
-              className="teacher-textarea"
+              className="teacher-create-course-textarea"
               name="description"
               value={form.description}
               onChange={handleChange}
-              placeholder="Décrivez le contenu et les objectifs du cours..."
-              rows={5}
+              placeholder="Décrivez le contenu, les objectifs et les compétences visées..."
+              rows={6}
             />
           </div>
 
-          <div className="teacher-field">
-            <label className="label">Niveau</label>
+          <div className="teacher-create-course-field">
+            <label className="teacher-create-course-label">
+              <Layers3 size={16} />
+              <span>Niveau</span>
+            </label>
             <select
-              className="input"
+              className="teacher-create-course-input"
               name="niveau"
               value={form.niveau}
               onChange={handleChange}
@@ -208,10 +255,13 @@ export default function CreateCourse() {
             </select>
           </div>
 
-          <div className="teacher-field">
-            <label className="label">Statut</label>
+          <div className="teacher-create-course-field">
+            <label className="teacher-create-course-label">
+              <Eye size={16} />
+              <span>Statut</span>
+            </label>
             <select
-              className="input"
+              className="teacher-create-course-input"
               name="status"
               value={form.status}
               onChange={handleChange}
@@ -222,10 +272,13 @@ export default function CreateCourse() {
             </select>
           </div>
 
-          <div className="teacher-field">
-            <label className="label">Temps d’apprentissage (minutes)</label>
+          <div className="teacher-create-course-field">
+            <label className="teacher-create-course-label">
+              <Clock3 size={16} />
+              <span>Temps d’apprentissage (minutes)</span>
+            </label>
             <input
-              className="input"
+              className="teacher-create-course-input"
               type="number"
               min="0"
               name="temps_apprentissage"
@@ -234,10 +287,13 @@ export default function CreateCourse() {
             />
           </div>
 
-          <div className="teacher-field">
-            <label className="label">Catégorie</label>
+          <div className="teacher-create-course-field">
+            <label className="teacher-create-course-label">
+              <Tag size={16} />
+              <span>Catégorie</span>
+            </label>
             <input
-              className="input"
+              className="teacher-create-course-input"
               type="text"
               name="category"
               value={form.category}
@@ -246,49 +302,57 @@ export default function CreateCourse() {
             />
           </div>
 
-          <div className="teacher-field teacher-field--full">
-            <label className="label">Bannière</label>
+          <div className="teacher-create-course-field teacher-create-course-field--full">
+            <label className="teacher-create-course-label">
+              <ImagePlus size={16} />
+              <span>Bannière du cours</span>
+            </label>
 
-            {preview && (
-              <div style={{ marginBottom: "12px" }}>
-                <img
-                  src={preview}
-                  alt="Aperçu bannière"
-                  style={{
-                    width: "240px",
-                    maxWidth: "100%",
-                    borderRadius: "12px",
-                    objectFit: "cover",
-                  }}
-                />
-              </div>
-            )}
+            <div className="teacher-create-course-upload">
+              {preview ? (
+                <div className="teacher-create-course-preview-wrap">
+                  <img
+                    src={preview}
+                    alt="Aperçu bannière"
+                    className="teacher-create-course-preview"
+                  />
+                </div>
+              ) : (
+                <div className="teacher-create-course-upload-placeholder">
+                  <UploadCloud size={24} />
+                  <span>Ajoutez une bannière pour valoriser votre cours</span>
+                </div>
+              )}
 
-            <input
-              type="file"
-              name="banniere"
-              accept="image/*"
-              onChange={handleChange}
-            />
+              <input
+                className="teacher-create-course-file"
+                type="file"
+                name="banniere"
+                accept="image/*"
+                onChange={handleChange}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="teacher-form-actions">
+        <div className="teacher-create-course-actions">
           <button
             type="button"
-            className="btn btn--ghost"
+            className="teacher-create-course-btn teacher-create-course-btn--ghost"
             onClick={() => navigate("/teacher/courses")}
             disabled={loading}
           >
-            Annuler
+            <ArrowLeft size={16} />
+            <span>Annuler</span>
           </button>
 
           <button
             type="submit"
-            className="btn btn--primary"
+            className="teacher-create-course-btn teacher-create-course-btn--primary"
             disabled={loading}
           >
-            {loading ? "Création..." : "Créer le cours"}
+            <Save size={16} />
+            <span>{loading ? "Création..." : "Créer le cours"}</span>
           </button>
         </div>
       </form>
