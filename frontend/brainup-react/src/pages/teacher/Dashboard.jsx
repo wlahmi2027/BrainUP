@@ -13,7 +13,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { fetchTeacherDashboard } from "../../api/dashboard";
-
+import "../../styles/teacher/dashboard.css";
 export default function Dashboard() {
   const navigate = useNavigate();
 

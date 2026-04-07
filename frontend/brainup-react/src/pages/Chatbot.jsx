@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Sparkles,
+  Send,
+  Bot,
+  User,
+  ArrowUpRight,
+  ChevronRight,
+} from "lucide-react";
 import { askBot } from "../api/chatbot";
+import "../styles/chatbot.css";
 
 export default function Chatbot({ role = "student" }) {
   const navigate = useNavigate();
@@ -123,71 +132,83 @@ export default function Chatbot({ role = "student" }) {
   };
 
   return (
-    <div className="chatbot-page">
-      <div className="chatbot-card">
-        <div className="chatbot-header">
-          <div className="chatbot-header-left">
-            <div className="chatbot-avatar">🧠</div>
+    <section className="brainup-chatbot-page">
+      <div className="brainup-chatbot-shell">
+        <div className="brainup-chatbot-header">
+          <div className="brainup-chatbot-header__left">
+            <div className="brainup-chatbot-logo">
+              <div className="brainup-chatbot-logo__ring" />
+              <Bot size={28} />
+            </div>
+
             <div>
-              <h2>Assistant BrainUP</h2>
+              <h1>Assistant BrainUP</h1>
               <p>
                 {isTeacher
-                  ? "Votre assistant enseignant intelligent"
-                  : "Ton assistant pédagogique intelligent"}
+                  ? "Votre copilote intelligent pour enseigner, organiser et gérer vos contenus."
+                  : "Votre assistant pédagogique pour apprendre, trouver vos cours et vous guider."}
               </p>
             </div>
           </div>
 
-          <div className="chatbot-status">
-            <span className="status-dot"></span>
+          <div className="brainup-chatbot-status">
+            <span className="brainup-chatbot-status__dot" />
             En ligne
           </div>
         </div>
 
-        <div className="chatbot-suggestions">
+        <div className="brainup-chatbot-suggestions">
           {quickSuggestions.map((item, index) => (
             <button
               key={index}
-              className="suggestion-chip"
+              className="brainup-chatbot-suggestion"
               onClick={() => sendMessage(item)}
               disabled={loading}
+              type="button"
             >
-              {item}
+              <Sparkles size={15} />
+              <span>{item}</span>
             </button>
           ))}
         </div>
 
-        <div className="chatbot-messages">
+        <div className="brainup-chatbot-messages">
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`chat-row ${
-                msg.role === "user" ? "chat-row-user" : "chat-row-assistant"
+              className={`brainup-chatbot-row ${
+                msg.role === "user"
+                  ? "brainup-chatbot-row--user"
+                  : "brainup-chatbot-row--assistant"
               }`}
             >
               {msg.role === "assistant" && (
-                <div className="message-avatar assistant-avatar">🧠</div>
+                <div className="brainup-chatbot-avatar brainup-chatbot-avatar--assistant">
+                  <Bot size={18} />
+                </div>
               )}
 
               <div
-                className={`chat-bubble ${
+                className={`brainup-chatbot-bubble ${
                   msg.role === "user"
-                    ? "chat-bubble-user"
-                    : "chat-bubble-assistant"
+                    ? "brainup-chatbot-bubble--user"
+                    : "brainup-chatbot-bubble--assistant"
                 }`}
               >
-                <div className="chat-text">{msg.text}</div>
+                <div className="brainup-chatbot-text">{msg.text}</div>
 
                 {msg.sources && msg.sources.length > 0 && (
-                  <div className="chat-sources">
-                    <div className="chat-sources-title">Liens utiles :</div>
+                  <div className="brainup-chatbot-links">
+                    <div className="brainup-chatbot-links__title">
+                      Liens utiles
+                    </div>
 
-                    <div className="chat-sources-list">
+                    <div className="brainup-chatbot-links__list">
                       {msg.sources.map((src, index) => (
                         <button
                           key={index}
                           type="button"
-                          className="chat-source-chip"
+                          className="brainup-chatbot-linkchip"
                           onClick={() => handleSourceClick(src)}
                           disabled={loading}
                           title={
@@ -196,11 +217,14 @@ export default function Chatbot({ role = "student" }) {
                               : `Poser la question : ${src.title}`
                           }
                         >
-                          <span className="chat-source-chip-text">
+                          <span className="brainup-chatbot-linkchip__text">
                             {src.title}
                           </span>
-                          {src.route && (
-                            <span className="chat-source-chip-route">↗</span>
+
+                          {src.route ? (
+                            <ArrowUpRight size={14} />
+                          ) : (
+                            <ChevronRight size={14} />
                           )}
                         </button>
                       ))}
@@ -209,12 +233,12 @@ export default function Chatbot({ role = "student" }) {
                 )}
 
                 {msg.actions && msg.actions.length > 0 && (
-                  <div className="chat-actions">
+                  <div className="brainup-chatbot-actions">
                     {msg.actions.map((action, index) => (
                       <button
                         key={index}
                         type="button"
-                        className="chat-action-btn"
+                        className="brainup-chatbot-action"
                         onClick={() => goToRoute(action.route)}
                         disabled={loading}
                       >
@@ -226,27 +250,34 @@ export default function Chatbot({ role = "student" }) {
               </div>
 
               {msg.role === "user" && (
-                <div className="message-avatar user-avatar">👤</div>
+                <div className="brainup-chatbot-avatar brainup-chatbot-avatar--user">
+                  <User size={18} />
+                </div>
               )}
             </div>
           ))}
 
           {loading && (
-            <div className="chat-row chat-row-assistant">
-              <div className="message-avatar assistant-avatar">🧠</div>
-              <div className="chat-bubble chat-bubble-assistant typing-bubble">
-                <span className="typing-dot"></span>
-                <span className="typing-dot"></span>
-                <span className="typing-dot"></span>
-                <span className="typing-label">BrainUP réfléchit...</span>
+            <div className="brainup-chatbot-row brainup-chatbot-row--assistant">
+              <div className="brainup-chatbot-avatar brainup-chatbot-avatar--assistant">
+                <Bot size={18} />
+              </div>
+
+              <div className="brainup-chatbot-bubble brainup-chatbot-bubble--assistant brainup-chatbot-typing">
+                <span className="brainup-chatbot-typing__dot" />
+                <span className="brainup-chatbot-typing__dot" />
+                <span className="brainup-chatbot-typing__dot" />
+                <span className="brainup-chatbot-typing__label">
+                  BrainUP réfléchit...
+                </span>
               </div>
             </div>
           )}
 
-          <div ref={messagesEndRef}></div>
+          <div ref={messagesEndRef} />
         </div>
 
-        <div className="chatbot-input-area">
+        <div className="brainup-chatbot-composer">
           <input
             type="text"
             placeholder={
@@ -255,19 +286,21 @@ export default function Chatbot({ role = "student" }) {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="chatbot-input"
+            className="brainup-chatbot-input"
             disabled={loading}
           />
 
           <button
-            className="chatbot-send-btn"
+            className="brainup-chatbot-send"
             onClick={() => sendMessage()}
             disabled={loading}
+            type="button"
           >
-            Envoyer
+            <Send size={16} />
+            <span>Envoyer</span>
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
