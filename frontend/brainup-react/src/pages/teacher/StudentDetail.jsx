@@ -8,7 +8,12 @@ import {
   Activity,
   Mail,
   GraduationCap,
+  Sparkles,
+  Award,
+  TrendingUp,
+  CalendarDays,
 } from "lucide-react";
+import "../../styles/teacher/student-detail.css";
 
 export default function StudentDetail() {
   const navigate = useNavigate();
@@ -43,100 +48,155 @@ export default function StudentDetail() {
   const recentActivity = data?.recent_activity || [];
 
   const getStatusClass = (status) => {
-    if (status === "Excellent") return "teacher-pill teacher-pill--success";
-    if (status === "À relancer") return "teacher-pill teacher-pill--warn";
-    return "teacher-pill teacher-pill--neutral";
+    if (status === "Excellent") {
+      return "teacher-student-detail-pill teacher-student-detail-pill--success";
+    }
+    if (status === "À relancer") {
+      return "teacher-student-detail-pill teacher-student-detail-pill--warn";
+    }
+    return "teacher-student-detail-pill teacher-student-detail-pill--neutral";
   };
 
   if (loading) {
     return (
-      <section className="page teacher-page">
-        <p>Chargement du suivi étudiant...</p>
+      <section className="teacher-student-detail-page">
+        <div className="teacher-student-detail-loading">
+          Chargement du suivi étudiant...
+        </div>
       </section>
     );
   }
 
   if (error) {
     return (
-      <section className="page teacher-page">
-        <p style={{ color: "red" }}>{error}</p>
+      <section className="teacher-student-detail-page">
+        <div className="teacher-student-detail-feedback teacher-student-detail-feedback--error">
+          {error}
+        </div>
+      </section>
+    );
+  }
+
+  if (!student) {
+    return (
+      <section className="teacher-student-detail-page">
+        <div className="teacher-student-detail-feedback teacher-student-detail-feedback--error">
+          Étudiant introuvable.
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="page teacher-page">
-      <div className="teacher-head">
+    <section className="teacher-student-detail-page">
+      <div className="teacher-student-detail-head">
         <div>
           <button
-            className="btn btn--ghost"
+            className="teacher-student-detail-back"
             onClick={() => navigate("/teacher/students")}
-            style={{ marginBottom: "14px" }}
+            type="button"
           >
             <ArrowLeft size={16} />
-            Retour aux étudiants
+            <span>Retour aux étudiants</span>
           </button>
 
-          <h1 className="page__title">Suivi étudiant</h1>
-          <p className="teacher-subtitle">
-            Consultez le détail de la progression et des performances.
+          <div className="teacher-student-detail-eyebrow">
+            <Sparkles size={14} />
+            <span>Suivi détaillé</span>
+          </div>
+
+          <h1 className="teacher-student-detail-title">Suivi étudiant</h1>
+          <p className="teacher-student-detail-subtitle">
+            Consultez la progression, les quiz et l’activité récente de cet
+            apprenant.
           </p>
         </div>
       </div>
 
-      <section className="teacher-student-hero">
-        <div className="teacher-student-hero__identity">
-          <div className="teacher-student-hero__avatar">{student.initial}</div>
+      <section className="teacher-student-detail-hero">
+        <div className="teacher-student-detail-hero__identity">
+          <div className="teacher-student-detail-hero__avatar">
+            {student.initial}
+          </div>
 
           <div>
             <h2>{student.nom}</h2>
-            <div className="teacher-student-hero__meta">
-              <span><Mail size={15} /> {student.email}</span>
-              <span><GraduationCap size={15} /> {student.statut}</span>
+
+            <div className="teacher-student-detail-hero__meta">
+              <span>
+                <Mail size={15} />
+                {student.email}
+              </span>
+
+              <span>
+                <GraduationCap size={15} />
+                {student.statut}
+              </span>
             </div>
           </div>
         </div>
 
-        <div className="teacher-student-hero__stats">
-          <div className="teacher-student-hero__stat">
-            <span>Progression moyenne</span>
+        <div className="teacher-student-detail-hero__stats">
+          <div className="teacher-student-detail-hero__stat">
+            <span>
+              <TrendingUp size={14} />
+              Progression moyenne
+            </span>
             <strong>{student.progression_moyenne}%</strong>
           </div>
 
-          <div className="teacher-student-hero__stat">
-            <span>Moyenne quiz</span>
+          <div className="teacher-student-detail-hero__stat">
+            <span>
+              <Award size={14} />
+              Moyenne quiz
+            </span>
             <strong>{student.moyenne_quiz}%</strong>
           </div>
 
-          <div className="teacher-student-hero__stat">
-            <span>Statut</span>
-            <strong className={getStatusClass(student.statut)}>{student.statut}</strong>
+          <div className="teacher-student-detail-hero__stat">
+            <span>
+              <GraduationCap size={14} />
+              Statut
+            </span>
+            <div className={getStatusClass(student.statut)}>
+              {student.statut}
+            </div>
           </div>
         </div>
       </section>
 
       <div className="teacher-student-detail-grid">
-        <section className="teacher-detail-card">
-          <div className="teacher-detail-card__head">
-            <h3><BookOpen size={18} /> Cours suivis</h3>
+        <section className="teacher-student-detail-card">
+          <div className="teacher-student-detail-card__head">
+            <h3>
+              <BookOpen size={18} />
+              Cours suivis
+            </h3>
           </div>
 
-          <div className="teacher-detail-list">
+          <div className="teacher-student-detail-list">
             {courses.length > 0 ? (
               courses.map((course) => (
-                <div key={course.course_id} className="teacher-detail-row">
+                <div
+                  key={course.course_id}
+                  className="teacher-student-detail-row"
+                >
                   <div>
-                    <div className="teacher-detail-row__title">{course.course_title}</div>
-                    <div className="teacher-detail-row__meta">
+                    <div className="teacher-student-detail-row__title">
+                      {course.course_title}
+                    </div>
+                    <div className="teacher-student-detail-row__meta">
                       Quiz : {course.quiz_count} • Moyenne : {course.quiz_average}%
                     </div>
                   </div>
 
-                  <div className="teacher-detail-row__right">
-                    <div className="teacher-progress-bar">
+                  <div className="teacher-student-detail-row__right">
+                    <div className="teacher-student-detail-progress-bar">
                       <div
-                        className="teacher-progress-bar__fill"
-                        style={{ width: `${Math.min(course.progression_percent, 100)}%` }}
+                        className="teacher-student-detail-progress-bar__fill"
+                        style={{
+                          width: `${Math.min(course.progression_percent, 100)}%`,
+                        }}
                       />
                     </div>
                     <span>{course.progression_percent}%</span>
@@ -144,59 +204,84 @@ export default function StudentDetail() {
                 </div>
               ))
             ) : (
-              <p>Aucun cours.</p>
+              <div className="teacher-student-detail-empty-inline">
+                Aucun cours.
+              </div>
             )}
           </div>
         </section>
 
-        <section className="teacher-detail-card">
-          <div className="teacher-detail-card__head">
-            <h3><ClipboardList size={18} /> Derniers quiz</h3>
+        <section className="teacher-student-detail-card">
+          <div className="teacher-student-detail-card__head">
+            <h3>
+              <ClipboardList size={18} />
+              Derniers quiz
+            </h3>
           </div>
 
-          <div className="teacher-detail-list">
+          <div className="teacher-student-detail-list">
             {quizzes.length > 0 ? (
               quizzes.map((quiz) => (
-                <div key={quiz.id} className="teacher-detail-row">
+                <div key={quiz.id} className="teacher-student-detail-row">
                   <div>
-                    <div className="teacher-detail-row__title">{quiz.quiz_title}</div>
-                    <div className="teacher-detail-row__meta">
+                    <div className="teacher-student-detail-row__title">
+                      {quiz.quiz_title}
+                    </div>
+                    <div className="teacher-student-detail-row__meta">
                       {quiz.course_title} • {quiz.date_label}
                     </div>
                   </div>
 
-                  <div className="teacher-detail-score">
+                  <div className="teacher-student-detail-score">
                     {quiz.pourcentage}%
                   </div>
                 </div>
               ))
             ) : (
-              <p>Aucun quiz enregistré.</p>
+              <div className="teacher-student-detail-empty-inline">
+                Aucun quiz enregistré.
+              </div>
             )}
           </div>
         </section>
       </div>
 
-      <section className="teacher-detail-card" style={{ marginTop: "18px" }}>
-        <div className="teacher-detail-card__head">
-          <h3><Activity size={18} /> Activité récente</h3>
+      <section className="teacher-student-detail-card teacher-student-detail-card--activity">
+        <div className="teacher-student-detail-card__head">
+          <h3>
+            <Activity size={18} />
+            Activité récente
+          </h3>
         </div>
 
-        <div className="teacher-activity-list">
+        <div className="teacher-student-detail-activity-list">
           {recentActivity.length > 0 ? (
             recentActivity.map((activity) => (
-              <div key={activity.id} className="teacher-activity-item">
-                <div className="teacher-activity-item__dot" />
-                <div className="teacher-activity-item__content">
-                  <div className="teacher-activity-item__title">{activity.title}</div>
-                  <div className="teacher-activity-item__meta">
-                    {activity.description || "Sans description"} • {activity.date_label}
+              <div
+                key={activity.id}
+                className="teacher-student-detail-activity-item"
+              >
+                <div className="teacher-student-detail-activity-item__dot" />
+
+                <div className="teacher-student-detail-activity-item__content">
+                  <div className="teacher-student-detail-activity-item__title">
+                    {activity.title}
                   </div>
+                  <div className="teacher-student-detail-activity-item__meta">
+                    {activity.description || "Sans description"} •{" "}
+                    {activity.date_label}
+                  </div>
+                </div>
+
+                <div className="teacher-student-detail-activity-item__date">
+                  <CalendarDays size={14} />
                 </div>
               </div>
             ))
           ) : (
-            <p>Aucune activité récente.</p>
+            <div className="teacher-student-detail-empty-inline">
+              Aucune activité récente.
+            </div>
           )}
         </div>
       </section>
