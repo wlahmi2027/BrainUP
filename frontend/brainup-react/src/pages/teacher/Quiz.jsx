@@ -1,6 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Plus,
+  FileQuestion,
+  BarChart3,
+  ClipboardList,
+  TrendingUp,
+  Medal,
+  Eye,
+  Pencil,
+  ChevronRight,
+  Sparkles,
+} from "lucide-react";
 import { fetchTeacherQuizzes } from "../../api/quizzes";
+import "../../styles/teacher/quiz.css";
 
 export default function TeacherQuiz() {
   const navigate = useNavigate();
@@ -71,203 +84,238 @@ export default function TeacherQuiz() {
   }
 
   return (
-    <section className="page teacher-page">
-      <div className="teacher-head">
+    <section className="teacher-quiz-page">
+      <div className="teacher-quiz-hero">
         <div>
-          <h1 className="page__title">Gestion des quiz</h1>
-          <p className="teacher-subtitle">
-            Créez des quiz, ajoutez des questions et suivez les résultats.
+          <div className="teacher-quiz-eyebrow">
+            <Sparkles size={14} />
+            <span>Évaluation</span>
+          </div>
+
+          <h1 className="teacher-quiz-title">Gestion des quiz</h1>
+          <p className="teacher-quiz-subtitle">
+            Créez, consultez et analysez vos quiz pour suivre les performances
+            de vos étudiants.
           </p>
         </div>
 
         <button
-          className="btn btn--primary"
+          className="teacher-quiz-create-btn"
           onClick={() => navigate("/teacher/quiz/create")}
+          type="button"
         >
-          + Nouveau quiz
+          <Plus size={18} />
+          <span>Nouveau quiz</span>
         </button>
       </div>
 
-      <div className="filters">
+      <div className="teacher-quiz-tabs">
         <button
-          className={`chip ${activeTab === "quiz" ? "is-active" : ""}`}
+          className={`teacher-quiz-tab ${activeTab === "quiz" ? "is-active" : ""}`}
           onClick={() => setActiveTab("quiz")}
+          type="button"
         >
-          📝 Mes quiz
+          <ClipboardList size={16} />
+          <span>Mes quiz</span>
         </button>
 
         <button
-          className={`chip ${activeTab === "results" ? "is-active" : ""}`}
+          className={`teacher-quiz-tab ${activeTab === "results" ? "is-active" : ""}`}
           onClick={() => setActiveTab("results")}
+          type="button"
         >
-          📊 Résultats
-        </button>
-
-        <button
-          className={`chip ${activeTab === "questions" ? "is-active" : ""}`}
-          onClick={() => setActiveTab("questions")}
-        >
-          ❓ Questions
+          <BarChart3 size={16} />
+          <span>Résultats</span>
         </button>
       </div>
 
       {activeTab === "quiz" && (
-        <div className="teacher-list teacher-list--space">
+        <>
           {isLoading && (
-            <div className="card card--pad">
-              <p>Chargement des quiz...</p>
+            <div className="teacher-quiz-grid">
+              {[1, 2, 3].map((item) => (
+                <article
+                  key={item}
+                  className="teacher-quiz-card teacher-quiz-card--skeleton"
+                >
+                  <div className="teacher-quiz-skeleton teacher-quiz-skeleton--title" />
+                  <div className="teacher-quiz-skeleton teacher-quiz-skeleton--line" />
+                  <div className="teacher-quiz-skeleton teacher-quiz-skeleton--line short" />
+                </article>
+              ))}
             </div>
           )}
 
           {!isLoading && errorMessage && (
-            <div className="card card--pad">
-              <p style={{ color: "#c0392b" }}>{errorMessage}</p>
+            <div className="teacher-quiz-feedback teacher-quiz-feedback--error">
+              {errorMessage}
             </div>
           )}
 
           {!isLoading && !errorMessage && quizzes.length === 0 && (
-            <div className="card card--pad">
-              <h2 className="card__title">Aucun quiz pour le moment</h2>
-              <p className="teacher-subtitle" style={{ marginTop: 10 }}>
-                Commencez par créer votre premier quiz.
-              </p>
-              <div style={{ marginTop: 16 }}>
-                <button
-                  className="btn btn--primary"
-                  onClick={() => navigate("/teacher/quiz/create")}
-                >
-                  + Créer un quiz
-                </button>
+            <div className="teacher-quiz-empty">
+              <FileQuestion size={24} />
+              <div>
+                <h3>Aucun quiz pour le moment</h3>
+                <p>Commencez par créer votre premier quiz.</p>
               </div>
+              <button
+                className="teacher-quiz-create-btn"
+                onClick={() => navigate("/teacher/quiz/create")}
+                type="button"
+              >
+                <Plus size={18} />
+                <span>Créer un quiz</span>
+              </button>
             </div>
           )}
 
-          {!isLoading &&
-            !errorMessage &&
-            quizzes.map((quiz) => (
-              <div key={quiz.id} className="teacher-row teacher-row--card">
-                <div>
-                  <div className="teacher-row__title">{quiz.titre}</div>
-                  <div className="teacher-row__meta">
-                    {quiz.cours_title || `Cours #${quiz.cours}`} •{" "}
-                    {quiz.questions_count || 0} question
-                    {(quiz.questions_count || 0) > 1 ? "s" : ""}
-                  </div>
-                </div>
-
-                <div className="teacher-row__right">
-                  <span className="teacher-mini-kpi">
-                    {quiz.tentatives_count || 0} tentative
-                    {(quiz.tentatives_count || 0) > 1 ? "s" : ""}
-                  </span>
-
-                  <span className="teacher-mini-kpi">
-                    Moyenne {formatAverage(quiz.moyenne_score)}
-                  </span>
-
-                  <button
-                    className="btn btn--ghost"
-                    onClick={() => navigate(`/teacher/quiz/${quiz.id}/edit`)}
-                  >
-                    Modifier
-                  </button>
-
-                  <button
-                    className="btn btn--primary"
-                    onClick={() => navigate(`/teacher/quiz/${quiz.id}`)}
-                  >
-                    Voir
-                  </button>
-                </div>
-              </div>
-            ))}
-        </div>
-      )}
-
-      {activeTab === "results" && (
-        <div className="card card--pad">
-          <h2 className="card__title">Résumé des résultats</h2>
-
-          <div className="teacher-results-grid">
-            <div className="teacher-result-box">
-              <div className="teacher-result-box__value">
-                {resultsSummary.successRate}
-              </div>
-              <div className="teacher-result-box__label">Taux de réussite</div>
-            </div>
-
-            <div className="teacher-result-box">
-              <div className="teacher-result-box__value">
-                {resultsSummary.globalAverage}
-              </div>
-              <div className="teacher-result-box__label">Moyenne générale</div>
-            </div>
-
-            <div className="teacher-result-box">
-              <div className="teacher-result-box__value">
-                {resultsSummary.totalAttempts}
-              </div>
-              <div className="teacher-result-box__label">
-                Tentatives totales
-              </div>
-            </div>
-          </div>
-
-          {quizzes.length > 0 && (
-            <div style={{ marginTop: 20 }}>
+          {!isLoading && !errorMessage && quizzes.length > 0 && (
+            <div className="teacher-quiz-grid">
               {quizzes.map((quiz) => (
-                <div
-                  key={quiz.id}
-                  className="teacher-row teacher-row--card"
-                  style={{ marginTop: 12 }}
-                >
-                  <div>
-                    <div className="teacher-row__title">{quiz.titre}</div>
-                    <div className="teacher-row__meta">
-                      {quiz.cours_title || `Cours #${quiz.cours}`}
+                <article key={quiz.id} className="teacher-quiz-card">
+                  <div className="teacher-quiz-card__head">
+                    <div className="teacher-quiz-card__icon">
+                      <FileQuestion size={20} />
+                    </div>
+
+                    <div className="teacher-quiz-card__headtext">
+                      <h3>{quiz.titre}</h3>
+                      <p>{quiz.cours_title || `Cours #${quiz.cours}`}</p>
                     </div>
                   </div>
 
-                  <div className="teacher-row__right">
-                    <span className="teacher-mini-kpi">
-                      {quiz.tentatives_count || 0} tentative
-                      {(quiz.tentatives_count || 0) > 1 ? "s" : ""}
-                    </span>
+                  <div className="teacher-quiz-card__meta">
+                    <div className="teacher-quiz-pill">
+                      <ClipboardList size={14} />
+                      <span>
+                        {quiz.questions_count || 0} question
+                        {(quiz.questions_count || 0) > 1 ? "s" : ""}
+                      </span>
+                    </div>
 
-                    <span className="teacher-mini-kpi">
-                      Moyenne {formatAverage(quiz.moyenne_score)}
-                    </span>
+                    <div className="teacher-quiz-pill">
+                      <BarChart3 size={14} />
+                      <span>
+                        {quiz.tentatives_count || 0} tentative
+                        {(quiz.tentatives_count || 0) > 1 ? "s" : ""}
+                      </span>
+                    </div>
+
+                    <div className="teacher-quiz-pill">
+                      <Medal size={14} />
+                      <span>Moyenne {formatAverage(quiz.moyenne_score)}</span>
+                    </div>
+                  </div>
+
+                  <div className="teacher-quiz-card__actions">
+                    <button
+                      className="teacher-quiz-btn teacher-quiz-btn--ghost"
+                      onClick={() => navigate(`/teacher/quiz/${quiz.id}/edit`)}
+                      type="button"
+                    >
+                      <Pencil size={16} />
+                      <span>Modifier</span>
+                    </button>
 
                     <button
-                      className="btn btn--primary"
-                      onClick={() => navigate(`/teacher/quiz/${quiz.id}/results`)}
+                      className="teacher-quiz-btn teacher-quiz-btn--primary"
+                      onClick={() => navigate(`/teacher/quiz/${quiz.id}`)}
+                      type="button"
                     >
-                      Voir détails
+                      <Eye size={16} />
+                      <span>Voir</span>
                     </button>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}
-        </div>
+        </>
       )}
 
-      {activeTab === "questions" && (
-        <div className="card card--pad">
-          <h2 className="card__title">Banque de questions</h2>
-          <p className="teacher-subtitle" style={{ marginTop: 10 }}>
-            Vous pourrez ici ajouter, modifier et organiser les questions de vos
-            quiz.
-          </p>
+      {activeTab === "results" && (
+        <div className="teacher-quiz-results">
+          <div className="teacher-quiz-kpis">
+            <div className="teacher-quiz-kpi">
+              <div className="teacher-quiz-kpi__icon teacher-quiz-kpi__icon--blue">
+                <TrendingUp size={18} />
+              </div>
+              <div>
+                <strong>{resultsSummary.successRate}</strong>
+                <span>Taux de réussite</span>
+              </div>
+            </div>
 
-          <div style={{ marginTop: 16 }}>
-            <button
-              className="btn btn--primary"
-              onClick={() => navigate("/teacher/quiz/create")}
-            >
-              + Ajouter une question
-            </button>
+            <div className="teacher-quiz-kpi">
+              <div className="teacher-quiz-kpi__icon teacher-quiz-kpi__icon--purple">
+                <Medal size={18} />
+              </div>
+              <div>
+                <strong>{resultsSummary.globalAverage}</strong>
+                <span>Moyenne générale</span>
+              </div>
+            </div>
+
+            <div className="teacher-quiz-kpi">
+              <div className="teacher-quiz-kpi__icon teacher-quiz-kpi__icon--orange">
+                <BarChart3 size={18} />
+              </div>
+              <div>
+                <strong>{resultsSummary.totalAttempts}</strong>
+                <span>Tentatives totales</span>
+              </div>
+            </div>
           </div>
+
+          {quizzes.length > 0 ? (
+            <div className="teacher-quiz-results-list">
+              {quizzes.map((quiz) => (
+                <article key={quiz.id} className="teacher-quiz-result-row">
+                  <div className="teacher-quiz-result-row__left">
+                    <div className="teacher-quiz-result-row__icon">
+                      <FileQuestion size={18} />
+                    </div>
+
+                    <div>
+                      <h3>{quiz.titre}</h3>
+                      <p>{quiz.cours_title || `Cours #${quiz.cours}`}</p>
+                    </div>
+                  </div>
+
+                  <div className="teacher-quiz-result-row__right">
+                    <div className="teacher-quiz-pill">
+                      <span>
+                        {quiz.tentatives_count || 0} tentative
+                        {(quiz.tentatives_count || 0) > 1 ? "s" : ""}
+                      </span>
+                    </div>
+
+                    <div className="teacher-quiz-pill">
+                      <span>Moyenne {formatAverage(quiz.moyenne_score)}</span>
+                    </div>
+
+                    <button
+                      className="teacher-quiz-btn teacher-quiz-btn--primary"
+                      onClick={() => navigate(`/teacher/quiz/${quiz.id}/results`)}
+                      type="button"
+                    >
+                      <span>Voir détails</span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="teacher-quiz-empty">
+              <BarChart3 size={24} />
+              <div>
+                <h3>Aucun résultat disponible</h3>
+                <p>Les statistiques apparaîtront lorsque des étudiants répondront aux quiz.</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </section>

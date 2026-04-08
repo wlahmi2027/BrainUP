@@ -1,5 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeft,
+  Sparkles,
+  Users,
+  BarChart3,
+  Trophy,
+  CircleCheckBig,
+  CircleX,
+  Clock3,
+  ClipboardList,
+} from "lucide-react";
+import "../../styles/teacher/teacher-quiz-result-details.css";
 
 export default function TeacherQuizResultDetails() {
   const { quizId } = useParams();
@@ -45,71 +57,186 @@ export default function TeacherQuizResultDetails() {
     fetchQuizResults();
   }, [quizId]);
 
+  const summary = useMemo(() => {
+    if (!results.length) {
+      return {
+        attempts: 0,
+        average: "0%",
+        success: 0,
+      };
+    }
+
+    const attempts = results.length;
+    const success = results.filter((item) => item.reussi).length;
+    const averageValue =
+      results.reduce((sum, item) => sum + Number(item.pourcentage || 0), 0) /
+      attempts;
+
+    return {
+      attempts,
+      average: `${Math.round(averageValue)}%`,
+      success,
+    };
+  }, [results]);
+
+  function formatDate(value) {
+    if (!value) return "Date inconnue";
+
+    try {
+      return new Date(value).toLocaleString();
+    } catch {
+      return "Date inconnue";
+    }
+  }
+
   return (
-    <section className="page teacher-page">
-      <div className="teacher-head">
+    <section className="teacher-quiz-result-details-page">
+      <div className="teacher-quiz-result-details-hero">
         <div>
-          <h1 className="page__title">Résultats du quiz</h1>
-          <p className="teacher-subtitle">
-            Consultez les étudiants ayant passé ce quiz.
+          <div className="teacher-quiz-result-details-eyebrow">
+            <Sparkles size={14} />
+            <span>Analyse détaillée</span>
+          </div>
+
+          <h1 className="teacher-quiz-result-details-title">
+            Résultats détaillés du quiz
+          </h1>
+          <p className="teacher-quiz-result-details-subtitle">
+            Consultez les étudiants ayant passé ce quiz, leurs tentatives et
+            leurs performances.
           </p>
         </div>
 
         <button
-          className="btn btn--ghost"
+          className="teacher-quiz-result-details-back"
           onClick={() => navigate("/teacher/quiz")}
+          type="button"
         >
-          ← Retour
+          <ArrowLeft size={16} />
+          <span>Retour</span>
         </button>
       </div>
 
       {isLoading && (
-        <div className="card card--pad">
-          <p>Chargement des résultats...</p>
+        <div className="teacher-quiz-result-details-skeleton-grid">
+          {[1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="teacher-quiz-result-details-skeleton-card"
+            >
+              <div className="teacher-quiz-result-details-skeleton teacher-quiz-result-details-skeleton--title" />
+              <div className="teacher-quiz-result-details-skeleton teacher-quiz-result-details-skeleton--line" />
+              <div className="teacher-quiz-result-details-skeleton teacher-quiz-result-details-skeleton--line short" />
+            </div>
+          ))}
         </div>
       )}
 
       {!isLoading && errorMessage && (
-        <div className="card card--pad">
-          <p style={{ color: "#c0392b" }}>{errorMessage}</p>
+        <div className="teacher-quiz-result-details-feedback teacher-quiz-result-details-feedback--error">
+          {errorMessage}
         </div>
       )}
 
-      {!isLoading && !errorMessage && results.length === 0 && (
-        <div className="card card--pad">
-          <h2 className="card__title">Aucun résultat</h2>
-          <p className="teacher-subtitle" style={{ marginTop: 10 }}>
-            Aucun étudiant n’a encore soumis ce quiz.
-          </p>
-        </div>
-      )}
-
-      {!isLoading && !errorMessage && results.length > 0 && (
-        <div className="teacher-list teacher-list--space">
-          {results.map((result) => (
-            <div key={result.id} className="teacher-row teacher-row--card">
-              <div>
-                <div className="teacher-row__title">{result.etudiant_nom}</div>
-                <div className="teacher-row__meta">
-                  Tentative #{result.numero_tentative} • Score {result.score}/
-                  {result.score_max} • {result.pourcentage}%
-                </div>
+      {!isLoading && !errorMessage && (
+        <>
+          <div className="teacher-quiz-result-details-kpis">
+            <div className="teacher-quiz-result-details-kpi">
+              <div className="teacher-quiz-result-details-kpi__icon teacher-quiz-result-details-kpi__icon--blue">
+                <ClipboardList size={18} />
               </div>
-
-              <div className="teacher-row__right">
-                <span className="teacher-mini-kpi">
-                  {result.reussi ? "✅ Réussi" : "❌ Échoué"}
-                </span>
-
-                <span className="teacher-mini-kpi">
-                  {result.date_soumission
-                    ? new Date(result.date_soumission).toLocaleString()
-                    : "Date inconnue"}
-                </span>
+              <div>
+                <strong>{summary.attempts}</strong>
+                <span>Tentatives</span>
               </div>
             </div>
-          ))}
-        </div>
+
+            <div className="teacher-quiz-result-details-kpi">
+              <div className="teacher-quiz-result-details-kpi__icon teacher-quiz-result-details-kpi__icon--purple">
+                <BarChart3 size={18} />
+              </div>
+              <div>
+                <strong>{summary.average}</strong>
+                <span>Moyenne</span>
+              </div>
+            </div>
+
+            <div className="teacher-quiz-result-details-kpi">
+              <div className="teacher-quiz-result-details-kpi__icon teacher-quiz-result-details-kpi__icon--green">
+                <Trophy size={18} />
+              </div>
+              <div>
+                <strong>{summary.success}</strong>
+                <span>Réussites</span>
+              </div>
+            </div>
+          </div>
+
+          {results.length === 0 ? (
+            <div className="teacher-quiz-result-details-empty">
+              <Users size={24} />
+              <div>
+                <h3>Aucun résultat</h3>
+                <p>Aucun étudiant n’a encore soumis ce quiz.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="teacher-quiz-result-details-list">
+              {results.map((result) => (
+                <article
+                  key={result.id}
+                  className="teacher-quiz-result-details-card"
+                >
+                  <div className="teacher-quiz-result-details-card__left">
+                    <div className="teacher-quiz-result-details-card__avatar">
+                      {result.etudiant_nom?.charAt(0)?.toUpperCase() || "E"}
+                    </div>
+
+                    <div className="teacher-quiz-result-details-card__identity">
+                      <h3>{result.etudiant_nom}</h3>
+                      <p>Tentative #{result.numero_tentative}</p>
+                    </div>
+                  </div>
+
+                  <div className="teacher-quiz-result-details-card__right">
+                    <span className="teacher-quiz-result-details-pill">
+                      Score {result.score}/{result.score_max}
+                    </span>
+
+                    <span className="teacher-quiz-result-details-pill">
+                      {result.pourcentage}%
+                    </span>
+
+                    <span
+                      className={`teacher-quiz-result-details-pill ${
+                        result.reussi
+                          ? "teacher-quiz-result-details-pill--success"
+                          : "teacher-quiz-result-details-pill--danger"
+                      }`}
+                    >
+                      {result.reussi ? (
+                        <>
+                          <CircleCheckBig size={14} />
+                          <span>Réussi</span>
+                        </>
+                      ) : (
+                        <>
+                          <CircleX size={14} />
+                          <span>Échoué</span>
+                        </>
+                      )}
+                    </span>
+
+                    <span className="teacher-quiz-result-details-pill teacher-quiz-result-details-pill--date">
+                      <Clock3 size={14} />
+                      <span>{formatDate(result.date_soumission)}</span>
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </section>
   );

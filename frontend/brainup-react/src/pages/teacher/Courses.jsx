@@ -1,5 +1,18 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Search,
+  Plus,
+  Users,
+  BookOpen,
+  Eye,
+  Pencil,
+  GraduationCap,
+  Filter,
+  MoreHorizontal,
+  X,
+} from "lucide-react";
+import "../../styles/teacher/courses.css";
 
 export default function Courses() {
   const navigate = useNavigate();
@@ -41,9 +54,7 @@ export default function Courses() {
       }
 
       setCourses((prev) =>
-        prev.map((c) =>
-          c.id === courseId ? { ...c, status: newStatus } : c
-        )
+        prev.map((c) => (c.id === courseId ? { ...c, status: newStatus } : c))
       );
     } catch (err) {
       console.error(err);
@@ -140,8 +151,7 @@ export default function Courses() {
         course.author.toLowerCase().includes(query.toLowerCase());
 
       const matchesStatus =
-        statusFilter === "all" ||
-        course.status?.toLowerCase() === statusFilter;
+        statusFilter === "all" || course.status?.toLowerCase() === statusFilter;
 
       return matchesQuery && matchesStatus;
     });
@@ -156,60 +166,118 @@ export default function Courses() {
   };
 
   const getStatusClass = (status) => {
-    if (status === "publie") return "teacher-badge--success";
-    if (status === "brouillon") return "teacher-badge--warn";
-    return "teacher-badge--muted";
+    if (status === "publie") return "teacher-course-badge teacher-course-badge--success";
+    if (status === "brouillon") return "teacher-course-badge teacher-course-badge--warn";
+    return "teacher-course-badge teacher-course-badge--muted";
   };
 
-  if (loading) return <p>Chargement...</p>;
-  if (error) return <p>{error}</p>;
+  if (loading) {
+    return (
+      <section className="teacher-courses-page">
+        <div className="teacher-courses-hero">
+          <div>
+            <div className="teacher-courses-eyebrow">Cours</div>
+            <h1 className="teacher-courses-title">Gestion des cours</h1>
+            <p className="teacher-courses-subtitle">Chargement des cours...</p>
+          </div>
+        </div>
+
+        <div className="teacher-courses-grid">
+          {[1, 2, 3].map((item) => (
+            <article key={item} className="teacher-course-card teacher-course-card--skeleton">
+              <div className="teacher-course-card__banner teacher-course-skeleton" />
+              <div className="teacher-course-card__body">
+                <div className="teacher-course-skeleton teacher-course-skeleton--title" />
+                <div className="teacher-course-skeleton teacher-course-skeleton--line" />
+                <div className="teacher-course-skeleton teacher-course-skeleton--line short" />
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="teacher-courses-page">
+        <div className="teacher-courses-hero">
+          <div>
+            <div className="teacher-courses-eyebrow">Cours</div>
+            <h1 className="teacher-courses-title">Gestion des cours</h1>
+            <p className="teacher-courses-subtitle teacher-courses-error">{error}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="courses-page">
-      <div className="courses-header">
-        <h1>Gestion des Cours</h1>
+    <section className="teacher-courses-page">
+      <div className="teacher-courses-hero">
+        <div>
+          <div className="teacher-courses-eyebrow">Cours</div>
+          <h1 className="teacher-courses-title">Gestion des cours</h1>
+          <p className="teacher-courses-subtitle">
+            Organisez vos contenus, consultez vos étudiants et gérez le statut de publication.
+          </p>
+        </div>
 
-        <div className="courses-toolbar">
+        <button
+          className="teacher-courses-create-btn"
+          onClick={() => navigate("/teacher/courses/create")}
+          type="button"
+        >
+          <Plus size={18} />
+          <span>Créer un cours</span>
+        </button>
+      </div>
+
+      <div className="teacher-courses-toolbar">
+        <div className="teacher-courses-search">
+          <Search size={18} />
           <input
-            placeholder="Rechercher un cours..."
+            placeholder="Rechercher un cours ou un enseignant..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
+        </div>
 
-          <button
-            className="btn btn--primary"
-            onClick={() => navigate("/teacher/courses/create")}
-          >
-            + Créer un cours
-          </button>
+        <div className="teacher-courses-tabs">
+          <div className="teacher-courses-tabs__label">
+            <Filter size={15} />
+            <span>Filtrer</span>
+          </div>
+
+          {FILTERS.map((s) => (
+            <button
+              key={s}
+              className={`teacher-courses-tab ${statusFilter === s ? "is-active" : ""}`}
+              onClick={() => setStatusFilter(s)}
+              type="button"
+            >
+              {{
+                all: "Tous",
+                publie: "Publiés",
+                brouillon: "Brouillons",
+                archive: "Archivés",
+              }[s]}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="courses-tabs">
-        {FILTERS.map((s) => (
-          <button
-            key={s}
-            className={statusFilter === s ? "active" : ""}
-            onClick={() => setStatusFilter(s)}
-          >
-            {{
-              all: "Tous",
-              publie: "Publiés",
-              brouillon: "Brouillons",
-              archive: "Archivés",
-            }[s]}
-          </button>
-        ))}
-      </div>
-
-      <div className="courses-grid">
+      <div className="teacher-courses-grid">
         {filteredCourses.length === 0 ? (
-          <p>Aucun cours trouvé.</p>
+          <div className="teacher-courses-empty">
+            <GraduationCap size={22} />
+            <span>Aucun cours trouvé.</span>
+          </div>
         ) : (
           filteredCourses.map((c) => (
-            <div key={c.id} className="course-card">
+            <article key={c.id} className="teacher-course-card">
               <div
-                className="course-banner"
+                className="teacher-course-card__banner"
                 style={
                   c.banner
                     ? {
@@ -220,55 +288,83 @@ export default function Courses() {
                     : undefined
                 }
               >
-                <div className="banner-overlay">
-                  <h3>{c.title}</h3>
-                </div>
+                {!c.banner && (
+                  <div className="teacher-course-card__banner-placeholder">
+                    <BookOpen size={28} />
+                  </div>
+                )}
 
-                <span
-                  className={`teacher-badge ${getStatusClass(c.status)}`}
-                  style={{ position: "absolute", top: 8, right: 8 }}
-                >
-                  {getStatusLabel(c.status)}
-                </span>
+                <div className="teacher-course-card__overlay">
+                  <div className="teacher-course-card__overlay-top">
+                    <span className={getStatusClass(c.status)}>
+                      {getStatusLabel(c.status)}
+                    </span>
+                  </div>
+
+                  <div className="teacher-course-card__overlay-bottom">
+                    <h3>{c.title}</h3>
+                  </div>
+                </div>
               </div>
 
-              <div className="course-content">
-                <p className="course-author">{c.author}</p>
+              <div className="teacher-course-card__body">
+                <div className="teacher-course-card__author">
+                  <div className="teacher-course-card__author-avatar">
+                    {c.author?.charAt(0)?.toUpperCase() || "E"}
+                  </div>
 
-                <div className="course-stats">
-                  <span className="stat-badge">
-                    👥 {c.students} étudiants
-                  </span>
-                  <span className="stat-badge">
-                    📚 {c.lessons} leçons
-                  </span>
+                  <div>
+                    <div className="teacher-course-card__author-name">{c.author}</div>
+                    <div className="teacher-course-card__author-role">Enseignant</div>
+                  </div>
+                </div>
+
+                <div className="teacher-course-card__stats">
+                  <div className="teacher-course-stat">
+                    <Users size={15} />
+                    <span>{c.students} étudiants</span>
+                  </div>
+
+                  <div className="teacher-course-stat">
+                    <BookOpen size={15} />
+                    <span>{c.lessons} leçons</span>
+                  </div>
                 </div>
 
                 <div className="teacher-course-card__actions">
                   <button
-                    className="btn btn--primary"
+                    className="teacher-course-btn teacher-course-btn--primary"
                     onClick={() => navigate(`/teacher/courses/${c.id}/edit`)}
+                    type="button"
                   >
-                    Modifier
+                    <Pencil size={16} />
+                    <span>Modifier</span>
                   </button>
 
                   <button
-                    className="btn btn--primary"
+                    className="teacher-course-btn teacher-course-btn--soft"
                     onClick={() => navigate(`/teacher/courses/${c.id}`)}
+                    type="button"
                   >
-                    Voir
+                    <Eye size={16} />
+                    <span>Voir</span>
+                  </button>
+                </div>
+
+                <div className="teacher-course-card__footer">
+                  <button
+                    className="teacher-course-btn teacher-course-btn--ghost"
+                    onClick={() => openStudents(c.id)}
+                    type="button"
+                  >
+                    <Users size={16} />
+                    <span>Étudiants</span>
                   </button>
 
-                  <div>
-                    <button
-                      className="btn btn--soft"
-                      onClick={() => openStudents(c.id)}
-                    >
-                      Étudiants
-                    </button>
-
+                  <div className="teacher-course-status-select-wrap">
+                    <MoreHorizontal size={15} />
                     <select
-                      className="btn btn--ghost"
+                      className="teacher-course-status-select"
                       value={c.status}
                       onChange={(e) => updateStatus(c.id, e.target.value)}
                     >
@@ -279,38 +375,75 @@ export default function Courses() {
                   </div>
                 </div>
               </div>
-            </div>
+            </article>
           ))
         )}
       </div>
 
       {showStudentsModal && studentsData && (
         <div
-          className="modal-overlay"
+          className="teacher-course-modal-overlay"
           onClick={() => setShowStudentsModal(false)}
         >
           <div
-            className="modal"
+            className="teacher-course-modal"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3>Étudiants inscrits ({studentsData.count})</h3>
+            <div className="teacher-course-modal__head">
+              <div>
+                <h3>Étudiants inscrits</h3>
+                <p>
+                  Cours #{selectedCourseId} • {studentsData.count} étudiant
+                  {studentsData.count > 1 ? "s" : ""}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="teacher-course-modal__close"
+                onClick={() => setShowStudentsModal(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
 
             {studentsData.students.length === 0 ? (
-              <p className="muted">Aucun étudiant inscrit</p>
+              <div className="teacher-course-modal__empty">
+                Aucun étudiant inscrit
+              </div>
             ) : (
-              <ul>
+              <div className="teacher-course-students-list">
                 {studentsData.students.map((s) => (
-                  <li key={s.id} style={{ marginBottom: "10px" }}>
-                    <strong>{s.username}</strong> — {s.email}
-                    <br />
-                    Progression: {s.progression}%
-                  </li>
+                  <div key={s.id} className="teacher-course-student-row">
+                    <div className="teacher-course-student-row__left">
+                      <div className="teacher-course-student-row__avatar">
+                        {s.username?.charAt(0)?.toUpperCase() || "E"}
+                      </div>
+
+                      <div>
+                        <div className="teacher-course-student-row__name">
+                          {s.username}
+                        </div>
+                        <div className="teacher-course-student-row__email">
+                          {s.email}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="teacher-course-student-row__right">
+                      <span>{s.progression}%</span>
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
 
-            <div className="modal-actions">
-              <button onClick={() => setShowStudentsModal(false)}>
+            <div className="teacher-course-modal__actions">
+              <button
+                className="teacher-course-btn teacher-course-btn--soft"
+                onClick={() => setShowStudentsModal(false)}
+                type="button"
+              >
                 Fermer
               </button>
             </div>
