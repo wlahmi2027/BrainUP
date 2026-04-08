@@ -16,6 +16,8 @@ class Utilisateur(models.Model):
     last_online = models.DateTimeField(null=True, blank=True)
     date_registered = models.DateTimeField(auto_now_add=True)
 
+    force_password_change = models.BooleanField(default=False) # for password resets
+
     def __str__(self):
         return self.nom
 

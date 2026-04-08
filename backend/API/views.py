@@ -1809,3 +1809,19 @@ class UserAdminViewSet(viewsets.ViewSet):
 
         target.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=["post"], url_path="reset-password")
+    def reset_password(self, request):
+        user = get_user_from_token(request)
+        if not user or not is_admin(user):
+            return Response({"message": "Forbidden"}, status=403)
+
+        serializer = AdminResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        target_user = Utilisateur.objects.get(id=serializer.validated_data["user_id"])
+        target_user.password = make_password(serializer.validated_data["new_password"])
+        target_user.force_password_change = True
+        target_user.save()
+
+        return Response({"message": "Mot de passe réinitialisé avec succès"}, status=200)
