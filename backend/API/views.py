@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Avg, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from datetime import timedelta
 
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action, api_view
@@ -42,7 +43,6 @@ from .models import (
     ProgressionLecon,
 )
 from .recommendation_service import build_recommendations_payload
-
 
 import secrets
 
@@ -865,7 +865,14 @@ def login_view(request):
             status=status.HTTP_401_UNAUTHORIZED
         )
 
+
     if check_password(mot_de_passe, utilisateur.mot_de_passe):
+        if utilisateur.force_password_change:
+            return Response({
+                "message": "Password reset required",
+                "force_password_change": True
+            }, status=status.HTTP_403_FORBIDDEN)
+
         token = secrets.token_hex(32)
         utilisateur.token = token
         utilisateur.save()
@@ -1772,7 +1779,9 @@ class AdminCoursViewSet(viewsets.ModelViewSet):
         return Response({"message": "Cours supprimé"}, status=204)
 
 
-class UserAdminViewSet(viewsets.ViewSet):
+class UserAdminViewSet(viewsets.ModelViewSet):
+    queryset = Utilisateur.objects.all()
+    serializer_class = AdminUserSerializer
 
     def list(self, request):
         user = get_user_from_token(request)
@@ -1810,18 +1819,30 @@ class UserAdminViewSet(viewsets.ViewSet):
         target.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=["post"], url_path="reset-password")
-    def reset_password(self, request):
-        user = get_user_from_token(request)
-        if not user or not is_admin(user):
+    
+    @action(detail=True, methods=["post"], url_path="reset-password")
+    def reset_password(self, request, pk=None):
+        admin_user = get_user_from_token(request)
+        if not admin_user or not is_admin(admin_user):
             return Response({"message": "Forbidden"}, status=403)
 
-        serializer = AdminResetPasswordSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            target_user = Utilisateur.objects.get(pk=pk)
+        except Utilisateur.DoesNotExist:
+            return Response({"message": "User not found"}, status=404)
 
-        target_user = Utilisateur.objects.get(id=serializer.validated_data["user_id"])
-        target_user.password = make_password(serializer.validated_data["new_password"])
+        if target_user.role == "admin":
+            return Response({"message": "Cannot reset another admin"}, status=403)
+
+        # Generate temp password
+
+        temp_pw_plain = secrets.token_urlsafe(10)  # secure random
+        target_user.temp_password = make_password(temp_pw_plain)
+        target_user.temp_password_expiry = timezone.now() + timedelta(hours=1)
         target_user.force_password_change = True
         target_user.save()
 
-        return Response({"message": "Mot de passe réinitialisé avec succès"}, status=200)
+        return Response({
+            "message": "Temporary password generated",
+            "temp_password": temp_pw_plain  # show to admin once
+        })

@@ -155,6 +155,29 @@ export default function Users() {
       alert(err.message);
     }
   }
+  async function handleResetPassword(userId, role) {
+    if (role === "admin") {
+      alert("Vous ne pouvez pas réinitialiser le mot de passe d'un autre admin.");
+      return;
+    }
+
+    if (!window.confirm("Voulez-vous réinitialiser le mot de passe de cet utilisateur ?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:8001/api/admin/users/${userId}/reset-password/`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Erreur lors de la réinitialisation");
+
+      const data = await res.json();
+      alert(`Mot de passe temporaire : ${data.temp_password}`);
+    } catch (err) {
+      alert(err.message);
+    }
+  }
 
   return (
     <section className="page teacher-page">
@@ -215,6 +238,7 @@ export default function Users() {
           <div>{user.date_registered ? new Date(user.date_registered).toLocaleDateString() : "—"}</div>
 
           <div className="admin-student-actions">
+            <button className="btn btn--soft" onClick={() => handleResetPassword(user.id, user.role)}>Réinitialisation mdp</button>
             <button className="btn btn--ghost" onClick={() => startEdit(user)}>Modifier</button>
             <button className="btn btn--soft" onClick={() => handleDelete(user.id, user.role)}>Supprimer</button>
           </div>

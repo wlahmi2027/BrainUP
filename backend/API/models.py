@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+import secrets
 
 class Utilisateur(models.Model):
     ROLE_CHOICES = [
@@ -16,7 +17,19 @@ class Utilisateur(models.Model):
     last_online = models.DateTimeField(null=True, blank=True)
     date_registered = models.DateTimeField(auto_now_add=True)
 
-    force_password_change = models.BooleanField(default=False) # for password resets
+    # for password resets :
+    force_password_change = models.BooleanField(default=False)
+    temp_password = models.CharField(max_length=128, null=True, blank=True)
+    temp_password_expiry = models.DateTimeField(null=True, blank=True)
+
+    def set_temp_password(self, length=12, expiry_hours=1):
+
+        temp_pw = secrets.token_urlsafe(length)  # generates secure random string
+        self.temp_password = make_password(temp_pw)
+        self.temp_password_expiry = timezone.now() + timedelta(hours=expiry_hours)
+        self.force_password_change = True
+        self.save()
+        return temp_pw  # return plaintext for admin to show
 
     def __str__(self):
         return self.nom

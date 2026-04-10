@@ -403,15 +403,5 @@ class AdminUserSerializer(serializers.ModelSerializer):
             ]
         return []
 
-class AdminResetPasswordSerializer(serializers.Serializer):
-    user_id = serializers.IntegerField()
-    new_password = serializers.CharField(min_length=6)
-
-    def validate_user_id(self, value):
-        try:
-            user = Utilisateur.objects.get(id=value)
-        except Utilisateur.DoesNotExist:
-            raise serializers.ValidationError("Utilisateur introuvable")
-        if user.role == "admin":
-            raise serializers.ValidationError("Impossible de réinitialiser le mot de passe d'un admin")
-        return value
+class AdminResetPasswordSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(read_only=False)
