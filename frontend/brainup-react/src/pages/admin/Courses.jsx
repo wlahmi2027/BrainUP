@@ -99,7 +99,7 @@ export default function Courses() {
         const normalized = data.map((c) => ({
           id: c.id,
           title: c.title,
-          author: c.enseignant_nom || "—",
+          author: c.author || "—",
           banner: c.banniere,
           status: c.status,
           students: c.etudiants_count ?? 0,

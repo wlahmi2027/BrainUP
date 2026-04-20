@@ -9,33 +9,6 @@ export default function StudentCourses() {
   const [tab, setTab] = useState("all"); // all | favorites
   const [sortBy, setSortBy] = useState("title");
 
-  /*async function loadCourses() {
-    const token = localStorage.getItem("token");
-    try {
-      const res = await fetch("http://localhost:8001/api/student/courses/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = await res.json();
-
-      const normalized = data.map((c) => ({
-        id: c.id,
-        title: c.title,
-        author: c.enseignant.nom,
-        progression: c.inscription?.progression_percent ?? 0,
-        isFavorite: c.inscription?.favoris ?? false,
-        banner: c.banniere,
-        inscription: c.inscription,
-      }));
-
-      setCourses(normalized);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
-*/
 async function loadCourses() {
   const token = localStorage.getItem("token");
   try {
@@ -43,13 +16,7 @@ async function loadCourses() {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    console.log("student courses status =", res.status);
-    console.log("student courses ok =", res.ok);
-
     const data = await res.json();
-
-    console.log("student courses data =", data);
-    console.log("is array =", Array.isArray(data));
 
     const normalized = data.map((c) => ({
       id: c.id,
