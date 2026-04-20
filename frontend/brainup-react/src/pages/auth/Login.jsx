@@ -51,6 +51,8 @@ export default function Login() {
 
       if (err.response && err.response.status === 401) {
         alert("Email ou mot de passe invalide");
+      } else if (err.response && err.response.status === 403) {
+        alert("Vous n'avez pas le droit");
       } else {
         alert("Erreur serveur, veuillez réessayer");
       }
@@ -139,8 +141,17 @@ export default function Login() {
           </form>
 
           <div className="login-card__footer">
-            <span>Pas encore de compte ?</span>
-            <Link to="/inscription">Créer un compte</Link>
+            <div>
+              <span>Pas encore de compte ?</span>
+              <Link to="/inscription">Créer un compte</Link>
+            </div>
+            <div>
+              mot de passe oublié ?
+              <Link to="/PasswordForgotten">Je n'ai pas de code</Link>
+              <div>
+                <Link to="/PasswordReset">J'ai recu un code</Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>

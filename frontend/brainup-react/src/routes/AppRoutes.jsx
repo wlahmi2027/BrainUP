@@ -3,6 +3,8 @@ import ProtectedRoute from "../components/common/ProtectedRoute";
 
 import Login from "../pages/auth/Login";
 import Inscription from "../pages/auth/Inscription";
+import PasswordReset from "../pages/auth/PasswordReset";
+import PasswordForgotten from "../pages/auth/PasswordForgotten";
 import Deconnexion from "../pages/Deconnexion";
 import Chatbot from "../pages/Chatbot";
 import Home from "../pages/public/Home";
@@ -54,6 +56,8 @@ export default function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/inscription" element={<Inscription />} />
       <Route path="/deconnexion" element={<Deconnexion />} />
+      <Route path="/PasswordReset" element={<PasswordReset />} />
+      <Route path="/PasswordForgotten" element={<PasswordForgotten />} />
 
       {/* Student routes */}
       <Route element={<ProtectedRoute />}>

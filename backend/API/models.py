@@ -34,6 +34,12 @@ class Utilisateur(models.Model):
     def __str__(self):
         return self.nom
 
+        
+class PasswordResetRequest(models.Model):
+    user = models.ForeignKey(Utilisateur, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved = models.BooleanField(default=False)
+    resolved_at = models.DateTimeField(null=True, blank=True)
 
 class Etudiant(Utilisateur):
     progression = models.FloatField(default=0.0)

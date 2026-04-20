@@ -12,6 +12,7 @@ from API.models import (
     ChoixQuestion,
     TentativeQuiz,
     ReponseTentative,
+    PasswordResetRequest
 )
 
 
@@ -405,3 +406,13 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
 class AdminResetPasswordSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(read_only=False)
+
+class ConfirmTempPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    temp_password = serializers.CharField()
+    new_password = serializers.CharField(min_length=6)
+
+class PasswordResetRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PasswordResetRequest
+        fields = ["id", "created_at", "resolved"]

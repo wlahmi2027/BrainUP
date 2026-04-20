@@ -25,6 +25,7 @@ from API.serializers import (
     QuizSubmissionResponseSerializer,
     StudentCourseSerializer,
     LeconSerializer,
+    ConfirmTempPasswordSerializer
 )
 from .models import (
     Utilisateur,
@@ -41,6 +42,7 @@ from .models import (
     HistoriqueActivite,
     Lecon,
     ProgressionLecon,
+    PasswordResetRequest
 )
 from .recommendation_service import build_recommendations_payload
 
@@ -100,7 +102,6 @@ def logout_view(request):
         {"success": True, "message": "Déconnexion réussie"},
         status=status.HTTP_200_OK
     )
-
 
 class EtudiantViewSet(viewsets.ModelViewSet):
     queryset = Etudiant.objects.all()
@@ -1729,13 +1730,22 @@ class AdminCoursViewSet(viewsets.ModelViewSet):
         data = []
 
         for u in users:
+            latest_request = (
+                PasswordResetRequest.objects
+                .filter(user=u, resolved=False)
+                .order_by("-created_at")
+                .first()
+            )
             user_data = {
                 "id": u.id,
                 "nom": u.nom,
                 "email": u.email,
                 "role": u.role,
                 "last_online": u.last_online,
-                "date_registered": u.date_registered
+                "date_registered": u.date_registered,
+                "password_reset_requested": bool(latest_request),
+                "password_reset_date": latest_request.created_at if latest_request else None,
+                "password_reset_request_id": latest_request.id if latest_request else None,
             }
 
             # If teacher, include courses they teach
@@ -1846,3 +1856,68 @@ class UserAdminViewSet(viewsets.ModelViewSet):
             "message": "Temporary password generated",
             "temp_password": temp_pw_plain  # show to admin once
         })
+
+class AuthViewSet(viewsets.ModelViewSet):
+
+    @action(detail=False, methods=["post"], url_path="confirm-temp-password")
+    def confirm_temp_password(self, request):
+        serializer = ConfirmTempPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        temp_password = serializer.validated_data["temp_password"]
+        new_password = serializer.validated_data["new_password"]
+
+        try:
+            user = Utilisateur.objects.get(email=email)
+        except Utilisateur.DoesNotExist:
+            return Response({"message": "User not found"}, status=404)
+
+        # must be in reset state
+        if not user.force_password_change:
+            return Response({"message": "No password reset required"}, status=400)
+
+        # expiry check
+        if user.temp_password_expiry and user.temp_password_expiry < timezone.now():
+            return Response({"message": "Temporary password expired"}, status=400)
+
+        # verify temp password
+        if not user.temp_password or not check_password(temp_password, user.temp_password):
+            return Response({"message": "Invalid temporary password"}, status=400)
+
+        # update password
+        user.mot_de_passe = make_password(new_password)
+
+        # find active reset request
+        reset_request = PasswordResetRequest.objects.filter(
+            user=user,
+            resolved=False
+        ).order_by("-created_at").first()
+
+        if reset_request:
+            reset_request.resolved = True
+            reset_request.resolved_at = timezone.now()
+            reset_request.save()
+
+        # cleanup
+        user.temp_password = None
+        user.temp_password_expiry = None
+        user.force_password_change = False
+
+        user.save()
+
+        return Response({"message": "Password updated successfully"}, status=200)
+
+    
+    @action(detail=False, methods=["post"], url_path="password-forgotten")
+    def password_forgotten(self, request):
+        email = request.data.get("email")
+
+        try:
+            user = Utilisateur.objects.get(email=email)
+        except Utilisateur.DoesNotExist:
+            return Response({"message": "If account exists, request is recorded"}, status=200)
+
+        PasswordResetRequest.objects.create(user=user)
+
+        return Response({"message": "If account exists, request is recorded"}, status=200)

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+
 export default function Users() {
   const [query, setQuery] = useState("");
   const [users, setUsers] = useState([]);
@@ -9,6 +10,7 @@ export default function Users() {
   const [roleFilter, setRoleFilter] = useState("all"); // 'all', 'etudiant', 'enseignant', 'admin'
   const [editingUser, setEditingUser] = useState(null); // user being edited
   const [editData, setEditData] = useState({ nom: "", email: "", role: "" });
+  const [resetUser, setResetUser] = useState(null);
 
   const navigate = useNavigate();
 
@@ -142,9 +144,9 @@ export default function Users() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-        nom: editData.nom,       // <- map to backend field
-        email: editData.email,
-        role: editData.role,
+          nom: editData.nom,       // <- map to backend field
+          email: editData.email,
+          role: editData.role,
         }),
       })
       if (!res.ok) throw new Error("Erreur lors de la modification");
@@ -158,24 +160,32 @@ export default function Users() {
   async function handleResetPassword(userId, role) {
     if (role === "admin") {
       alert("Vous ne pouvez pas réinitialiser le mot de passe d'un autre admin.");
-      return;
+      return null;
     }
 
-    if (!window.confirm("Voulez-vous réinitialiser le mot de passe de cet utilisateur ?")) return;
+    if (!window.confirm("Voulez-vous réinitialiser le mot de passe de cet utilisateur ?")) return null;
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:8001/api/admin/users/${userId}/reset-password/`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+
+      const res = await fetch(
+        `http://localhost:8001/api/admin/users/${userId}/reset-password/`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (!res.ok) throw new Error("Erreur lors de la réinitialisation");
 
       const data = await res.json();
+
       alert(`Mot de passe temporaire : ${data.temp_password}`);
+
+      return data; // ✅ IMPORTANT
     } catch (err) {
       alert(err.message);
+      return null;
     }
   }
 
@@ -238,7 +248,13 @@ export default function Users() {
           <div>{user.date_registered ? new Date(user.date_registered).toLocaleDateString() : "—"}</div>
 
           <div className="admin-student-actions">
-            <button className="btn btn--soft" onClick={() => handleResetPassword(user.id, user.role)}>Réinitialisation mdp</button>
+            <button
+              className={`btn ${user.password_reset_requested ? "btn--primary" : "btn--soft"
+                }`}
+              onClick={() => setResetUser(user)}
+            >
+              Réinitialisation mdp
+            </button>
             <button className="btn btn--ghost" onClick={() => startEdit(user)}>Modifier</button>
             <button className="btn btn--soft" onClick={() => handleDelete(user.id, user.role)}>Supprimer</button>
           </div>
@@ -259,6 +275,55 @@ export default function Users() {
             <div className="modal-actions">
               <button className="btn btn--ghost" onClick={() => setEditingUser(null)}>Annuler</button>
               <button className="btn btn--soft" onClick={submitEdit}>Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {resetUser && (
+        <div className="modal-overlay" onClick={() => setResetUser(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Réinitialisation du mot de passe</h2>
+
+            <p><strong>Utilisateur :</strong> {resetUser.nom}</p>
+            <p><strong>Email :</strong> {resetUser.email}</p>
+
+            {resetUser.password_reset_requested ? (
+              <p style={{ color: "#b45309", fontWeight: 700 }}>
+                Une demande de réinitialisation a été faite.
+              </p>
+            ) : (
+              <p className="muted">
+                Aucune demande active.
+              </p>
+            )}
+
+            {resetUser.password_reset_date && (
+              <p>
+                <strong>Demandé le :</strong>{" "}
+                {new Date(resetUser.password_reset_date).toLocaleString()}
+              </p>
+            )}
+
+            <div className="modal-actions">
+              <button
+                className="btn btn--ghost"
+                onClick={() => setResetUser(null)}
+              >
+                Annuler
+              </button>
+
+              <button
+                className="btn btn--primary"
+                onClick={async () => {
+                  const data = await handleResetPassword(resetUser.id, resetUser.role);
+                  if (data) {
+                    alert(`Mot de passe temporaire : ${data.temp_password}`);
+                    setResetUser(null);
+                  }
+                }}
+              >
+                Générer mot de passe temporaire et reset le password
+              </button>
             </div>
           </div>
         </div>
