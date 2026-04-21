@@ -46,7 +46,9 @@ INSTALLED_APPS = [
     'API',
     'corsheaders',
     'chatbot',
+    'django_extensions',
 ]
+
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",   # doit être avant CommonMiddleware
     "django.middleware.common.CommonMiddleware",
@@ -102,14 +104,7 @@ DATABASES = {
         'PORT': config('DB_PORT', default='5432'),
     }
 }
-"""
-DATABASES = {
-  "default": {
-    "ENGINE": "django.db.backends.sqlite3",
-    "NAME": BASE_DIR / "db.sqlite3",
-  }
-}
-"""
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
