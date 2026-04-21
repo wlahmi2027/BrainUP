@@ -16,7 +16,6 @@ import StudentCourses from "../pages/student/Courses";
 import StudentCourseDetail from "../pages/student/CourseDetail";
 import StudentQuiz from "../pages/student/Quiz";
 import StudentRecommendations from "../pages/student/Recommendations";
-import StudentProfile from "../pages/student/Profile";
 import StudentQuizDetails from "../pages/student/StudentQuizDetails";
 
 /* Teacher */
@@ -25,7 +24,6 @@ import TeacherDashboard from "../pages/teacher/Dashboard";
 import TeacherCourses from "../pages/teacher/Courses";
 import TeacherCourseDetail from "../pages/teacher/CourseDetail";
 import TeacherQuiz from "../pages/teacher/Quiz";
-import TeacherProfile from "../pages/teacher/Profile";
 import CreateCourse from "../pages/teacher/CreateCourse";
 import EditCourse from "../pages/teacher/EditCourse";
 import CreateQuiz from "../pages/teacher/CreateQuiz";
@@ -38,14 +36,9 @@ import TeacherQuizResultDetails from "../pages/teacher/TeacherQuizResultDetails"
 
 /* Admin */
 import AdminLayout from "../pages/admin/Layout";
-import AdminDashboard from "../pages/admin/Dashboard";
 import AdminCourses from "../pages/admin/Courses";
 import AdminCourseDetail from "../pages/admin/CourseDetail";
 import AdminEditCourse from "../pages/admin/EditCourse";
-import AdminQuiz from "../pages/admin/Quiz";
-import AdminEditQuiz from "../pages/admin/EditQuiz";
-import AdminResults from "../pages/admin/Results";
-import AdminStudentsResults from "../pages/admin/StudentsResults";
 import AdminUsers from "../pages/admin/Users";
 
 export default function AppRoutes() {
@@ -68,7 +61,6 @@ export default function AppRoutes() {
           <Route path="courses/:id" element={<StudentCourseDetail />} />
           <Route path="quiz" element={<StudentQuiz />} />
           <Route path="recommendations" element={<StudentRecommendations />} />
-          <Route path="profile" element={<StudentProfile />} />
           <Route path="chatbot" element={<Chatbot role="student" />} />
           <Route path="quiz/:id" element={<StudentQuizDetails />} />
         </Route>
@@ -90,7 +82,6 @@ export default function AppRoutes() {
           <Route path="quiz/:id/results" element={<QuizResults />} />
           <Route path="students" element={<Students />} />
           <Route path="students/:studentId" element={<StudentDetail />} />
-          <Route path="profile" element={<TeacherProfile />} />
           <Route path="chatbot" element={<Chatbot role="teacher" />} />
           <Route
             path="quiz/:quizId/results"
@@ -99,17 +90,12 @@ export default function AppRoutes() {
         </Route>
       </Route>
 
-      {/* Admin routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/admin" element={<AdminLayout />}>
-          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route index element={<Navigate to="courses" replace />} />
           <Route path="courses" element={<AdminCourses />} />
           <Route path="courses/:id" element={<AdminCourseDetail />} />
           <Route path="courses/:id/edit" element={<AdminEditCourse />} />
-          <Route path="quiz" element={<AdminQuiz />} />
-          <Route path="quiz/:id/edit" element={<AdminEditQuiz />} />
-          <Route path="results" element={<AdminResults />} />
-          <Route path="students-results" element={<AdminStudentsResults />} />
           <Route path="users" element={<AdminUsers />} />
         </Route>
       </Route>

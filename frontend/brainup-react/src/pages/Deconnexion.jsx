@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
-
+import "../styles/auth/deconnexion.css";
 
 
 export default function Deconnexion() {

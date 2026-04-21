@@ -97,15 +97,6 @@ export default function Sidebar({
 
             <NavLink
               className={linkClass}
-              to="/student/profile"
-              onClick={handleNavClick}
-            >
-              <UserRound size={18} />
-              <span>Profil</span>
-            </NavLink>
-
-            <NavLink
-              className={linkClass}
               to="/student/chatbot"
               onClick={handleNavClick}
             >
@@ -155,15 +146,6 @@ export default function Sidebar({
 
             <NavLink
               className={linkClass}
-              to="/teacher/profile"
-              onClick={handleNavClick}
-            >
-              <UserRound size={18} />
-              <span>Profil</span>
-            </NavLink>
-
-            <NavLink
-              className={linkClass}
               to="/teacher/chatbot"
               onClick={handleNavClick}
             >
@@ -176,13 +158,6 @@ export default function Sidebar({
         {role === "admin" && (
           <>
             <NavLink className={linkClass} 
-            to="/admin/dashboard" 
-            onClick={handleNavClick}>
-              <LayoutDashboard size={18} />
-              <span>Tableau de bord</span>
-            </NavLink>
-
-            <NavLink className={linkClass} 
             to="/admin/users" 
             onClick={handleNavClick}>
               <Users size={18} />
@@ -194,27 +169,6 @@ export default function Sidebar({
             onClick={handleNavClick}>
               <FileText size={18} />
               <span>Cours</span>
-            </NavLink>
-
-            <NavLink className={linkClass} 
-            to="/admin/quiz" 
-            onClick={handleNavClick}>
-              <FileQuestion size={18} />
-              <span>Quiz</span>
-            </NavLink>
-
-            <NavLink className={linkClass} 
-            to="/admin/results" 
-            onClick={handleNavClick}>
-              <BarChart2 size={18} />
-              <span>Résultats</span>
-            </NavLink>
-
-            <NavLink className={linkClass} 
-            to="/admin/students-results" 
-            onClick={handleNavClick}>
-              <UserRound size={18} />
-              <span>Suivi étudiants</span>
             </NavLink>
           </>
         )}

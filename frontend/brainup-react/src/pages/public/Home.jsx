@@ -147,7 +147,7 @@ export default function Home() {
       } else if (user?.role === "enseignant") {
         navigate("/teacher/dashboard", { replace: true });
       } else if (user?.role === "admin") {
-        navigate("/admin/dashboard", { replace: true });
+        navigate("/admin/courses", { replace: true });
       }
     } catch (error) {
       console.error("Erreur lecture user :", error);
