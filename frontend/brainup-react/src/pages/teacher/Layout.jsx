@@ -16,31 +16,31 @@ export default function TeacherLayout() {
   }
 
   return (
-    <div className="bg">
-      <div className="shell teacher-shell">
+    <div className="teacher-layout">
+      <div className="teacher-layout__shell">
         <Sidebar
           role="teacher"
           mobileMenuOpen={mobileMenuOpen}
           onCloseMobileMenu={closeMobileMenu}
         />
 
-        {mobileMenuOpen && (
-          <button
-            type="button"
-            className="app-layout__overlay"
-            onClick={closeMobileMenu}
-            aria-label="Fermer le menu"
-          />
-        )}
-
-        <main className="main teacher-main">
+        <main className="teacher-layout__main">
           <Topbar role="teacher" onToggleMobileMenu={openMobileMenu} />
 
-          <div className="content teacher-content">
+          <div className="teacher-layout__content">
             <Outlet />
           </div>
         </main>
       </div>
+
+      {mobileMenuOpen && (
+        <button
+          type="button"
+          className="teacher-layout__overlay"
+          onClick={closeMobileMenu}
+          aria-label="Fermer le menu"
+        />
+      )}
     </div>
   );
 }

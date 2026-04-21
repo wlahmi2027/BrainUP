@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Search,
+  BookOpen,
+  Star,
+  ChartColumn,
+  ArrowRight,
+  UserRound,
+  GraduationCap,
+} from "lucide-react";
+import "../../styles/student/courses.css";
 
 export default function StudentCourses() {
   const navigate = useNavigate();
@@ -9,7 +19,7 @@ export default function StudentCourses() {
   const [tab, setTab] = useState("all"); // all | favorites
   const [sortBy, setSortBy] = useState("title");
 
-  /*async function loadCourses() {
+  async function loadCourses() {
     const token = localStorage.getItem("token");
     try {
       const res = await fetch("http://localhost:8001/api/student/courses/", {
@@ -21,7 +31,7 @@ export default function StudentCourses() {
       const normalized = data.map((c) => ({
         id: c.id,
         title: c.title,
-        author: c.enseignant.nom,
+        author: c.enseignant?.nom || "",
         progression: c.inscription?.progression_percent ?? 0,
         isFavorite: c.inscription?.favoris ?? false,
         banner: c.banniere,
@@ -30,48 +40,18 @@ export default function StudentCourses() {
 
       setCourses(normalized);
     } catch (err) {
-      console.error(err);
+      console.error("loadCourses error =", err);
     } finally {
       setLoading(false);
     }
   }
-*/
-async function loadCourses() {
-  const token = localStorage.getItem("token");
-  try {
-    const res = await fetch("http://localhost:8001/api/student/courses/", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
 
-    console.log("student courses status =", res.status);
-    console.log("student courses ok =", res.ok);
-
-    const data = await res.json();
-
-    console.log("student courses data =", data);
-    console.log("is array =", Array.isArray(data));
-
-    const normalized = data.map((c) => ({
-      id: c.id,
-      title: c.title,
-      author: c.enseignant?.nom || "",
-      progression: c.inscription?.progression_percent ?? 0,
-      isFavorite: c.inscription?.favoris ?? false,
-      banner: c.banniere,
-      inscription: c.inscription,
-    }));
-
-    setCourses(normalized);
-  } catch (err) {
-    console.error("loadCourses error =", err);
-  } finally {
-    setLoading(false);
-  }
-}
   async function handleEnroll(courseId) {
     const token = localStorage.getItem("token");
 
-    if (!window.confirm("Voulez-vous vraiment vous inscrire à ce cours ?")) return;
+    if (!window.confirm("Voulez-vous vraiment vous inscrire à ce cours ?")) {
+      return;
+    }
 
     try {
       const res = await fetch(
@@ -86,22 +66,20 @@ async function loadCourses() {
 
       if (!res.ok) throw new Error();
 
-      // reload data
-      setCourses((prev) =>
-        prev.map((c) =>
-          c.id === courseId
-            ? { ...c, inscription: { progression: 0, favoris: false } }
-            : c
-        )
-      );
+      await loadCourses();
     } catch (err) {
       console.error(err);
     }
   }
+
   async function handleUnsubscribe(courseId) {
     const token = localStorage.getItem("token");
 
-    if (!window.confirm("Voulez-vous vraiment vous désinscrire de ce cours ?")) return;
+    if (
+      !window.confirm("Voulez-vous vraiment vous désinscrire de ce cours ?")
+    ) {
+      return;
+    }
 
     try {
       const res = await fetch(
@@ -116,12 +94,12 @@ async function loadCourses() {
 
       if (!res.ok) throw new Error();
 
-      // refresh courses
       await loadCourses();
     } catch (err) {
       console.error(err);
     }
   }
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -132,10 +110,8 @@ async function loadCourses() {
   }, [navigate]);
 
   const filteredAndSorted = useMemo(() => {
-
     let result = [...courses];
 
-    // SEARCH
     if (query.trim()) {
       const q = query.toLowerCase();
       result = result.filter(
@@ -145,18 +121,15 @@ async function loadCourses() {
       );
     }
 
-    // TAB FILTER
     if (tab === "favorites") {
       result = result.filter((c) => c.isFavorite);
     }
 
-    // SORTING
     if (sortBy === "title") {
       result.sort((a, b) => a.title.localeCompare(b.title));
     } else if (sortBy === "progression") {
       result.sort((a, b) => b.progression - a.progression);
     } else {
-      // DEFAULT: favorites first, then progression
       result.sort((a, b) => {
         if (b.isFavorite !== a.isFavorite) {
           return b.isFavorite - a.isFavorite;
@@ -172,193 +145,215 @@ async function loadCourses() {
     const token = localStorage.getItem("token");
 
     setCourses((prev) =>
-      prev.map((c) =>
-        c.id === id ? { ...c, isFavorite: !c.isFavorite } : c
-      )
+      prev.map((c) => (c.id === id ? { ...c, isFavorite: !c.isFavorite } : c))
     );
 
     try {
-      await fetch(
-        `http://localhost:8001/api/student/courses/${id}/favorite/`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await fetch(`http://localhost:8001/api/student/courses/${id}/favorite/`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
     } catch (err) {
       console.error(err);
     }
   };
-  async function updateStatus(courseId, newStatus) {
-    const token = localStorage.getItem("token");
 
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
-    const confirmMsg = `Passer ce cours en "${newStatus}" ?`;
-    if (!window.confirm(confirmMsg)) return;
-
-    try {
-      const res = await fetch(
-        `http://localhost:8001/api/courses/${courseId}/`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
-
-      if (!res.ok) throw new Error("Erreur lors de la mise à jour.");
-
-      // update local state
-      setCourses((prev) =>
-        prev.map((c) =>
-          c.id === courseId ? { ...c, status: newStatus } : c
-        )
-      );
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la mise à jour du statut.");
-    }
+  if (loading) {
+    return (
+      <section className="student-courses-page">
+        <div className="student-courses-loading">Chargement des cours...</div>
+      </section>
+    );
   }
 
-  if (loading) return <p>Chargement...</p>;
-
   return (
-    <section className="courses-page">
-      {/* HEADER */}
-      <div className="courses-header">
-        <h1>Catalogue des Cours</h1>
+    <section className="student-courses-page">
+      <div className="student-courses-hero">
+        <div>
+          <div className="student-courses-eyebrow">
+            <GraduationCap size={14} />
+            <span>Catalogue pédagogique</span>
+          </div>
 
-        <div className="courses-toolbar">
-          <input
-            placeholder="Rechercher un cours..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+          <h1 className="student-courses-title">Catalogue des cours</h1>
+          <p className="student-courses-subtitle">
+            Explorez les contenus disponibles, reprenez votre progression et
+            retrouvez rapidement vos cours favoris.
+          </p>
+        </div>
 
-          <div className="sort-group">
-            <button
-              className={sortBy === "title" ? "active" : ""}
-              onClick={() => setSortBy("title")}
-            >
-              🔠 Alphabetique
-            </button>
-            <button
-              className={sortBy === "progression" ? "active" : ""}
-              onClick={() => setSortBy("progression")}
-            >
-              📊 Progression
-            </button>
+        <div className="student-courses-summary">
+          <div className="student-courses-summary__item">
+            <span>Cours disponibles</span>
+            <strong>{courses.length}</strong>
+          </div>
+          <div className="student-courses-summary__item">
+            <span>Favoris</span>
+            <strong>{courses.filter((c) => c.isFavorite).length}</strong>
           </div>
         </div>
       </div>
 
-      {/* TABS */}
-      <div className="courses-tabs">
+      <div className="student-courses-toolbar">
+        <div className="student-courses-search">
+          <Search size={18} />
+          <input
+            placeholder="Rechercher un cours ou un enseignant..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="student-courses-sort">
+          <button
+            className={sortBy === "title" ? "is-active" : ""}
+            onClick={() => setSortBy("title")}
+            type="button"
+          >
+            <BookOpen size={16} />
+            <span>Alphabétique</span>
+          </button>
+
+          <button
+            className={sortBy === "progression" ? "is-active" : ""}
+            onClick={() => setSortBy("progression")}
+            type="button"
+          >
+            <ChartColumn size={16} />
+            <span>Progression</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="student-courses-tabs">
         <button
-          className={tab === "all" ? "active" : ""}
+          className={tab === "all" ? "is-active" : ""}
           onClick={() => setTab("all")}
+          type="button"
         >
-          📘 Tous les cours
+          <BookOpen size={16} />
+          <span>Tous les cours</span>
         </button>
+
         <button
-          className={tab === "favorites" ? "active" : ""}
+          className={tab === "favorites" ? "is-active" : ""}
           onClick={() => setTab("favorites")}
+          type="button"
         >
-          ⭐ Mes favoris
+          <Star size={16} />
+          <span>Mes favoris</span>
         </button>
       </div>
 
-      {/* SECTION TITLE */}
-      <div className="courses-section">
-        <h2>{tab === "favorites" ? "Mes Favoris" : "Nos Cours"}</h2>
+      <div className="student-courses-section-title">
+        <h2>{tab === "favorites" ? "Mes favoris" : "Nos cours"}</h2>
+        <p>{filteredAndSorted.length} résultat(s)</p>
       </div>
 
-      {/* GRID */}
-      <div className="courses-grid">
+      <div className="student-courses-grid">
         {filteredAndSorted.length === 0 ? (
-          <p>Aucun cours trouvé.</p>
+          <div className="student-courses-empty">
+            <BookOpen size={22} />
+            <p>Aucun cours trouvé.</p>
+          </div>
         ) : (
           filteredAndSorted.map((c) => {
             const isEnrolled = !!c.inscription;
-            return (
 
-              <div key={c.id} className="course-card">
-                {/* BANNER */}
+            return (
+              <article key={c.id} className="student-course-card">
                 <div
-                  className="course-banner"
+                  className="student-course-card__banner"
                   style={
                     c.banner
                       ? {
-                        backgroundImage: `url(${c.banner})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
+                          backgroundImage: `url(${c.banner})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
                       : undefined
                   }
                 >
-                  <div className="banner-overlay">
+                  <div className="student-course-card__overlay" />
+
+                  <div className="student-course-card__banner-content">
+                    <span className="student-course-card__chip">
+                      {isEnrolled ? "Inscrit" : "Disponible"}
+                    </span>
                     <h3>{c.title}</h3>
                   </div>
                 </div>
 
-                {/* CONTENT */}
-                <div className="course-content">
-                  <p className="course-author">{c.author}</p>
+                <div className="student-course-card__body">
+                  <div className="student-course-card__author">
+                    <UserRound size={15} />
+                    <span>{c.author || "Enseignant"}</span>
+                  </div>
 
-                  <div className="course-progress">
+                  <div className="student-course-card__progress-top">
+                    <span>Progression</span>
+                    <strong>{c.progression}%</strong>
+                  </div>
+
+                  <div className="student-course-card__progress">
                     <div
-                      className="bar"
+                      className="student-course-card__progress-fill"
                       style={{ width: `${c.progression}%` }}
                     />
                   </div>
 
-                  <p>{c.progression}% complété</p>
+                  <p className="student-course-card__progress-text">
+                    {c.progression}% complété
+                  </p>
 
-                  <div className="course-actions">
+                  <div className="student-course-card__actions">
                     {!isEnrolled ? (
                       <button
-                        className="btn-primary"
+                        className="student-course-btn student-course-btn--primary"
                         onClick={() => handleEnroll(c.id)}
+                        type="button"
                       >
                         S’inscrire
                       </button>
                     ) : (
                       <>
                         <button
-                          className="btn-primary"
+                          className="student-course-btn student-course-btn--primary"
                           onClick={() => navigate(`/student/courses/${c.id}`)}
+                          type="button"
                         >
-                          Voir Cours
+                          <span>Voir le cours</span>
+                          <ArrowRight size={16} />
                         </button>
+
                         <button
-                          className="btn"
+                          className="student-course-btn student-course-btn--ghost"
                           onClick={() => handleUnsubscribe(c.id)}
+                          type="button"
                         >
                           Désinscrire
                         </button>
+
                         <button
-                          className={`favorite-btn ${c.isFavorite ? "active" : ""}`}
+                          className={`student-course-favorite ${
+                            c.isFavorite ? "is-active" : ""
+                          }`}
                           onClick={() => toggleFavorite(c.id)}
+                          type="button"
+                          aria-label="Ajouter aux favoris"
+                          title="Ajouter aux favoris"
                         >
-                          ★
+                          <Star size={16} />
                         </button>
                       </>
                     )}
                   </div>
                 </div>
-              </div>
+              </article>
             );
           })
         )}
       </div>
-
-    </section >
+    </section>
   );
 }
