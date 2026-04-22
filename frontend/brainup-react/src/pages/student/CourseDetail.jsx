@@ -1,9 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Document, Page, pdfjs } from "react-pdf";
+import {
+  BookOpen,
+  FileText,
+  Download,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  GraduationCap,
+  UserRound,
+  CheckCircle2,
+} from "lucide-react";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
+import "../../styles/student/course-detail.css";
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 
@@ -23,7 +35,6 @@ export default function CourseDetail() {
   const pageRefs = useRef([]);
   const lastSentPageRef = useRef(0);
 
-  // Temps d'étude
   const activeStartRef = useRef(null);
   const accumulatedMsRef = useRef(0);
   const flushIntervalRef = useRef(null);
@@ -157,9 +168,6 @@ export default function CourseDetail() {
     setNumPages(numPages);
   }
 
-  // -------------------------
-  // Gestion du temps d'étude
-  // -------------------------
   function startStudyTimer() {
     if (!selectedLesson?.id) return;
     if (document.hidden) return;
@@ -236,7 +244,6 @@ export default function CourseDetail() {
       const durationMinutes = Math.floor(accumulatedMsRef.current / 60000);
       if (!selectedLesson?.id || durationMinutes <= 0) return;
 
-      const token = localStorage.getItem("token");
       const payload = JSON.stringify({
         lesson_id: selectedLesson.id,
         duration_minutes: durationMinutes,
@@ -304,140 +311,167 @@ export default function CourseDetail() {
     return () => observer.disconnect();
   }, [lessonFile, numPages, maxSeenPage, selectedLesson?.id]);
 
-  if (loading) return <p>Chargement...</p>;
-  if (!course) return <p>Cours introuvable.</p>;
+  if (loading) {
+    return (
+      <section className="student-course-detail-page">
+        <div className="student-course-detail-loading">
+          Chargement du cours...
+        </div>
+      </section>
+    );
+  }
+
+  if (!course) {
+    return (
+      <section className="student-course-detail-page">
+        <div className="student-course-detail-loading">Cours introuvable.</div>
+      </section>
+    );
+  }
 
   const progress = Math.round(course.inscription?.progression_percent || 0);
 
   return (
-    <section className="player">
-      <div
-        className="player__header"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: "16px",
-          flexWrap: "wrap",
-        }}
-      >
+    <section className="student-course-detail-page">
+      <div className="student-course-detail-hero">
         <div>
-          <h1>{course.title}</h1>
-          <p>
-            {course.enseignant?.nom} • {course.niveau}
-          </p>
+          <div className="student-course-detail-eyebrow">
+            <GraduationCap size={14} />
+            <span>Espace d’apprentissage</span>
+          </div>
+
+          <h1 className="student-course-detail-title">{course.title}</h1>
+
+          <div className="student-course-detail-meta">
+            <span>
+              <UserRound size={15} />
+              {course.enseignant?.nom || "Enseignant"}
+            </span>
+            <span>
+              <BookOpen size={15} />
+              {course.niveau}
+            </span>
+          </div>
         </div>
 
-        <div
-          className="player__progress"
-          style={{
-            fontWeight: 600,
-            fontSize: "18px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {progress}% complété
+        <div className="student-course-detail-progress-card">
+          <span>Progression globale</span>
+          <strong>{progress}%</strong>
         </div>
       </div>
 
-      <div className="player__layout">
-        <aside className="player__sidebar">
-          <h3>Leçons</h3>
+      <div className="student-course-detail-layout">
+        <aside className="student-course-detail-sidebar">
+          <div className="student-course-detail-sidebar__head">
+            <h3>Leçons</h3>
+            <span>{course.lecons?.length || 0}</span>
+          </div>
 
-          {course.lecons?.length === 0 && (
-            <p className="muted">Aucune leçon disponible</p>
-          )}
-
-          {course.lecons?.map((lesson) => (
-            <div
-              key={lesson.id}
-              className={`lesson ${
-                selectedLesson?.id === lesson.id ? "is-active" : ""
-              }`}
-              onClick={() => setSelectedLesson(lesson)}
-            >
-              <span className="lesson__title">{lesson.titre}</span>
+          {course.lecons?.length === 0 ? (
+            <div className="student-course-detail-empty">
+              Aucune leçon disponible
             </div>
-          ))}
+          ) : (
+            <div className="student-course-detail-lessons">
+              {course.lecons?.map((lesson, index) => (
+                <button
+                  key={lesson.id}
+                  type="button"
+                  className={`student-course-detail-lesson ${
+                    selectedLesson?.id === lesson.id ? "is-active" : ""
+                  }`}
+                  onClick={() => setSelectedLesson(lesson)}
+                >
+                  <div className="student-course-detail-lesson__left">
+                    <div className="student-course-detail-lesson__index">
+                      {index + 1}
+                    </div>
+
+                    <div className="student-course-detail-lesson__text">
+                      <strong>{lesson.titre}</strong>
+                      <span>
+                        {selectedLesson?.id === lesson.id
+                          ? "Leçon ouverte"
+                          : "Cliquer pour ouvrir"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {selectedLesson?.id === lesson.id && (
+                    <CheckCircle2 size={16} />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </aside>
 
-        <main className="player__content">
+        <main className="student-course-detail-content">
           {!selectedLesson ? (
-            <div className="card card--pad">
+            <div className="student-course-detail-placeholder">
               Sélectionnez une leçon
             </div>
           ) : (
-            <div className="card">
-              <div
-                className="card__head"
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "12px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <h2>{selectedLesson.titre}</h2>
+            <div className="student-course-detail-viewer-card">
+              <div className="student-course-detail-viewer-head">
+                <div>
+                  <h2>{selectedLesson.titre}</h2>
+                  <p>
+                    {lessonFile
+                      ? "Visualisation du support PDF"
+                      : "Contenu de la leçon"}
+                  </p>
+                </div>
 
-                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <div className="student-course-detail-viewer-actions">
                   <button
                     type="button"
-                    className="btn btn--ghost"
+                    className="student-course-detail-zoom-btn"
                     onClick={() => setZoom((prev) => Math.max(0.7, prev - 0.1))}
                   >
-                    -
+                    <ZoomOut size={16} />
                   </button>
 
-                  <span style={{ minWidth: "52px", textAlign: "center" }}>
+                  <span className="student-course-detail-zoom-value">
                     {Math.round(zoom * 100)}%
                   </span>
 
                   <button
                     type="button"
-                    className="btn btn--ghost"
+                    className="student-course-detail-zoom-btn"
                     onClick={() => setZoom((prev) => Math.min(2, prev + 0.1))}
                   >
-                    +
+                    <ZoomIn size={16} />
                   </button>
 
                   <button
                     type="button"
-                    className="btn btn--ghost"
+                    className="student-course-detail-reset-btn"
                     onClick={() => setZoom(1)}
                   >
-                    Reset
+                    <RotateCcw size={15} />
+                    <span>Reset</span>
                   </button>
                 </div>
               </div>
 
-              <div className="lesson__content">
+              <div className="student-course-detail-viewer-body">
                 {lessonFile ? (
                   <>
-                    <div style={{ marginBottom: "12px" }}>
+                    <div className="student-course-detail-download">
                       <a
                         href={lessonFile}
                         download
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn btn--primary"
+                        className="student-course-detail-download-btn"
                       >
-                        Télécharger le PDF
+                        <Download size={16} />
+                        <span>Télécharger le PDF</span>
                       </a>
                     </div>
 
-                    <div
-                      ref={viewerRef}
-                      style={{
-                        height: "75vh",
-                        overflowY: "auto",
-                        overflowX: "auto",
-                        border: "1px solid #d9e2f1",
-                        borderRadius: "12px",
-                        background: "#f8fafc",
-                        padding: "16px",
-                      }}
-                    >
+                    <div ref={viewerRef} className="student-course-detail-pdf">
                       <Document
                         file={lessonFile}
                         onLoadSuccess={onDocumentLoadSuccess}
@@ -454,11 +488,7 @@ export default function CourseDetail() {
                             ref={(el) => {
                               pageRefs.current[index] = el;
                             }}
-                            style={{
-                              display: "flex",
-                              justifyContent: "center",
-                              marginBottom: "20px",
-                            }}
+                            className="student-course-detail-pdf-page"
                           >
                             <Page
                               pageNumber={index + 1}
@@ -472,9 +502,16 @@ export default function CourseDetail() {
                     </div>
                   </>
                 ) : selectedLesson.contenu ? (
-                  <p>{selectedLesson.contenu}</p>
+                  <div className="student-course-detail-text-content">
+                    <div className="student-course-detail-text-box">
+                      <FileText size={18} />
+                      <p>{selectedLesson.contenu}</p>
+                    </div>
+                  </div>
                 ) : (
-                  <p className="muted">Contenu non disponible</p>
+                  <div className="student-course-detail-empty">
+                    Contenu non disponible
+                  </div>
                 )}
               </div>
             </div>
