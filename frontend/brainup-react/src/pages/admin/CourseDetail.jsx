@@ -25,13 +25,13 @@ export default function AdminCourseDetail() {
     formData.append("ordre", (course.lecons?.length || 0) + 1);
     formData.append("cours", course.id);
 
-    // ✅ REQUIRED: always send contenu
+    // REQUIRED: always send contenu
     formData.append(
       "contenu",
       newLessonTitle.trim() || "Contenu de la leçon"
     );
 
-    // ✅ file goes into "fichier", not "contenu"
+    // file goes into "fichier", not "contenu"
     if (newLessonFile) {
       formData.append("fichier", newLessonFile);
     }

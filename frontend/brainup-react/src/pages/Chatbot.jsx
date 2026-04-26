@@ -22,8 +22,8 @@ export default function Chatbot({ role = "student" }) {
       id: 1,
       role: "assistant",
       text: isTeacher
-        ? "Bonjour 👋 Je suis Assistant BrainUP. Je peux vous aider à gérer vos cours, vos quiz et votre espace enseignant."
-        : "Bonjour 👋 Je suis Assistant BrainUP. Je peux t’aider à trouver un cours, t’orienter vers une page, ou répondre à des questions pédagogiques.",
+        ? "Bonjour  Je suis Assistant BrainUP. Je peux vous aider à gérer vos cours, vos quiz et votre espace enseignant."
+        : "Bonjour  Je suis Assistant BrainUP. Je peux t’aider à trouver un cours, t’orienter vers une page, ou répondre à des questions pédagogiques.",
       sources: [],
       actions: [],
     },

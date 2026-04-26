@@ -183,7 +183,7 @@ export default function Users() {
 
       alert(`Mot de passe temporaire : ${data.temp_password}`);
 
-      return data; // ✅ IMPORTANT
+      return data; 
     } catch (err) {
       alert(err.message);
       return null;

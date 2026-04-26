@@ -1,5 +1,5 @@
 /* =========================================
-   TEACHER DASHBOARD - RESPONSIVE PREMIUM
+   TEACHER DASHBOARD 
    ========================================= */
 
 .teacher-dashboard-page {
@@ -55,7 +55,7 @@
   gap: 8px;
   padding: 11px 14px;
   border-radius: 14px;
-  background: #ffffff;
+  background: #1f4b91;
   border: 1px solid #e4ecff;
   box-shadow: 0 10px 28px rgba(18, 40, 76, 0.06);
   color: #1f4b91;
@@ -239,7 +239,7 @@
   min-width: 56px;
   border-radius: 18px;
   background: #eef4ff;
-  color: #ffffff;
+  color: #2b5db3;
   display: flex;
   align-items: center;
   justify-content: center;

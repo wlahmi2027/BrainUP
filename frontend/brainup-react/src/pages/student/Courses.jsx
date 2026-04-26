@@ -16,7 +16,7 @@ export default function StudentCourses() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [tab, setTab] = useState("all"); // all | favorites
+  const [tab, setTab] = useState("all"); 
   const [sortBy, setSortBy] = useState("title");
 
   async function loadCourses() {
