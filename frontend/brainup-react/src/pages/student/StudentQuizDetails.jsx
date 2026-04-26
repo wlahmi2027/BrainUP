@@ -327,8 +327,8 @@ export default function StudentQuizDetails() {
               }`}
             >
               {results[currentQuestion.id].isCorrect
-                ? "Bonne réponse ✅"
-                : "Mauvaise réponse ❌"}
+                ? "Bonne réponse "
+                : "Mauvaise réponse "}
             </div>
           )}
         </article>
