@@ -8,6 +8,7 @@ import {
   FileText,
   Download,
 } from "lucide-react";
+import "../../styles/teacher/course-detail.css";
 
 export default function TeacherCourseDetail() {
   const { id } = useParams();
