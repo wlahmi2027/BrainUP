@@ -2,7 +2,17 @@ from django.utils import timezone
 from datetime import timedelta
 from .utils import get_user_from_token
 
+"""
+Middleware gère les fonctions entre urls.py et views.py.
+Ici, elle n'est que utilisé pour mettre a jour la valeur last_online des utilisateurs
+"""
+
+
 class UpdateLastOnlineMiddleware:
+    """
+    Middleware Django qui met à jour le champ `last_online` de l'utilisateur
+    à chaque requête backend, si la dernière mise à jour date de plus de 5 min.
+    """
     def __init__(self, get_response):
         self.get_response = get_response
 

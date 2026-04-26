@@ -4,7 +4,6 @@ def get_user_from_token(request):
 
     auth_header = request.headers.get("Authorization")
 
-
     if not auth_header:
         return None
 

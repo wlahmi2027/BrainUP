@@ -7,10 +7,7 @@ from API.models import Enseignant
 
 
 def user_has_teacher_access(user):
-    """
-    Vérifie si l'utilisateur courant peut accéder au chatbot enseignant.
-    À utiliser quand tu remettras la sécurité réelle.
-    """
+
     if not user or not getattr(user, "is_authenticated", False):
         return False
 
@@ -44,21 +41,6 @@ def chat(request):
             },
             status=400,
         )
-
-    # À réactiver quand tu testes avec un vrai utilisateur connecté
-    # if role == "teacher" and not user_has_teacher_access(request.user):
-    #     return Response(
-    #         {
-    #             "reply": "Accès refusé au chatbot enseignant.",
-    #             "sources": [],
-    #             "actions": [],
-    #             "rag_results": [],
-    #             "dynamic_context": None,
-    #             "suggestions": [],
-    #             "role": role,
-    #         },
-    #         status=403,
-    #     )
 
     try:
         context, sources, actions = search_knowledge(message, role=role)

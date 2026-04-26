@@ -1,3 +1,15 @@
+"""
+views.py = couche de logique métier (backend API)
+
+Rôle :
+- Reçoit les requêtes HTTP (via urls.py)
+- Applique la logique (authentification, règles métier, filtrage)
+
+Important :
+- L’authentification repose sur get_user_from_token()
+- Les serializers gèrent la validation et la transformation des données
+"""
+
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -5,6 +17,7 @@ from django.db.models import Avg, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
+
 
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action, api_view
@@ -49,26 +62,11 @@ from .recommendation_service import build_recommendations_payload
 import secrets
 
 
-def get_user_from_token(request):
-    auth_header = request.headers.get("Authorization")
-
-    if not auth_header:
-        return None
-
-    parts = auth_header.split()
-    if len(parts) != 2 or parts[0].lower() != "bearer":
-        return None
-
-    token = parts[1]
-
-    try:
-        return Utilisateur.objects.get(token=token)
-    except Utilisateur.DoesNotExist:
-        return None
-
-
 @api_view(["GET"])
 def profil_view(request):
+    """
+    Retourne les informations de base de l'utilisateur connecté
+    """
     user = get_user_from_token(request)
 
     if not user:
@@ -84,9 +82,11 @@ def profil_view(request):
         "id": user.id,
     })
 
-
 @api_view(["POST"])
 def logout_view(request):
+    """
+    Déconnecte l'utilisateur en invalidant son token
+    """
     user = get_user_from_token(request)
 
     if not user:
@@ -109,13 +109,25 @@ class EtudiantViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def progression(self, request, pk=None):
+        """
+        Retourne les données de progression d’un étudiant
+        """
         etudiant = self.get_object()
         serializer = self.get_serializer(etudiant)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CoursViewSet(viewsets.ModelViewSet):
+    """
+    CRUD complet pour gestion des cours du point de vue d'un enseignant :
+    - voir ses cours et ses informations
+    - voir les élèves de ses cours
+    - créer des cours
+    - modifier ses cours
+    - supprimer ses cours
+    """
     serializer_class = CoursSerializer
+    
 
     def get_queryset(self):
         queryset = Cours.objects.select_related("enseignant").all()
@@ -271,6 +283,18 @@ class CoursViewSet(viewsets.ModelViewSet):
 
 
 class LeconViewSet(viewsets.ModelViewSet):
+    """
+    CRUD complet pour gestion des Lecons
+
+    Les etudiants peuvent:
+    - voir les lecons
+
+    L'enseignant du cours et les admins peuvent :
+    - voir les lecons
+    - créer des lecon
+    - modifier les lecons
+    - supprimer les lecons
+    """
     serializer_class = LeconSerializer
 
     def get_queryset(self):
@@ -328,6 +352,13 @@ class LeconViewSet(viewsets.ModelViewSet):
 
 
 class StudentCourseViewSet(viewsets.ViewSet):
+    """
+    CRUD complet pour gestion des cours du point de vue d'un étudiant :
+    - voir ses cours et ses informations
+    - inscription aux cours
+    - désinscription aux cours
+    - voir sa progression
+    """
     def list(self, request):
         user = get_user_from_token(request)
 
@@ -392,7 +423,7 @@ class StudentCourseViewSet(viewsets.ViewSet):
             context={"student": student, "request": request},
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
-    from datetime import timedelta
+
 
     @action(detail=True, methods=["post"], url_path="study-session")
     def study_session(self, request, pk=None):
@@ -422,33 +453,34 @@ class StudentCourseViewSet(viewsets.ViewSet):
         )
 
         return Response({"status": "saved"}, status=200)
-        @action(detail=True, methods=["post"], url_path="favorite")
-        def favorite(self, request, pk=None):
-            user = get_user_from_token(request)
 
-            if not user or user.role != "etudiant":
-                return Response(
-                    {"detail": "Unauthorized"},
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
+    @action(detail=True, methods=["post"], url_path="favorite")
+    def favorite(self, request, pk=None):
+        user = get_user_from_token(request)
 
-            try:
-                student = Etudiant.objects.get(id=user.id)
-                course = Cours.objects.get(pk=pk)
-            except (Etudiant.DoesNotExist, Cours.DoesNotExist):
-                return Response(
-                    {"detail": "Not found"},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
-            insc, _created = Inscription.objects.get_or_create(
-                etudiant=student,
-                cours=course
+        if not user or user.role != "etudiant":
+            return Response(
+                {"detail": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
             )
-            insc.favoris = not insc.favoris
-            insc.save()
 
-            return Response({"favoris": insc.favoris}, status=status.HTTP_200_OK)
+        try:
+            student = Etudiant.objects.get(id=user.id)
+            course = Cours.objects.get(pk=pk)
+        except (Etudiant.DoesNotExist, Cours.DoesNotExist):
+            return Response(
+                {"detail": "Not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        insc, _created = Inscription.objects.get_or_create(
+            etudiant=student,
+            cours=course
+        )
+        insc.favoris = not insc.favoris
+        insc.save()
+
+        return Response({"favoris": insc.favoris}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], url_path="inscrire")
     def inscrire(self, request, pk=None):
@@ -604,6 +636,9 @@ class StudentCourseViewSet(viewsets.ViewSet):
 
 
 class QuizViewSet(viewsets.ModelViewSet):
+    """
+    Récupération des quiz du point de vue d'un enseignant
+    """
     serializer_class = QuizSerializer
 
     def get_queryset(self):
@@ -626,6 +661,9 @@ class QuizViewSet(viewsets.ModelViewSet):
 
 
 class QuestionViewSet(viewsets.ModelViewSet):
+    """
+    Récupération des questions d'un quiz
+    """
     serializer_class = QuestionSerializer
 
     def get_queryset(self):
@@ -643,6 +681,9 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
 
 class ChoixQuestionViewSet(viewsets.ModelViewSet):
+    """
+    Récupération des choix par question d'un quiz
+    """
     serializer_class = ChoixQuestionSerializer
 
     def get_queryset(self):
@@ -1409,6 +1450,9 @@ def teacher_students_view(request):
 
 @api_view(["GET"])
 def teacher_student_detail_view(request, student_id):
+    """
+    Récupération de tous les étudiants appartenant aux cours d'un prof
+    """
     user = get_user_from_token(request)
 
     if not user:
@@ -1542,6 +1586,9 @@ def teacher_student_detail_view(request, student_id):
 
 @api_view(["GET"])
 def topbar_view(request):
+    """
+    affichage du nom et role d'un utilisateur sur la bannière
+    """
     user = get_user_from_token(request)
 
     if not user:
@@ -1632,6 +1679,13 @@ def topbar_view(request):
 
 
 class AdminCoursViewSet(viewsets.ModelViewSet):
+    """
+    CRUD complet pour gestion des cours du point de vue d'un Admin :
+    - voir chaque cours et leurs informations
+    - voir les élèves de chaque cours
+    - modifier chaque cours
+    - supprimer des cours
+    """
     serializer_class = CoursSerializer
 
     def get_queryset(self):
@@ -1748,12 +1802,10 @@ class AdminCoursViewSet(viewsets.ModelViewSet):
                 "password_reset_request_id": latest_request.id if latest_request else None,
             }
 
-            # If teacher, include courses they teach
             if u.role == "enseignant":
                 courses = Cours.objects.filter(enseignant__utilisateur_ptr=u)
                 user_data["courses"] = [{"id": c.id, "title": c.title} for c in courses]
 
-            # If student, include enrolled courses and progression
             elif u.role == "etudiant":
                 inscriptions = Inscription.objects.filter(etudiant=u).select_related("cours")
                 user_data["courses"] = [
@@ -1790,6 +1842,14 @@ class AdminCoursViewSet(viewsets.ModelViewSet):
 
 
 class UserAdminViewSet(viewsets.ModelViewSet):
+    """
+    CRUD complet pour la gestion des utilisateurs du point de vue d'un Admin :
+    - voir les utilisateurs et leurs informations
+    - supprimer des utilisateurs
+    - modifier leurs noms ou emails
+    - voir les demandes de réinitialisation de mot de passe
+    - réinitialiser les mot de passe
+    """
     queryset = Utilisateur.objects.all()
     serializer_class = AdminUserSerializer
 
@@ -1844,9 +1904,7 @@ class UserAdminViewSet(viewsets.ModelViewSet):
         if target_user.role == "admin":
             return Response({"message": "Cannot reset another admin"}, status=403)
 
-        # Generate temp password
-
-        temp_pw_plain = secrets.token_urlsafe(10)  # secure random
+        temp_pw_plain = secrets.token_urlsafe(10)
         target_user.temp_password = make_password(temp_pw_plain)
         target_user.temp_password_expiry = timezone.now() + timedelta(hours=1)
         target_user.force_password_change = True
@@ -1854,10 +1912,15 @@ class UserAdminViewSet(viewsets.ModelViewSet):
 
         return Response({
             "message": "Temporary password generated",
-            "temp_password": temp_pw_plain  # show to admin once
+            "temp_password": temp_pw_plain
         })
 
 class AuthViewSet(viewsets.ModelViewSet):
+    """
+    Gestion des demandes de réinitialisations de mot de passe du poit de vue des utilisateurs :
+    - demander une réinitialisation
+    - changer de mot de passe avec le mot de passe temporaire donné par l'admin
+    """
 
     @action(detail=False, methods=["post"], url_path="confirm-temp-password")
     def confirm_temp_password(self, request):
@@ -1873,22 +1936,17 @@ class AuthViewSet(viewsets.ModelViewSet):
         except Utilisateur.DoesNotExist:
             return Response({"message": "User not found"}, status=404)
 
-        # must be in reset state
         if not user.force_password_change:
             return Response({"message": "No password reset required"}, status=400)
 
-        # expiry check
         if user.temp_password_expiry and user.temp_password_expiry < timezone.now():
             return Response({"message": "Temporary password expired"}, status=400)
 
-        # verify temp password
         if not user.temp_password or not check_password(temp_password, user.temp_password):
             return Response({"message": "Invalid temporary password"}, status=400)
 
-        # update password
         user.mot_de_passe = make_password(new_password)
 
-        # find active reset request
         reset_request = PasswordResetRequest.objects.filter(
             user=user,
             resolved=False
@@ -1899,7 +1957,6 @@ class AuthViewSet(viewsets.ModelViewSet):
             reset_request.resolved_at = timezone.now()
             reset_request.save()
 
-        # cleanup
         user.temp_password = None
         user.temp_password_expiry = None
         user.force_password_change = False

@@ -1,3 +1,8 @@
+"""
+Serializers.py définit le format des informations rentrant et sortant de la base de données
+Il y a en général 1 serializer par tableau de la database
+"""
+
 from rest_framework import serializers
 from PIL import Image
 
@@ -395,7 +400,6 @@ class AdminUserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "role", "last_online", "date_registered", "courses"]
 
     def get_courses(self, obj):
-        # Include course title and progress if the user is a student
         inscriptions = getattr(obj, "inscription_set", None)
         if inscriptions:
             return [

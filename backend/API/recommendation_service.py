@@ -3,27 +3,21 @@ from API.models import Cours, TentativeQuiz, Inscription, Recommandation
 
 
 def build_recommendations_payload(etudiant):
-    # =========================
-    # 1. Récupération données
-    # =========================
 
     attempts = TentativeQuiz.objects.filter(etudiant=etudiant).select_related("quiz", "quiz__cours")
     inscriptions = Inscription.objects.filter(etudiant=etudiant).select_related("cours")
 
-    # =========================
-    # 2. RECOMMANDÉ POUR VOUS
-    # =========================
 
     recommended = []
 
     for cours in Cours.objects.all():
         score = 0
 
-        # bonus si déjà inscrit
+
         if inscriptions.filter(cours=cours).exists():
             score += 0.3
 
-        # bonus si quiz lié réussi
+
         related_attempts = attempts.filter(quiz__cours=cours)
 
         if related_attempts.exists():
@@ -34,7 +28,7 @@ def build_recommendations_payload(etudiant):
             else:
                 score += 0.2
 
-        # bonus progression globale
+
         if etudiant.progression > 50:
             score += 0.1
 
@@ -48,7 +42,7 @@ def build_recommendations_payload(etudiant):
                 "route": f"/student/courses/{cours.id}",
             })
 
-            # sauvegarde (facultatif mais OK avec ton modèle)
+
             Recommandation.objects.update_or_create(
                 utilisateur=etudiant,
                 cours=cours,
@@ -56,10 +50,6 @@ def build_recommendations_payload(etudiant):
             )
 
     recommended.sort(key=lambda x: x["score_label"], reverse=True)
-
-    # =========================
-    # 3. CONTINUE LEARNING
-    # =========================
 
     continue_learning = None
 
@@ -74,10 +64,6 @@ def build_recommendations_payload(etudiant):
             "progress_label": f"{int(in_progress.progression_percent)}%",
             "route": f"/student/courses/{in_progress.cours.id}",
         }
-
-    # =========================
-    # 4. AMÉLIORER RÉSULTATS
-    # =========================
 
     improve = []
 
@@ -102,10 +88,6 @@ def build_recommendations_payload(etudiant):
 
         seen.add(cours.id)
 
-    # =========================
-    # 5. POPULAR COURSES
-    # =========================
-
     popular = []
 
     for cours in Cours.objects.all():
@@ -121,10 +103,6 @@ def build_recommendations_payload(etudiant):
         })
 
     popular.sort(key=lambda x: x["popularity_count"], reverse=True)
-
-    # =========================
-    # 6. RETURN FINAL
-    # =========================
 
     return {
         "recommended_for_you": recommended[:3],

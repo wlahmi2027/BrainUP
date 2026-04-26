@@ -24,12 +24,12 @@ class Utilisateur(models.Model):
 
     def set_temp_password(self, length=12, expiry_hours=1):
 
-        temp_pw = secrets.token_urlsafe(length)  # generates secure random string
+        temp_pw = secrets.token_urlsafe(length)
         self.temp_password = make_password(temp_pw)
         self.temp_password_expiry = timezone.now() + timedelta(hours=expiry_hours)
         self.force_password_change = True
         self.save()
-        return temp_pw  # return plaintext for admin to show
+        return temp_pw
 
     def __str__(self):
         return self.nom
@@ -75,7 +75,6 @@ class Cours(models.Model):
     is_published = models.BooleanField(default=True)
     date_creation = models.DateTimeField(auto_now_add=True)
 
-    # Ajouts conservateurs
     banniere = models.ImageField(upload_to="bannieres/", null=True, blank=True)
     niveau = models.CharField(max_length=20, choices=NIVEAUX_CHOIX, default="debutant")
     status = models.CharField(max_length=20, choices=STATUS_CHOIX, default="brouillon")
@@ -95,11 +94,9 @@ class Inscription(models.Model):
     note_moyenne = models.FloatField(default=0.0)
     evaluation = models.IntegerField(null=True, blank=True)
 
-    # Tes champs existants
     termine = models.BooleanField(default=False)
     progression_percent = models.FloatField(default=0.0)
 
-    # Ajout du binôme sans casser l’existant
     favoris = models.BooleanField(default=False)
 
     date_inscription = models.DateTimeField(auto_now_add=True)
@@ -115,10 +112,8 @@ class Inscription(models.Model):
 class Lecon(models.Model):
     titre = models.CharField(max_length=255)
 
-    # Ton champ actuel
     contenu = models.TextField()
 
-    # Ajout du binôme sans remplacement
     fichier = models.FileField(upload_to="lecons/", null=True, blank=True)
 
     cours = models.ForeignKey(Cours, on_delete=models.CASCADE, related_name="lecons")
