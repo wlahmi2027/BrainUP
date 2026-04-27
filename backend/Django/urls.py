@@ -1,3 +1,11 @@
+"""
+Urls.py sert d'interface entre le front et le back
+
+Il définit quelles fonctions de Views.py a utiliser pour chaque appel API
+Ceci est fait soit automatiquement avec des routers, soit en dur avec les liens des API dans urlpatterns
+"""
+
+
 from rest_framework import routers
 from django.urls import path, include
 from django.conf import settings

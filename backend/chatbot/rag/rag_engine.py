@@ -1,3 +1,6 @@
+"""
+Récupère le contexte pour l'IA (l'historique de conversation) + récupère des informations de la base de données
+"""
 import json
 import pickle
 from pathlib import Path

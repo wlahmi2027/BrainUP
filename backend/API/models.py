@@ -8,7 +8,6 @@ class Utilisateur(models.Model):
         ("enseignant", "Enseignant"),
         ("admin", "Admin"),
     ]
-
     nom = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     mot_de_passe = models.CharField(max_length=255)
@@ -17,7 +16,7 @@ class Utilisateur(models.Model):
     last_online = models.DateTimeField(null=True, blank=True)
     date_registered = models.DateTimeField(auto_now_add=True)
 
-    # for password resets :
+    # pour reinitialisation de mot de passe :
     force_password_change = models.BooleanField(default=False)
     temp_password = models.CharField(max_length=128, null=True, blank=True)
     temp_password_expiry = models.DateTimeField(null=True, blank=True)

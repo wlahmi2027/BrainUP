@@ -1,3 +1,7 @@
+"""
+Couche métier pour les appels au modèle Ollama
+"""
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
