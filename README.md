@@ -132,7 +132,7 @@ npm run dev
 ollama --version
 
 # Lancer Ollama
-ollama servew
+ollama serve
 
 # Télécharger le modèle
 ollama pull phi3:mini
