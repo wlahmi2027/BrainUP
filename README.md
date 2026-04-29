@@ -106,7 +106,7 @@ cd backend
 python -m venv .venv
 
 # Activer l'environnement virtuel
-source .venv/bin/activate   # Linux / Mac
+source venv/bin/activate   # Linux / Mac
 .venv\Scripts\activate      # Windows
 
 pip install -r requirements.txt
@@ -131,11 +131,11 @@ npm run dev
 # Vérifier l'installation
 ollama --version
 
-# Télécharger le modèle
-ollama pull phi3
-
 # Lancer Ollama
-ollama serve
+ollama servew
+
+# Télécharger le modèle
+ollama pull phi3:mini
 ```
 
 ---
