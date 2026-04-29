@@ -286,6 +286,9 @@ class Recommandation(models.Model):
     utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE)
     cours = models.ForeignKey(Cours, on_delete=models.CASCADE)
     score_recommendation = models.FloatField()
+    
+    class Meta:
+        unique_together = ("utilisateur", "cours")
 
     def __str__(self):
         return f"{self.utilisateur.nom} → {self.cours.title} ({self.score_recommendation})"
